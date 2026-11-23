@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ml">
 <head>
@@ -110,7 +109,7 @@
                 <!-- Date Badge -->
                 <div class="flex items-center gap-2 bg-stone-800 px-3 py-1.5 rounded-xl border border-stone-700">
                     <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
-                    <span id="header-date" class="text-xs sm:text-sm font-bold text-stone-100">22-11-2026</span>
+                    <span id="header-date" class="text-xs sm:text-sm font-bold text-stone-100">23-11-2026</span>
                 </div>
             </div>
 
@@ -138,6 +137,17 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Hold Slots Quick Recall Bar (ഹോൾഡ് 1, ഹോൾഡ് 2, ഹോൾഡ് 3) -->
+            <div id="hold-slots-bar" class="mt-2.5 pt-2.5 border-t border-stone-800 flex flex-wrap items-center gap-2">
+                <span class="text-[11px] font-extrabold text-amber-300 flex items-center gap-1">
+                    <i data-lucide="pause-circle" class="w-3.5 h-3.5"></i>
+                    ഹോൾഡ് ഓർഡറുകൾ:
+                </span>
+                <div id="hold-slots-buttons" class="flex flex-wrap items-center gap-1.5 flex-1">
+                    <!-- Hold 1, Hold 2, Hold 3 buttons rendered via JS -->
+                </div>
+            </div>
         </div>
     </header>
 
@@ -148,8 +158,8 @@
         <div class="lg:col-span-7 space-y-4">
 
             <!-- Table / Parcel Quick Selector -->
-            <section class="bg-white rounded-2xl p-3.5 shadow-sm border border-stone-200">
-                <div class="flex items-center justify-between mb-2">
+            <section class="bg-white rounded-2xl p-3.5 shadow-sm border border-stone-200 space-y-3">
+                <div class="flex items-center justify-between">
                     <span class="text-xs font-extrabold text-stone-500 uppercase tracking-wide flex items-center gap-1.5">
                         <i data-lucide="layout-grid" class="w-4 h-4 text-amber-600"></i>
                         ടേബിൾ / പാർസൽ തിരഞ്ഞെടുക്കുക
@@ -160,6 +170,33 @@
                 </div>
                 <div id="table-pills" class="grid grid-cols-3 sm:grid-cols-6 gap-2">
                     <!-- Table pills injected via JS -->
+                </div>
+
+                <!-- Parcel / Catering Customer Details Box (Shown when Parcel is active or toggled) -->
+                <div id="parcel-details-box" class="hidden bg-amber-50/80 border-2 border-amber-300 rounded-2xl p-3 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-extrabold text-amber-950 flex items-center gap-1.5">
+                            <i data-lucide="package" class="w-4 h-4 text-amber-700"></i>
+                            പാർസൽ / കാറ്ററിംഗ് കസ്റ്റമർ വിവരങ്ങൾ
+                        </span>
+                        <button type="button" onclick="clearParcelDetails()" class="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer">
+                            വിവരങ്ങൾ മായ്ക്കുക
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-stone-700 mb-0.5">കസ്റ്റമറുടെ പേര്</label>
+                            <input type="text" id="parcel-name" oninput="saveParcelDetails()" placeholder="ഉദാ: റഹീം / ഓർഡർ പേര്" class="w-full px-3 py-2 text-xs sm:text-sm font-bold bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-stone-700 mb-0.5">ഫോൺ നമ്പർ (വാട്സ്ആപ്പിന്)</label>
+                            <input type="tel" id="parcel-phone" oninput="saveParcelDetails()" placeholder="9876543210" class="w-full px-3 py-2 text-xs sm:text-sm font-bold bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-stone-700 mb-0.5">സ്ഥലം / അഡ്രസ്സ് (കാറ്ററിംഗ് / ഡെലിവറി)</label>
+                        <input type="text" id="parcel-address" oninput="saveParcelDetails()" placeholder="ഉദാ: കോളയാട് / പേരളശ്ശേരി" class="w-full px-3 py-2 text-xs sm:text-sm font-semibold bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
                 </div>
             </section>
 
@@ -178,12 +215,13 @@
         </div>
 
         <!-- Right Section: Current Bill / Cart Drawer (5 Columns on Large Screen) -->
-        <section class="lg:col-span-5 bg-white rounded-2xl shadow-md border-2 border-stone-300 flex flex-col lg:sticky lg:top-32 overflow-hidden">
+        <section class="lg:col-span-5 bg-white rounded-2xl shadow-md border-2 border-stone-300 flex flex-col lg:sticky lg:top-36 overflow-hidden">
             <!-- Bill Header -->
             <div class="bg-stone-100 px-4 py-3 border-b border-stone-200 flex items-center justify-between">
                 <div>
                     <span class="text-xs font-bold text-stone-500 block">നിലവിലെ ഓർഡർ</span>
                     <h2 id="cart-table-title" class="text-lg font-extrabold text-stone-900">ടേബിൾ 1 (Table 1)</h2>
+                    <p id="cart-customer-summary" class="text-xs font-bold text-amber-800 mt-0.5 hidden"></p>
                 </div>
                 <div class="text-right">
                     <span class="text-xs font-bold text-stone-500 block">ബിൽ നമ്പർ</span>
@@ -212,7 +250,7 @@
 
                     <button onclick="holdCurrentTable()" class="flex items-center justify-center gap-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-950 border border-amber-300 font-extrabold text-xs sm:text-sm py-3 px-3 rounded-xl transition cursor-pointer">
                         <i data-lucide="pause-circle" class="w-4 h-4"></i>
-                        <span>ഹോൾഡ് (Hold)</span>
+                        <span>ഹോൾഡ് (1/2/3)</span>
                     </button>
 
                     <button onclick="shareBillWhatsApp()" class="flex items-center justify-center gap-1.5 bg-green-100 hover:bg-green-200 active:scale-95 text-green-900 border border-green-300 font-extrabold text-xs sm:text-sm py-3 px-3 rounded-xl transition cursor-pointer">
@@ -239,7 +277,7 @@
             <div class="flex items-center justify-between pb-3 border-b border-stone-200">
                 <div>
                     <h2 class="text-xl font-extrabold text-stone-900">ഇന്നത്തെ വിറ്റുവരവ് റിപ്പോർട്ട്</h2>
-                    <p id="report-date-subtitle" class="text-xs font-bold text-stone-500 mt-0.5">തീയതി: 22-11-2026</p>
+                    <p id="report-date-subtitle" class="text-xs font-bold text-stone-500 mt-0.5">തീയതി: 23-11-2026</p>
                 </div>
                 <button onclick="closeModal('daily-report-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -344,12 +382,9 @@
                     </div>
                 </div>
 
-                <!-- Existing Items Quick Price Edit / Delete List -->
                 <div class="pt-2 border-t border-stone-200">
                     <span class="text-xs font-extrabold text-stone-500 block mb-2">നിലവിലുള്ള ഐറ്റങ്ങളുടെ വില മാറ്റാൻ / നീക്കം ചെയ്യാൻ:</span>
-                    <div id="manage-menu-list" class="max-h-40 overflow-y-auto space-y-1.5 pr-1">
-                        <!-- Manage items list -->
-                    </div>
+                    <div id="manage-menu-list" class="max-h-40 overflow-y-auto space-y-1.5 pr-1"></div>
                 </div>
 
                 <div class="flex items-center justify-end gap-2 pt-3 border-t border-stone-200">
@@ -387,7 +422,7 @@
         </div>
     </div>
 
-    <!-- Custom Confirmation Modal (No browser confirm/alert) -->
+    <!-- Custom Confirmation Modal -->
     <div id="confirm-dialog" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/75 backdrop-blur-xs p-4">
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center border border-stone-200">
             <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
@@ -408,6 +443,8 @@
             SHOP: 'kerala_hotel_pos_shop_v1',
             MENU: 'kerala_hotel_pos_menu_v1',
             TABLES: 'kerala_hotel_pos_tables_v1',
+            HOLDS: 'kerala_hotel_pos_holds_v1',
+            PARCEL: 'kerala_hotel_pos_parcel_v1',
             BILLS: 'kerala_hotel_pos_bills_v1',
             BILL_SEQ: 'kerala_hotel_pos_seq_v1'
         };
@@ -435,7 +472,7 @@
             { id: 't3', label: 'ടേബിൾ 3', fullLabel: 'ടേബിൾ 3 (Table 3)' },
             { id: 't4', label: 'ടേബിൾ 4', fullLabel: 'ടേബിൾ 4 (Table 4)' },
             { id: 't5', label: 'ടേബിൾ 5', fullLabel: 'ടേബിൾ 5 (Table 5)' },
-            { id: 'parcel', label: 'പാർസൽ', fullLabel: 'പാർസൽ (Parcel)' }
+            { id: 'parcel', label: 'പാർസൽ', fullLabel: 'പാർസൽ / കാറ്ററിംഗ്' }
         ];
 
         // --- Default Authentic Kerala Rural Hotel Menu ---
@@ -463,7 +500,9 @@
         // --- App State ---
         let shopInfo = { name: 'മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്', place: 'പേരളശ്ശേരി / കണ്ണൂർ' };
         let menuItems = [];
-        let tableOrders = {}; // { t1: { itemId: qty }, ... }
+        let tableOrders = {};
+        let holdSlots = { h1: null, h2: null, h3: null };
+        let parcelInfo = { name: '', phone: '', address: '' };
         let completedBills = [];
         let billSequence = 101;
         let activeTableId = 't1';
@@ -486,6 +525,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadState();
             document.getElementById('header-date').textContent = getTodayDDMMYYYY();
+            syncParcelInputs();
             setupForms();
             renderAll();
         });
@@ -500,6 +540,12 @@
 
                 const savedTables = localStorage.getItem(KEYS.TABLES);
                 tableOrders = savedTables ? JSON.parse(savedTables) : {};
+
+                const savedHolds = localStorage.getItem(KEYS.HOLDS);
+                if (savedHolds) holdSlots = Object.assign({ h1: null, h2: null, h3: null }, JSON.parse(savedHolds));
+
+                const savedParcel = localStorage.getItem(KEYS.PARCEL);
+                if (savedParcel) parcelInfo = Object.assign({ name: '', phone: '', address: '' }, JSON.parse(savedParcel));
 
                 const savedBills = localStorage.getItem(KEYS.BILLS);
                 completedBills = savedBills ? JSON.parse(savedBills) : [];
@@ -517,6 +563,8 @@
                 localStorage.setItem(KEYS.SHOP, JSON.stringify(shopInfo));
                 localStorage.setItem(KEYS.MENU, JSON.stringify(menuItems));
                 localStorage.setItem(KEYS.TABLES, JSON.stringify(tableOrders));
+                localStorage.setItem(KEYS.HOLDS, JSON.stringify(holdSlots));
+                localStorage.setItem(KEYS.PARCEL, JSON.stringify(parcelInfo));
                 localStorage.setItem(KEYS.BILLS, JSON.stringify(completedBills));
                 localStorage.setItem(KEYS.BILL_SEQ, String(billSequence));
             } catch (e) {
@@ -524,9 +572,163 @@
             }
         }
 
+        // --- Parcel Customer Helpers ---
+        function syncParcelInputs() {
+            const nameEl = document.getElementById('parcel-name');
+            const phoneEl = document.getElementById('parcel-phone');
+            const addrEl = document.getElementById('parcel-address');
+            if (nameEl) nameEl.value = parcelInfo.name || '';
+            if (phoneEl) phoneEl.value = parcelInfo.phone || '';
+            if (addrEl) addrEl.value = parcelInfo.address || '';
+        }
+
+        function saveParcelDetails() {
+            parcelInfo = {
+                name: (document.getElementById('parcel-name')?.value || '').trim(),
+                phone: (document.getElementById('parcel-phone')?.value || '').trim(),
+                address: (document.getElementById('parcel-address')?.value || '').trim()
+            };
+            saveState();
+            renderCartCustomerSummary();
+        }
+
+        function clearParcelDetails() {
+            parcelInfo = { name: '', phone: '', address: '' };
+            syncParcelInputs();
+            saveState();
+            renderCartCustomerSummary();
+            showToast('പാർസൽ കസ്റ്റമർ വിവരങ്ങൾ ഒഴിവാക്കി.');
+        }
+
+        function renderCartCustomerSummary() {
+            const el = document.getElementById('cart-customer-summary');
+            if (!el) return;
+            const parts = [];
+            if (parcelInfo.name) parts.push(parcelInfo.name);
+            if (parcelInfo.phone) parts.push(parcelInfo.phone);
+            if (parcelInfo.address) parts.push(parcelInfo.address);
+
+            if (activeTableId === 'parcel' && parts.length > 0) {
+                el.textContent = parts.join(' • ');
+                el.classList.remove('hidden');
+            } else {
+                el.textContent = '';
+                el.classList.add('hidden');
+            }
+        }
+
+        // --- Hold Slots 1, 2, 3 ---
+        function renderHoldSlotsBar() {
+            const container = document.getElementById('hold-slots-buttons');
+            const slotDefs = [
+                { id: 'h1', label: 'ഹോൾഡ് 1' },
+                { id: 'h2', label: 'ഹോൾഡ് 2' },
+                { id: 'h3', label: 'ഹോൾഡ് 3' }
+            ];
+
+            container.innerHTML = slotDefs.map(s => {
+                const data = holdSlots[s.id];
+                if (!data || !data.items || Object.keys(data.items).length === 0) {
+                    return `
+                        <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-stone-800/70 text-stone-500 border border-stone-800">
+                            ${s.label} (ഒഴിവ്)
+                        </span>
+                    `;
+                }
+
+                const total = calculateOrderTotal(data.items);
+                const customerTag = data.parcel?.name ? ` • ${escapeHtml(data.parcel.name)}` : '';
+
+                return `
+                    <div class="inline-flex items-center bg-amber-400 text-stone-950 rounded-lg overflow-hidden shadow-xs">
+                        <button onclick="recallHoldSlot('${s.id}')" class="px-2.5 py-1 text-[11px] font-extrabold hover:bg-amber-300 cursor-pointer flex items-center gap-1" title="ഓർഡർ തിരികെ എടുക്കുക">
+                            <span>${s.label}${customerTag}</span>
+                            <span class="bg-stone-950 text-amber-300 px-1.5 py-0.2 rounded text-[10px]">₹${total}</span>
+                        </button>
+                        <button onclick="discardHoldSlot('${s.id}')" class="px-1.5 py-1 text-[11px] font-extrabold hover:bg-rose-500 hover:text-white cursor-pointer border-l border-amber-500/50" title="ഹോൾഡ് ഒഴിവാക്കുക">
+                            ×
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function calculateOrderTotal(orderMap) {
+            if (!orderMap) return 0;
+            return Object.entries(orderMap).reduce((sum, [id, qty]) => {
+                const item = menuItems.find(m => m.id === id);
+                return sum + (item ? item.price * qty : 0);
+            }, 0);
+        }
+
+        function holdCurrentTable() {
+            const currentOrder = tableOrders[activeTableId] || {};
+            if (Object.keys(currentOrder).length === 0) {
+                showToast('ഹോൾഡ് ചെയ്യാൻ ഈ ടേബിളിൽ ഓർഡറൊന്നുമില്ല.');
+                return;
+            }
+
+            const freeSlot = ['h1', 'h2', 'h3'].find(id => !holdSlots[id]);
+            const targetSlot = freeSlot || 'h1';
+
+            if (!freeSlot) {
+                showToast('ഹോൾഡ് 1, 2, 3 നിറഞ്ഞതിനാൽ ഹോൾഡ് 1 അപ്ഡേറ്റ് ചെയ്തു.');
+            }
+
+            holdSlots[targetSlot] = {
+                items: JSON.parse(JSON.stringify(currentOrder)),
+                sourceTable: activeTableId,
+                parcel: activeTableId === 'parcel' ? { ...parcelInfo } : null
+            };
+
+            delete tableOrders[activeTableId];
+            if (activeTableId === 'parcel') {
+                parcelInfo = { name: '', phone: '', address: '' };
+                syncParcelInputs();
+            }
+
+            saveState();
+            renderAll();
+            const slotName = targetSlot === 'h1' ? 'ഹോൾഡ് 1' : targetSlot === 'h2' ? 'ഹോൾഡ് 2' : 'ഹോൾഡ് 3';
+            showToast(`ഓർഡർ ${slotName}-ലേക്ക് മാറ്റി വെച്ചു!`);
+        }
+
+        function recallHoldSlot(slotId) {
+            const slotData = holdSlots[slotId];
+            if (!slotData || !slotData.items) return;
+
+            const currentOrder = tableOrders[activeTableId] || {};
+            if (Object.keys(currentOrder).length > 0) {
+                showToast('നിലവിലെ ടേബിളിൽ ഓർഡർ ഉള്ളതിനാൽ ആദ്യം ഹോൾഡ്/ക്ലിയർ ചെയ്യുക.');
+                return;
+            }
+
+            tableOrders[activeTableId] = JSON.parse(JSON.stringify(slotData.items));
+            if (slotData.parcel) {
+                activeTableId = 'parcel';
+                parcelInfo = { ...slotData.parcel };
+                syncParcelInputs();
+            }
+
+            holdSlots[slotId] = null;
+            saveState();
+            renderAll();
+            const slotName = slotId === 'h1' ? 'ഹോൾഡ് 1' : slotId === 'h2' ? 'ഹോൾഡ് 2' : 'ഹോൾഡ് 3';
+            showToast(`${slotName} ഓർഡർ തിരികെ എടുത്തു!`);
+        }
+
+        function discardHoldSlot(slotId) {
+            holdSlots[slotId] = null;
+            saveState();
+            renderHoldSlotsBar();
+            lucide.createIcons();
+            showToast('ഹോൾഡ് ഓർഡർ ഒഴിവാക്കി.');
+        }
+
         // --- Rendering ---
         function renderAll() {
             renderHeader();
+            renderHoldSlotsBar();
             renderTables();
             renderCategories();
             renderMenuGrid();
@@ -572,6 +774,15 @@
 
             const activeObj = TABLES.find(t => t.id === activeTableId);
             document.getElementById('active-table-badge').textContent = activeObj ? activeObj.label : '';
+
+            const parcelBox = document.getElementById('parcel-details-box');
+            if (parcelBox) {
+                if (activeTableId === 'parcel') {
+                    parcelBox.classList.remove('hidden');
+                } else {
+                    parcelBox.classList.add('hidden');
+                }
+            }
         }
 
         function renderCategories() {
@@ -620,6 +831,7 @@
             const activeObj = TABLES.find(t => t.id === activeTableId);
             document.getElementById('cart-table-title').textContent = activeObj ? activeObj.fullLabel : 'ടേബിൾ 1';
             document.getElementById('cart-bill-no').textContent = `#${billSequence}`;
+            renderCartCustomerSummary();
 
             const listEl = document.getElementById('cart-items-list');
             const currentOrder = tableOrders[activeTableId] || {};
@@ -711,18 +923,6 @@
             lucide.createIcons();
         }
 
-        function holdCurrentTable() {
-            const currentOrder = tableOrders[activeTableId] || {};
-            const count = Object.keys(currentOrder).length;
-            if (count === 0) {
-                showToast('ഹോൾഡ് ചെയ്യാൻ ഈ ടേബിളിൽ ഓർഡറൊന്നുമില്ല.');
-                return;
-            }
-            const tableObj = TABLES.find(t => t.id === activeTableId);
-            saveState();
-            showToast(`${tableObj.label} ഓർഡർ ഹോൾഡ് ചെയ്തു. മറ്റൊരു ടേബിൾ തിരഞ്ഞെടുക്കാം.`);
-        }
-
         function clearCurrentTable() {
             const currentOrder = tableOrders[activeTableId] || {};
             if (Object.keys(currentOrder).length === 0) return;
@@ -732,11 +932,12 @@
                 'ഈ ടേബിളിലെ നിലവിലെ ഐറ്റങ്ങൾ ഒഴിവാക്കാൻ ഉറപ്പാണോ?',
                 () => {
                     delete tableOrders[activeTableId];
+                    if (activeTableId === 'parcel') {
+                        parcelInfo = { name: '', phone: '', address: '' };
+                        syncParcelInputs();
+                    }
                     saveState();
-                    renderTables();
-                    renderMenuGrid();
-                    renderCart();
-                    lucide.createIcons();
+                    renderAll();
                     showToast('ടേബിൾ ഓർഡർ ഒഴിവാക്കി.');
                 }
             );
@@ -773,6 +974,7 @@
                 date: getTodayDDMMYYYY(),
                 time: getCurrentTime12Hr(),
                 tableLabel: tableObj ? tableObj.label : 'ടേബിൾ 1',
+                parcel: activeTableId === 'parcel' ? { ...parcelInfo } : null,
                 items: items,
                 total: total
             };
@@ -786,7 +988,6 @@
                 return;
             }
 
-            // Populate 58mm Thermal Print Template
             const printArea = document.getElementById('thermal-print-area');
             const itemsRowsHtml = bill.items.map(it => `
                 <tr>
@@ -795,6 +996,17 @@
                     <td style="padding: 2px 0; text-align: right;">${it.amount}</td>
                 </tr>
             `).join('');
+
+            let customerBlockHtml = '';
+            if (bill.parcel && (bill.parcel.name || bill.parcel.phone || bill.parcel.address)) {
+                customerBlockHtml = `
+                    <div style="font-size: 10px; margin-bottom: 4px; border-bottom: 1px dashed #000; padding-bottom: 4px;">
+                        ${bill.parcel.name ? `<div>കസ്റ്റമർ: <b>${escapeHtml(bill.parcel.name)}</b></div>` : ''}
+                        ${bill.parcel.phone ? `<div>ഫോൺ: ${escapeHtml(bill.parcel.phone)}</div>` : ''}
+                        ${bill.parcel.address ? `<div>സ്ഥലം: ${escapeHtml(bill.parcel.address)}</div>` : ''}
+                    </div>
+                `;
+            }
 
             printArea.innerHTML = `
                 <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 4px; margin-bottom: 4px;">
@@ -805,6 +1017,7 @@
                     <div>ബിൽ നമ്പർ: <b>#${bill.billNo}</b> | ${escapeHtml(bill.tableLabel)}</div>
                     <div>തീയതി: ${bill.date} | ${bill.time}</div>
                 </div>
+                ${customerBlockHtml}
                 <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
                     <thead>
                         <tr style="border-bottom: 1px dashed #000;">
@@ -826,22 +1039,32 @@
                 </div>
             `;
 
-            // Save completed bill & increment sequence
             completedBills.unshift(bill);
             billSequence += 1;
             delete tableOrders[activeTableId];
+            if (activeTableId === 'parcel') {
+                parcelInfo = { name: '', phone: '', address: '' };
+                syncParcelInputs();
+            }
             saveState();
             renderAll();
 
             showToast(`ബിൽ #${bill.billNo} സേവ് ചെയ്തു! പ്രിന്റ് തയ്യാറാകുന്നു...`);
 
-            // Trigger browser print dialog (58mm formatted)
             setTimeout(() => {
                 window.print();
             }, 150);
         }
 
         // --- Direct WhatsApp Share (wa.me) ---
+        function formatCleanPhoneForWa(rawPhone) {
+            if (!rawPhone) return '';
+            const digits = String(rawPhone).replace(/\D/g, '');
+            if (!digits) return '';
+            if (digits.length === 10) return '91' + digits;
+            return digits;
+        }
+
         function shareBillWhatsApp() {
             const bill = buildCurrentBillObject();
             if (!bill) {
@@ -854,6 +1077,14 @@
             text += `------------------------\n`;
             text += `ബിൽ നമ്പർ: #${bill.billNo} (${bill.tableLabel})\n`;
             text += `തീയതി: ${bill.date} | ${bill.time}\n`;
+
+            if (bill.parcel && (bill.parcel.name || bill.parcel.phone || bill.parcel.address)) {
+                text += `------------------------\n`;
+                if (bill.parcel.name) text += `കസ്റ്റമർ: *${bill.parcel.name}*\n`;
+                if (bill.parcel.phone) text += `ഫോൺ: ${bill.parcel.phone}\n`;
+                if (bill.parcel.address) text += `സ്ഥലം: ${bill.parcel.address}\n`;
+            }
+
             text += `------------------------\n`;
 
             bill.items.forEach(it => {
@@ -864,7 +1095,11 @@
             text += `*ആകെ തുക: ₹${bill.total}*\n`;
             text += `നന്ദി! വീണ്ടും വരിക 🙏`;
 
-            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            const phoneDigits = bill.parcel ? formatCleanPhoneForWa(bill.parcel.phone) : '';
+            const url = phoneDigits
+                ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent(text)}`
+                : `https://wa.me/?text=${encodeURIComponent(text)}`;
+
             window.open(url, '_blank');
         }
 
@@ -879,7 +1114,6 @@
             document.getElementById('rep-total-amount').textContent = `₹${totalRevenue}`;
             document.getElementById('rep-total-bills').textContent = todaysBills.length;
 
-            // Aggregate item-wise sales
             const itemMap = {};
             todaysBills.forEach(bill => {
                 bill.items.forEach(it => {
@@ -906,20 +1140,22 @@
                 `).join('');
             }
 
-            // Recent Bills History
             const historyEl = document.getElementById('rep-bills-history');
             if (todaysBills.length === 0) {
                 historyEl.innerHTML = `<p class="text-xs text-stone-400 text-center py-3">ബില്ലുകൾ ലഭ്യമല്ല</p>`;
             } else {
-                historyEl.innerHTML = todaysBills.map(b => `
-                    <div class="flex items-center justify-between bg-stone-50 px-3 py-2 rounded-xl border border-stone-200 text-xs">
-                        <div>
-                            <span class="font-extrabold text-stone-900">#${b.billNo}</span>
-                            <span class="text-stone-500 ml-1.5">${escapeHtml(b.tableLabel)} • ${b.time}</span>
+                historyEl.innerHTML = todaysBills.map(b => {
+                    const pName = b.parcel?.name ? ` (${escapeHtml(b.parcel.name)})` : '';
+                    return `
+                        <div class="flex items-center justify-between bg-stone-50 px-3 py-2 rounded-xl border border-stone-200 text-xs">
+                            <div>
+                                <span class="font-extrabold text-stone-900">#${b.billNo}</span>
+                                <span class="text-stone-500 ml-1.5">${escapeHtml(b.tableLabel)}${pName} • ${b.time}</span>
+                            </div>
+                            <span class="font-extrabold text-emerald-700 text-sm">₹${b.total}</span>
                         </div>
-                        <span class="font-extrabold text-emerald-700 text-sm">₹${b.total}</span>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
 
             openModal('daily-report-modal');
