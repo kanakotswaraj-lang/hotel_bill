@@ -1,0 +1,1160 @@
+```html
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ് | POS ബില്ലിംഗ്</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans Malayalam & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+Malayalam:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans Malayalam"', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans Malayalam', 'Inter', sans-serif;
+            background-color: #f4f1ea;
+            color: #1c1917;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .tap-card {
+            transition: transform 0.08s ease, box-shadow 0.12s ease;
+        }
+        .tap-card:active {
+            transform: scale(0.95);
+        }
+
+        /* 58mm Thermal Receipt Print Styling */
+        #thermal-print-area {
+            display: none;
+        }
+
+        @media print {
+            @page {
+                size: 58mm auto;
+                margin: 0mm;
+            }
+            body * {
+                visibility: hidden;
+            }
+            #thermal-print-area, #thermal-print-area * {
+                visibility: visible;
+            }
+            #thermal-print-area {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 58mm;
+                padding: 2mm 3mm;
+                background: #ffffff;
+                color: #000000;
+                font-family: 'Noto Sans Malayalam', monospace, sans-serif;
+                font-size: 11px;
+                line-height: 1.35;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Toast Notification -->
+    <div id="toast-box" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center gap-2 w-11/12 max-w-md"></div>
+
+    <!-- Top Header & Live Daily Sales Bar -->
+    <header class="bg-stone-900 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-3 sm:px-5 py-3">
+            <!-- Hotel Info & Date -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-stone-700/80">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-stone-950 flex items-center justify-center font-extrabold shadow-inner flex-shrink-0">
+                        <i data-lucide="utensils" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <h1 id="header-hotel-name" class="text-base sm:text-xl font-extrabold tracking-tight text-amber-300 leading-tight">മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്</h1>
+                            <button onclick="openShopSettingsModal()" class="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition cursor-pointer" title="ഹോട്ടൽ പേര് മാറ്റുക">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <p id="header-hotel-place" class="text-xs text-stone-300 font-medium">പേരളശ്ശേരി / കണ്ണൂർ</p>
+                    </div>
+                </div>
+
+                <!-- Date Badge -->
+                <div class="flex items-center gap-2 bg-stone-800 px-3 py-1.5 rounded-xl border border-stone-700">
+                    <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
+                    <span id="header-date" class="text-xs sm:text-sm font-bold text-stone-100">22-11-2026</span>
+                </div>
+            </div>
+
+            <!-- Live Sales Summary Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-2.5">
+                <div class="flex items-center gap-3 sm:gap-5">
+                    <div class="bg-emerald-950/80 border border-emerald-700/60 px-3 py-1.5 rounded-xl">
+                        <span class="text-[11px] text-emerald-300 block font-semibold">ഇന്നത്തെ വിറ്റുവരവ്</span>
+                        <span id="live-total-sales" class="text-base sm:text-xl font-extrabold text-emerald-400">₹0</span>
+                    </div>
+                    <div class="bg-stone-800/90 border border-stone-700 px-3 py-1.5 rounded-xl">
+                        <span class="text-[11px] text-stone-400 block font-semibold">ആകെ ബില്ലുകൾ</span>
+                        <span id="live-total-bills" class="text-base sm:text-xl font-extrabold text-white">0</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="openAddItemModal()" class="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 active:scale-95 text-amber-300 border border-stone-600 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>പുതിയ ഐറ്റം</span>
+                    </button>
+                    <button onclick="openDailyReportModal()" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-stone-950 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold shadow-md transition cursor-pointer">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                        <span>ഇന്നത്തെ കണക്ക്</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace: Left (Tables & Menu) + Right (Active Bill) -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-5 py-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+        <!-- Left Section (7 Columns on Large Screen) -->
+        <div class="lg:col-span-7 space-y-4">
+
+            <!-- Table / Parcel Quick Selector -->
+            <section class="bg-white rounded-2xl p-3.5 shadow-sm border border-stone-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-extrabold text-stone-500 uppercase tracking-wide flex items-center gap-1.5">
+                        <i data-lucide="layout-grid" class="w-4 h-4 text-amber-600"></i>
+                        ടേബിൾ / പാർസൽ തിരഞ്ഞെടുക്കുക
+                    </span>
+                    <span id="active-table-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900">
+                        ടേബിൾ 1
+                    </span>
+                </div>
+                <div id="table-pills" class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    <!-- Table pills injected via JS -->
+                </div>
+            </section>
+
+            <!-- Menu Categories & Large Tap Grid -->
+            <section class="bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-stone-200 space-y-3.5">
+                <!-- Category Filter Pills -->
+                <div id="category-pills" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                    <!-- Category pills injected via JS -->
+                </div>
+
+                <!-- Large Touch Menu Grid -->
+                <div id="menu-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
+                    <!-- Menu buttons injected via JS -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Section: Current Bill / Cart Drawer (5 Columns on Large Screen) -->
+        <section class="lg:col-span-5 bg-white rounded-2xl shadow-md border-2 border-stone-300 flex flex-col lg:sticky lg:top-32 overflow-hidden">
+            <!-- Bill Header -->
+            <div class="bg-stone-100 px-4 py-3 border-b border-stone-200 flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-bold text-stone-500 block">നിലവിലെ ഓർഡർ</span>
+                    <h2 id="cart-table-title" class="text-lg font-extrabold text-stone-900">ടേബിൾ 1 (Table 1)</h2>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-bold text-stone-500 block">ബിൽ നമ്പർ</span>
+                    <span id="cart-bill-no" class="text-sm font-extrabold text-amber-700">#101</span>
+                </div>
+            </div>
+
+            <!-- Selected Items List -->
+            <div id="cart-items-list" class="p-3 sm:p-4 space-y-2 max-h-[340px] lg:max-h-[380px] overflow-y-auto divide-y divide-stone-100">
+                <!-- Cart items injected via JS -->
+            </div>
+
+            <!-- Grand Total & Action Buttons -->
+            <div class="bg-stone-50 p-4 border-t-2 border-stone-200 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-base sm:text-lg font-extrabold text-stone-700">ആകെ തുക (Total):</span>
+                    <span id="cart-grand-total" class="text-2xl sm:text-3xl font-extrabold text-emerald-700">₹0</span>
+                </div>
+
+                <!-- Primary Action Buttons -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="printAndCompleteBill()" class="col-span-2 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-base sm:text-lg py-3.5 px-4 rounded-xl shadow-md transition cursor-pointer">
+                        <i data-lucide="printer" class="w-5 h-5"></i>
+                        <span>ബിൽ പ്രിന്റ് & സേവ് (Print Bill)</span>
+                    </button>
+
+                    <button onclick="holdCurrentTable()" class="flex items-center justify-center gap-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-950 border border-amber-300 font-extrabold text-xs sm:text-sm py-3 px-3 rounded-xl transition cursor-pointer">
+                        <i data-lucide="pause-circle" class="w-4 h-4"></i>
+                        <span>ഹോൾഡ് (Hold)</span>
+                    </button>
+
+                    <button onclick="shareBillWhatsApp()" class="flex items-center justify-center gap-1.5 bg-green-100 hover:bg-green-200 active:scale-95 text-green-900 border border-green-300 font-extrabold text-xs sm:text-sm py-3 px-3 rounded-xl transition cursor-pointer">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        <span>വാട്സ്ആപ്പ് ബിൽ</span>
+                    </button>
+                </div>
+
+                <button onclick="clearCurrentTable()" class="w-full flex items-center justify-center gap-1.5 text-rose-600 hover:bg-rose-50 font-bold text-xs py-2 rounded-lg transition cursor-pointer">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    <span>ഈ ടേബിളിലെ ഓർഡർ ഒഴിവാക്കുക (Clear)</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Hidden 58mm Thermal Receipt Area (Only visible during window.print()) -->
+    <div id="thermal-print-area"></div>
+
+    <!-- Modal 1: Daily Sales Report (ഇന്നത്തെ കണക്ക്) -->
+    <div id="daily-report-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-stone-200 my-auto max-h-[92vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-stone-200">
+                <div>
+                    <h2 class="text-xl font-extrabold text-stone-900">ഇന്നത്തെ വിറ്റുവരവ് റിപ്പോർട്ട്</h2>
+                    <p id="report-date-subtitle" class="text-xs font-bold text-stone-500 mt-0.5">തീയതി: 22-11-2026</p>
+                </div>
+                <button onclick="closeModal('daily-report-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto py-4 space-y-5 flex-1 pr-1">
+                <!-- Summary KPI Boxes -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+                        <span class="text-xs font-bold text-emerald-800 block">ആകെ വിറ്റുവരവ്</span>
+                        <span id="rep-total-amount" class="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-1 block">₹0</span>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                        <span class="text-xs font-bold text-amber-900 block">ആകെ ബില്ലുകൾ</span>
+                        <span id="rep-total-bills" class="text-2xl sm:text-3xl font-extrabold text-amber-800 mt-1 block">0</span>
+                    </div>
+                </div>
+
+                <!-- Item-wise Breakdown -->
+                <div>
+                    <h3 class="text-sm font-extrabold text-stone-800 mb-2 flex items-center gap-1.5">
+                        <i data-lucide="list-ordered" class="w-4 h-4 text-amber-600"></i>
+                        <span>ഓരോ ഐറ്റത്തിന്റെയും വിൽപ്പന കണക്ക്</span>
+                    </h3>
+                    <div class="border border-stone-200 rounded-2xl overflow-hidden">
+                        <table class="w-full text-left text-xs sm:text-sm">
+                            <thead class="bg-stone-100 text-stone-700 font-extrabold">
+                                <tr>
+                                    <th class="py-2.5 px-3">ഐറ്റം</th>
+                                    <th class="py-2.5 px-3 text-center">എണ്ണം</th>
+                                    <th class="py-2.5 px-3 text-right">തുക (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rep-item-breakdown" class="divide-y divide-stone-100">
+                                <!-- Item rows injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Recent Bills History -->
+                <div>
+                    <h3 class="text-sm font-extrabold text-stone-800 mb-2 flex items-center gap-1.5">
+                        <i data-lucide="receipt" class="w-4 h-4 text-amber-600"></i>
+                        <span>ഇന്ന് അടിച്ച ബില്ലുകൾ</span>
+                    </h3>
+                    <div id="rep-bills-history" class="space-y-2 max-h-48 overflow-y-auto">
+                        <!-- Recent bills injected via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Action Buttons -->
+            <div class="pt-3 border-t border-stone-200 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button onclick="printDayEndReport()" class="flex items-center justify-center gap-1.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm py-3 px-3 rounded-xl cursor-pointer">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>റിപ്പോർട്ട് പ്രിന്റ്</span>
+                </button>
+                <button onclick="shareDayReportWhatsApp()" class="flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-bold text-xs sm:text-sm py-3 px-3 rounded-xl cursor-pointer">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span>വാട്സ്ആപ്പിൽ അയക്കുക</span>
+                </button>
+                <button onclick="confirmResetDay()" class="flex items-center justify-center gap-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold text-xs sm:text-sm py-3 px-3 rounded-xl cursor-pointer">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <span>പുതിയ ദിവസം തുടങ്ങുക</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Add / Edit Menu Item -->
+    <div id="add-item-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200">
+            <div class="flex items-center justify-between pb-3 border-b border-stone-200">
+                <h2 class="text-lg font-extrabold text-stone-900">മെനുവിൽ പുതിയ ഐറ്റം ചേർക്കുക</h2>
+                <button onclick="closeModal('add-item-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="add-item-form" class="space-y-4 mt-4">
+                <div>
+                    <label class="block text-xs font-extrabold text-stone-700 mb-1">ഐറ്റത്തിന്റെ പേര് (മലയാളത്തിൽ) *</label>
+                    <input type="text" id="new-item-name" required placeholder="ഉദാ: മസാല ദോശ" class="w-full px-3.5 py-2.5 text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">വില (₹) *</label>
+                        <input type="number" id="new-item-price" required min="1" step="1" placeholder="45" class="w-full px-3.5 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">വിഭാഗം</label>
+                        <select id="new-item-cat" class="w-full px-3 py-2.5 text-sm font-semibold border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="tea">ചായ & കടി</option>
+                            <option value="breakfast">പ്രഭാതഭക്ഷണം</option>
+                            <option value="meals">ഊണ് & ബിരിയാണി</option>
+                            <option value="dinner">രാത്രി ഭക്ഷണം</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Existing Items Quick Price Edit / Delete List -->
+                <div class="pt-2 border-t border-stone-200">
+                    <span class="text-xs font-extrabold text-stone-500 block mb-2">നിലവിലുള്ള ഐറ്റങ്ങളുടെ വില മാറ്റാൻ / നീക്കം ചെയ്യാൻ:</span>
+                    <div id="manage-menu-list" class="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                        <!-- Manage items list -->
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-stone-200">
+                    <button type="button" onclick="closeModal('add-item-modal')" class="px-4 py-2.5 rounded-xl text-sm font-bold text-stone-600 hover:bg-stone-100 cursor-pointer">അടയ്ക്കുക</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-extrabold bg-amber-500 hover:bg-amber-400 text-stone-950 shadow-sm cursor-pointer">ഐറ്റം ചേർക്കുക</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3: Hotel Name & Place Settings -->
+    <div id="shop-settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200">
+            <div class="flex items-center justify-between pb-3 border-b border-stone-200">
+                <h2 class="text-lg font-extrabold text-stone-900">ഹോട്ടൽ വിവരങ്ങൾ മാറ്റുക</h2>
+                <button onclick="closeModal('shop-settings-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="shop-settings-form" class="space-y-4 mt-4">
+                <div>
+                    <label class="block text-xs font-extrabold text-stone-700 mb-1">ഹോട്ടലിന്റെ പേര് *</label>
+                    <input type="text" id="setting-hotel-name" required class="w-full px-3.5 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-stone-700 mb-1">സ്ഥലം / ഫോൺ നമ്പർ (ബില്ലിൽ വരാൻ)</label>
+                    <input type="text" id="setting-hotel-place" class="w-full px-3.5 py-2.5 text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('shop-settings-modal')" class="px-4 py-2.5 rounded-xl text-sm font-bold text-stone-600 hover:bg-stone-100 cursor-pointer">റദ്ദാക്കുക</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-extrabold bg-stone-900 text-white cursor-pointer">സേവ് ചെയ്യുക</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal (No browser confirm/alert) -->
+    <div id="confirm-dialog" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/75 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center border border-stone-200">
+            <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 id="confirm-dialog-title" class="text-lg font-extrabold text-stone-900">ഉറപ്പാണോ?</h3>
+            <p id="confirm-dialog-msg" class="text-xs sm:text-sm text-stone-600 mt-1.5"></p>
+            <div class="flex items-center gap-3 mt-5">
+                <button onclick="closeModal('confirm-dialog')" class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 cursor-pointer">വേണ്ട</button>
+                <button id="confirm-dialog-yes" class="flex-1 py-2.5 rounded-xl text-sm font-extrabold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer">അതെ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Storage Keys ---
+        const KEYS = {
+            SHOP: 'kerala_hotel_pos_shop_v1',
+            MENU: 'kerala_hotel_pos_menu_v1',
+            TABLES: 'kerala_hotel_pos_tables_v1',
+            BILLS: 'kerala_hotel_pos_bills_v1',
+            BILL_SEQ: 'kerala_hotel_pos_seq_v1'
+        };
+
+        // --- Categories & Color Themes ---
+        const CATEGORIES = [
+            { id: 'all', label: 'എല്ലാം (All)' },
+            { id: 'tea', label: '☕ ചായ & കടി' },
+            { id: 'breakfast', label: '🥞 പ്രഭാതഭക്ഷണം' },
+            { id: 'meals', label: '🍛 ഊണ് & ബിരിയാണി' },
+            { id: 'dinner', label: '🍖 രാത്രി ഭക്ഷണം' }
+        ];
+
+        const CAT_STYLES = {
+            tea: 'bg-amber-50 border-amber-300 hover:bg-amber-100 text-amber-950',
+            breakfast: 'bg-orange-50 border-orange-300 hover:bg-orange-100 text-orange-950',
+            meals: 'bg-emerald-50 border-emerald-300 hover:bg-emerald-100 text-emerald-950',
+            dinner: 'bg-rose-50 border-rose-300 hover:bg-rose-100 text-rose-950'
+        };
+
+        // --- Tables Configuration ---
+        const TABLES = [
+            { id: 't1', label: 'ടേബിൾ 1', fullLabel: 'ടേബിൾ 1 (Table 1)' },
+            { id: 't2', label: 'ടേബിൾ 2', fullLabel: 'ടേബിൾ 2 (Table 2)' },
+            { id: 't3', label: 'ടേബിൾ 3', fullLabel: 'ടേബിൾ 3 (Table 3)' },
+            { id: 't4', label: 'ടേബിൾ 4', fullLabel: 'ടേബിൾ 4 (Table 4)' },
+            { id: 't5', label: 'ടേബിൾ 5', fullLabel: 'ടേബിൾ 5 (Table 5)' },
+            { id: 'parcel', label: 'പാർസൽ', fullLabel: 'പാർസൽ (Parcel)' }
+        ];
+
+        // --- Default Authentic Kerala Rural Hotel Menu ---
+        const DEFAULT_MENU = [
+            { id: 'm1', name: 'ചായ', price: 12, cat: 'tea' },
+            { id: 'm2', name: 'കാപ്പി', price: 15, cat: 'tea' },
+            { id: 'm3', name: 'പഴംപൊരി', price: 15, cat: 'tea' },
+            { id: 'm4', name: 'ഉഴുന്നുവട', price: 12, cat: 'tea' },
+            { id: 'm5', name: 'പരിപ്പുവട', price: 12, cat: 'tea' },
+            { id: 'm6', name: 'പൊറോട്ട', price: 15, cat: 'breakfast' },
+            { id: 'm7', name: 'ദോശ', price: 15, cat: 'breakfast' },
+            { id: 'm8', name: 'ഇഡ്ഡലി', price: 12, cat: 'breakfast' },
+            { id: 'm9', name: 'പുട്ട്', price: 20, cat: 'breakfast' },
+            { id: 'm10', name: 'വെള്ളയപ്പം', price: 15, cat: 'breakfast' },
+            { id: 'm11', name: 'കടലക്കറി', price: 40, cat: 'breakfast' },
+            { id: 'm12', name: 'മുട്ടക്കറി', price: 45, cat: 'breakfast' },
+            { id: 'm13', name: 'ഊണ്', price: 70, cat: 'meals' },
+            { id: 'm14', name: 'ചിക്കൻ ബിരിയാണി', price: 140, cat: 'meals' },
+            { id: 'm15', name: 'ബീഫ് റോസ്റ്റ്', price: 110, cat: 'dinner' },
+            { id: 'm16', name: 'ചിക്കൻ ഫ്രൈ', price: 100, cat: 'dinner' },
+            { id: 'm17', name: 'മീൻ കറി', price: 60, cat: 'meals' },
+            { id: 'm18', name: 'ലൈം ജ്യൂസ്', price: 25, cat: 'tea' }
+        ];
+
+        // --- App State ---
+        let shopInfo = { name: 'മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്', place: 'പേരളശ്ശേരി / കണ്ണൂർ' };
+        let menuItems = [];
+        let tableOrders = {}; // { t1: { itemId: qty }, ... }
+        let completedBills = [];
+        let billSequence = 101;
+        let activeTableId = 't1';
+        let activeCategory = 'all';
+
+        // --- Date & Time Helpers (Strictly DD-MM-YYYY) ---
+        function getTodayDDMMYYYY() {
+            const d = new Date();
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}-${month}-${year}`;
+        }
+
+        function getCurrentTime12Hr() {
+            return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            document.getElementById('header-date').textContent = getTodayDDMMYYYY();
+            setupForms();
+            renderAll();
+        });
+
+        function loadState() {
+            try {
+                const savedShop = localStorage.getItem(KEYS.SHOP);
+                if (savedShop) shopInfo = JSON.parse(savedShop);
+
+                const savedMenu = localStorage.getItem(KEYS.MENU);
+                menuItems = savedMenu ? JSON.parse(savedMenu) : [...DEFAULT_MENU];
+
+                const savedTables = localStorage.getItem(KEYS.TABLES);
+                tableOrders = savedTables ? JSON.parse(savedTables) : {};
+
+                const savedBills = localStorage.getItem(KEYS.BILLS);
+                completedBills = savedBills ? JSON.parse(savedBills) : [];
+
+                const savedSeq = localStorage.getItem(KEYS.BILL_SEQ);
+                if (savedSeq) billSequence = parseInt(savedSeq, 10) || 101;
+            } catch (e) {
+                console.error('Storage load error:', e);
+                menuItems = [...DEFAULT_MENU];
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(KEYS.SHOP, JSON.stringify(shopInfo));
+                localStorage.setItem(KEYS.MENU, JSON.stringify(menuItems));
+                localStorage.setItem(KEYS.TABLES, JSON.stringify(tableOrders));
+                localStorage.setItem(KEYS.BILLS, JSON.stringify(completedBills));
+                localStorage.setItem(KEYS.BILL_SEQ, String(billSequence));
+            } catch (e) {
+                console.error('Storage save error:', e);
+            }
+        }
+
+        // --- Rendering ---
+        function renderAll() {
+            renderHeader();
+            renderTables();
+            renderCategories();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function renderHeader() {
+            document.getElementById('header-hotel-name').textContent = shopInfo.name;
+            document.getElementById('header-hotel-place').textContent = shopInfo.place;
+
+            const todayStr = getTodayDDMMYYYY();
+            const todaysBills = completedBills.filter(b => b.date === todayStr);
+            const totalRevenue = todaysBills.reduce((sum, b) => sum + b.total, 0);
+
+            document.getElementById('live-total-sales').textContent = `₹${totalRevenue}`;
+            document.getElementById('live-total-bills').textContent = todaysBills.length;
+        }
+
+        function renderTables() {
+            const container = document.getElementById('table-pills');
+            container.innerHTML = TABLES.map(t => {
+                const isActive = t.id === activeTableId;
+                const orderMap = tableOrders[t.id] || {};
+                const itemCount = Object.values(orderMap).reduce((a, b) => a + b, 0);
+
+                let btnClasses = 'relative py-2.5 px-2 rounded-xl text-xs sm:text-sm font-extrabold border-2 transition cursor-pointer flex flex-col items-center justify-center ';
+                if (isActive) {
+                    btnClasses += 'bg-stone-900 text-amber-300 border-stone-900 shadow-md';
+                } else if (itemCount > 0) {
+                    btnClasses += 'bg-amber-50 text-amber-950 border-amber-400 hover:bg-amber-100';
+                } else {
+                    btnClasses += 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100';
+                }
+
+                return `
+                    <button onclick="selectTable('${t.id}')" class="${btnClasses}">
+                        <span>${t.label}</span>
+                        ${itemCount > 0 ? `<span class="mt-0.5 text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-amber-400 text-stone-950' : 'bg-amber-500 text-white'}">${itemCount} ഐറ്റം</span>` : `<span class="mt-0.5 text-[10px] opacity-60">ഒഴിവ്</span>`}
+                    </button>
+                `;
+            }).join('');
+
+            const activeObj = TABLES.find(t => t.id === activeTableId);
+            document.getElementById('active-table-badge').textContent = activeObj ? activeObj.label : '';
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('category-pills');
+            container.innerHTML = CATEGORIES.map(c => {
+                const isSelected = c.id === activeCategory;
+                return `
+                    <button onclick="selectCategory('${c.id}')" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold whitespace-nowrap transition cursor-pointer ${isSelected ? 'bg-amber-500 text-stone-950 shadow-xs' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'}">
+                        ${c.label}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderMenuGrid() {
+            const container = document.getElementById('menu-grid');
+            const currentOrder = tableOrders[activeTableId] || {};
+
+            const filtered = activeCategory === 'all'
+                ? menuItems
+                : menuItems.filter(item => item.cat === activeCategory);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-stone-400 text-sm font-bold">ഈ വിഭാഗത്തിൽ ഐറ്റങ്ങൾ ഒന്നുമില്ല. '+ പുതിയ ഐറ്റം' അമർത്തി ചേർക്കുക.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => {
+                const qty = currentOrder[item.id] || 0;
+                const styleClass = CAT_STYLES[item.cat] || CAT_STYLES.tea;
+
+                return `
+                    <button onclick="addItemToActiveTable('${item.id}')" class="tap-card relative text-left p-3.5 sm:p-4 rounded-2xl border-2 ${styleClass} shadow-xs flex flex-col justify-between min-h-[92px] cursor-pointer">
+                        ${qty > 0 ? `<span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-stone-900 text-amber-300 text-xs font-extrabold flex items-center justify-center shadow-md border-2 border-white">${qty}</span>` : ''}
+                        <span class="text-base sm:text-lg font-extrabold leading-snug block pr-2">${escapeHtml(item.name)}</span>
+                        <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-black/10">
+                            <span class="text-sm sm:text-base font-extrabold">₹${item.price}</span>
+                            <span class="text-[11px] font-bold opacity-75">+ ചേർക്കുക</span>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderCart() {
+            const activeObj = TABLES.find(t => t.id === activeTableId);
+            document.getElementById('cart-table-title').textContent = activeObj ? activeObj.fullLabel : 'ടേബിൾ 1';
+            document.getElementById('cart-bill-no').textContent = `#${billSequence}`;
+
+            const listEl = document.getElementById('cart-items-list');
+            const currentOrder = tableOrders[activeTableId] || {};
+            const itemIds = Object.keys(currentOrder).filter(id => currentOrder[id] > 0);
+
+            if (itemIds.length === 0) {
+                listEl.innerHTML = `
+                    <div class="py-10 text-center text-stone-400">
+                        <i data-lucide="shopping-bag" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
+                        <p class="text-sm font-bold">ഐറ്റങ്ങൾ തിരഞ്ഞെടുത്തിട്ടില്ല</p>
+                        <p class="text-xs mt-0.5">ഇടതുവശത്തുള്ള ബട്ടണുകളിൽ തൊട്ട് ഓർഡർ ചേർക്കുക</p>
+                    </div>
+                `;
+                document.getElementById('cart-grand-total').textContent = '₹0';
+                return;
+            }
+
+            let grandTotal = 0;
+
+            listEl.innerHTML = itemIds.map(id => {
+                const item = menuItems.find(m => m.id === id);
+                if (!item) return '';
+                const qty = currentOrder[id];
+                const lineTotal = item.price * qty;
+                grandTotal += lineTotal;
+
+                return `
+                    <div class="py-2.5 flex items-center justify-between gap-2">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm sm:text-base font-extrabold text-stone-900 truncate">${escapeHtml(item.name)}</p>
+                            <p class="text-xs font-semibold text-stone-500">₹${item.price} × ${qty}</p>
+                        </div>
+
+                        <div class="flex items-center gap-1.5 bg-stone-100 p-1 rounded-xl border border-stone-200">
+                            <button onclick="updateItemQty('${id}', -1)" class="w-8 h-8 rounded-lg bg-white hover:bg-rose-50 text-rose-600 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">-</button>
+                            <span class="w-7 text-center text-sm font-extrabold text-stone-900">${qty}</span>
+                            <button onclick="updateItemQty('${id}', 1)" class="w-8 h-8 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">+</button>
+                        </div>
+
+                        <div class="w-16 text-right">
+                            <span class="text-sm sm:text-base font-extrabold text-stone-900">₹${lineTotal}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('cart-grand-total').textContent = `₹${grandTotal}`;
+        }
+
+        // --- Interactive Order Actions ---
+        function selectTable(tableId) {
+            activeTableId = tableId;
+            renderTables();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function selectCategory(catId) {
+            activeCategory = catId;
+            renderCategories();
+            renderMenuGrid();
+        }
+
+        function addItemToActiveTable(itemId) {
+            if (!tableOrders[activeTableId]) {
+                tableOrders[activeTableId] = {};
+            }
+            tableOrders[activeTableId][itemId] = (tableOrders[activeTableId][itemId] || 0) + 1;
+            saveState();
+            renderTables();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function updateItemQty(itemId, delta) {
+            if (!tableOrders[activeTableId]) return;
+            const newQty = (tableOrders[activeTableId][itemId] || 0) + delta;
+            if (newQty <= 0) {
+                delete tableOrders[activeTableId][itemId];
+            } else {
+                tableOrders[activeTableId][itemId] = newQty;
+            }
+            saveState();
+            renderTables();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function holdCurrentTable() {
+            const currentOrder = tableOrders[activeTableId] || {};
+            const count = Object.keys(currentOrder).length;
+            if (count === 0) {
+                showToast('ഹോൾഡ് ചെയ്യാൻ ഈ ടേബിളിൽ ഓർഡറൊന്നുമില്ല.');
+                return;
+            }
+            const tableObj = TABLES.find(t => t.id === activeTableId);
+            saveState();
+            showToast(`${tableObj.label} ഓർഡർ ഹോൾഡ് ചെയ്തു. മറ്റൊരു ടേബിൾ തിരഞ്ഞെടുക്കാം.`);
+        }
+
+        function clearCurrentTable() {
+            const currentOrder = tableOrders[activeTableId] || {};
+            if (Object.keys(currentOrder).length === 0) return;
+
+            openConfirmDialog(
+                'ഓർഡർ ഒഴിവാക്കണോ?',
+                'ഈ ടേബിളിലെ നിലവിലെ ഐറ്റങ്ങൾ ഒഴിവാക്കാൻ ഉറപ്പാണോ?',
+                () => {
+                    delete tableOrders[activeTableId];
+                    saveState();
+                    renderTables();
+                    renderMenuGrid();
+                    renderCart();
+                    lucide.createIcons();
+                    showToast('ടേബിൾ ഓർഡർ ഒഴിവാക്കി.');
+                }
+            );
+        }
+
+        function buildCurrentBillObject() {
+            const currentOrder = tableOrders[activeTableId] || {};
+            const itemIds = Object.keys(currentOrder).filter(id => currentOrder[id] > 0);
+            if (itemIds.length === 0) return null;
+
+            const items = [];
+            let total = 0;
+
+            itemIds.forEach(id => {
+                const menu = menuItems.find(m => m.id === id);
+                if (menu) {
+                    const qty = currentOrder[id];
+                    const amount = menu.price * qty;
+                    total += amount;
+                    items.push({
+                        id: menu.id,
+                        name: menu.name,
+                        price: menu.price,
+                        qty: qty,
+                        amount: amount
+                    });
+                }
+            });
+
+            const tableObj = TABLES.find(t => t.id === activeTableId);
+
+            return {
+                billNo: billSequence,
+                date: getTodayDDMMYYYY(),
+                time: getCurrentTime12Hr(),
+                tableLabel: tableObj ? tableObj.label : 'ടേബിൾ 1',
+                items: items,
+                total: total
+            };
+        }
+
+        // --- Print 58mm Thermal Receipt & Save Bill ---
+        function printAndCompleteBill() {
+            const bill = buildCurrentBillObject();
+            if (!bill) {
+                showToast('ബിൽ പ്രിന്റ് ചെയ്യാൻ ആദ്യം ഐറ്റങ്ങൾ ചേർക്കുക!');
+                return;
+            }
+
+            // Populate 58mm Thermal Print Template
+            const printArea = document.getElementById('thermal-print-area');
+            const itemsRowsHtml = bill.items.map(it => `
+                <tr>
+                    <td style="padding: 2px 0; text-align: left;">${escapeHtml(it.name)}</td>
+                    <td style="padding: 2px 0; text-align: center;">${it.qty}</td>
+                    <td style="padding: 2px 0; text-align: right;">${it.amount}</td>
+                </tr>
+            `).join('');
+
+            printArea.innerHTML = `
+                <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 4px; margin-bottom: 4px;">
+                    <div style="font-size: 14px; font-weight: 800;">${escapeHtml(shopInfo.name)}</div>
+                    <div style="font-size: 10px;">${escapeHtml(shopInfo.place)}</div>
+                </div>
+                <div style="font-size: 10px; margin-bottom: 4px; border-bottom: 1px dashed #000; padding-bottom: 4px;">
+                    <div>ബിൽ നമ്പർ: <b>#${bill.billNo}</b> | ${escapeHtml(bill.tableLabel)}</div>
+                    <div>തീയതി: ${bill.date} | ${bill.time}</div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                    <thead>
+                        <tr style="border-bottom: 1px dashed #000;">
+                            <th style="text-align: left; padding-bottom: 2px;">ഐറ്റം</th>
+                            <th style="text-align: center; padding-bottom: 2px;">എണ്ണം</th>
+                            <th style="text-align: right; padding-bottom: 2px;">തുക</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsRowsHtml}
+                    </tbody>
+                </table>
+                <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-top: 5px; padding: 4px 0; display: flex; justify-content: space-between; font-size: 14px; font-weight: 800;">
+                    <span>ആകെ തുക:</span>
+                    <span>₹${bill.total}</span>
+                </div>
+                <div style="text-align: center; font-size: 10px; margin-top: 6px;">
+                    നന്ദി! വീണ്ടും വരിക 🙏
+                </div>
+            `;
+
+            // Save completed bill & increment sequence
+            completedBills.unshift(bill);
+            billSequence += 1;
+            delete tableOrders[activeTableId];
+            saveState();
+            renderAll();
+
+            showToast(`ബിൽ #${bill.billNo} സേവ് ചെയ്തു! പ്രിന്റ് തയ്യാറാകുന്നു...`);
+
+            // Trigger browser print dialog (58mm formatted)
+            setTimeout(() => {
+                window.print();
+            }, 150);
+        }
+
+        // --- Direct WhatsApp Share (wa.me) ---
+        function shareBillWhatsApp() {
+            const bill = buildCurrentBillObject();
+            if (!bill) {
+                showToast('വാട്സ്ആപ്പിൽ അയക്കാൻ ആദ്യം ഐറ്റങ്ങൾ ചേർക്കുക!');
+                return;
+            }
+
+            let text = `*${shopInfo.name}*\n`;
+            text += `${shopInfo.place}\n`;
+            text += `------------------------\n`;
+            text += `ബിൽ നമ്പർ: #${bill.billNo} (${bill.tableLabel})\n`;
+            text += `തീയതി: ${bill.date} | ${bill.time}\n`;
+            text += `------------------------\n`;
+
+            bill.items.forEach(it => {
+                text += `• ${it.name} (${it.qty} × ₹${it.price}) = *₹${it.amount}*\n`;
+            });
+
+            text += `------------------------\n`;
+            text += `*ആകെ തുക: ₹${bill.total}*\n`;
+            text += `നന്ദി! വീണ്ടും വരിക 🙏`;
+
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
+        // --- Daily Sales Report Modal ---
+        function openDailyReportModal() {
+            const todayStr = getTodayDDMMYYYY();
+            document.getElementById('report-date-subtitle').textContent = `തീയതി: ${todayStr}`;
+
+            const todaysBills = completedBills.filter(b => b.date === todayStr);
+            const totalRevenue = todaysBills.reduce((sum, b) => sum + b.total, 0);
+
+            document.getElementById('rep-total-amount').textContent = `₹${totalRevenue}`;
+            document.getElementById('rep-total-bills').textContent = todaysBills.length;
+
+            // Aggregate item-wise sales
+            const itemMap = {};
+            todaysBills.forEach(bill => {
+                bill.items.forEach(it => {
+                    if (!itemMap[it.name]) {
+                        itemMap[it.name] = { qty: 0, amount: 0 };
+                    }
+                    itemMap[it.name].qty += it.qty;
+                    itemMap[it.name].amount += it.amount;
+                });
+            });
+
+            const itemEntries = Object.entries(itemMap).sort((a, b) => b[1].amount - a[1].amount);
+            const breakdownBody = document.getElementById('rep-item-breakdown');
+
+            if (itemEntries.length === 0) {
+                breakdownBody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-stone-400 font-semibold">ഇന്ന് ഇതുവരെ ബില്ലുകൾ ഒന്നും അടിച്ചിട്ടില്ല</td></tr>`;
+            } else {
+                breakdownBody.innerHTML = itemEntries.map(([name, data]) => `
+                    <tr>
+                        <td class="py-2 px-3 font-bold text-stone-800">${escapeHtml(name)}</td>
+                        <td class="py-2 px-3 text-center font-extrabold text-amber-800">${data.qty}</td>
+                        <td class="py-2 px-3 text-right font-extrabold text-emerald-700">₹${data.amount}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Recent Bills History
+            const historyEl = document.getElementById('rep-bills-history');
+            if (todaysBills.length === 0) {
+                historyEl.innerHTML = `<p class="text-xs text-stone-400 text-center py-3">ബില്ലുകൾ ലഭ്യമല്ല</p>`;
+            } else {
+                historyEl.innerHTML = todaysBills.map(b => `
+                    <div class="flex items-center justify-between bg-stone-50 px-3 py-2 rounded-xl border border-stone-200 text-xs">
+                        <div>
+                            <span class="font-extrabold text-stone-900">#${b.billNo}</span>
+                            <span class="text-stone-500 ml-1.5">${escapeHtml(b.tableLabel)} • ${b.time}</span>
+                        </div>
+                        <span class="font-extrabold text-emerald-700 text-sm">₹${b.total}</span>
+                    </div>
+                `).join('');
+            }
+
+            openModal('daily-report-modal');
+        }
+
+        function printDayEndReport() {
+            const todayStr = getTodayDDMMYYYY();
+            const todaysBills = completedBills.filter(b => b.date === todayStr);
+            const totalRevenue = todaysBills.reduce((sum, b) => sum + b.total, 0);
+
+            const itemMap = {};
+            todaysBills.forEach(bill => {
+                bill.items.forEach(it => {
+                    if (!itemMap[it.name]) itemMap[it.name] = { qty: 0, amount: 0 };
+                    itemMap[it.name].qty += it.qty;
+                    itemMap[it.name].amount += it.amount;
+                });
+            });
+
+            const rowsHtml = Object.entries(itemMap).map(([name, d]) => `
+                <tr>
+                    <td style="padding: 2px 0;">${escapeHtml(name)}</td>
+                    <td style="text-align: center;">${d.qty}</td>
+                    <td style="text-align: right;">${d.amount}</td>
+                </tr>
+            `).join('');
+
+            const printArea = document.getElementById('thermal-print-area');
+            printArea.innerHTML = `
+                <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 4px; margin-bottom: 4px;">
+                    <div style="font-size: 13px; font-weight: 800;">${escapeHtml(shopInfo.name)}</div>
+                    <div style="font-size: 11px; font-weight: 700;">ദിവസത്തെ വിറ്റുവരവ് റിപ്പോർട്ട്</div>
+                    <div style="font-size: 10px;">തീയതി: ${todayStr}</div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                    <thead>
+                        <tr style="border-bottom: 1px dashed #000;">
+                            <th style="text-align: left;">ഐറ്റം</th>
+                            <th style="text-align: center;">എണ്ണം</th>
+                            <th style="text-align: right;">തുക</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml || '<tr><td colspan="3">വിൽപ്പനയില്ല</td></tr>'}</tbody>
+                </table>
+                <div style="border-top: 1px dashed #000; margin-top: 5px; padding-top: 4px; font-size: 11px;">
+                    <div>ആകെ ബില്ലുകൾ: <b>${todaysBills.length}</b></div>
+                    <div style="font-size: 13px; font-weight: 800; margin-top: 2px;">ആകെ വിറ്റുവരവ്: ₹${totalRevenue}</div>
+                </div>
+            `;
+
+            setTimeout(() => window.print(), 150);
+        }
+
+        function shareDayReportWhatsApp() {
+            const todayStr = getTodayDDMMYYYY();
+            const todaysBills = completedBills.filter(b => b.date === todayStr);
+            const totalRevenue = todaysBills.reduce((sum, b) => sum + b.total, 0);
+
+            const itemMap = {};
+            todaysBills.forEach(bill => {
+                bill.items.forEach(it => {
+                    if (!itemMap[it.name]) itemMap[it.name] = { qty: 0, amount: 0 };
+                    itemMap[it.name].qty += it.qty;
+                    itemMap[it.name].amount += it.amount;
+                });
+            });
+
+            let text = `📊 *${shopInfo.name} - ദിവസത്തെ കണക്ക്*\n`;
+            text += `📅 തീയതി: ${todayStr}\n`;
+            text += `🧾 ആകെ ബില്ലുകൾ: ${todaysBills.length}\n`;
+            text += `💰 *ആകെ വിറ്റുവരവ്: ₹${totalRevenue}*\n`;
+            text += `------------------------\n`;
+
+            Object.entries(itemMap).forEach(([name, d]) => {
+                text += `• ${name}: ${d.qty} എണ്ണം (₹${d.amount})\n`;
+            });
+
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
+        function confirmResetDay() {
+            openConfirmDialog(
+                'പുതിയ ദിവസം തുടങ്ങണോ?',
+                'ഇന്നത്തെ ബില്ലുകളുടെ കണക്ക് ക്ലിയർ ചെയ്ത് പുതിയ ദിവസത്തെ കണക്ക് ₹0 മുതൽ തുടങ്ങാൻ ഉറപ്പാണോ?',
+                () => {
+                    const todayStr = getTodayDDMMYYYY();
+                    completedBills = completedBills.filter(b => b.date !== todayStr);
+                    saveState();
+                    closeModal('daily-report-modal');
+                    renderAll();
+                    showToast('പുതിയ ദിവസത്തെ കണക്ക് ആരംഭിച്ചു!');
+                }
+            );
+        }
+
+        // --- Add / Manage Menu Items Modal ---
+        function openAddItemModal() {
+            renderManageMenuList();
+            openModal('add-item-modal');
+        }
+
+        function renderManageMenuList() {
+            const container = document.getElementById('manage-menu-list');
+            container.innerHTML = menuItems.map(item => `
+                <div class="flex items-center justify-between bg-stone-50 px-3 py-2 rounded-xl border border-stone-200 text-xs">
+                    <span class="font-bold text-stone-800 flex-1">${escapeHtml(item.name)}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-stone-500">₹</span>
+                        <input type="number" value="${item.price}" min="1" onchange="updateMenuItemPrice('${item.id}', this.value)" class="w-16 px-2 py-1 border border-stone-300 rounded-lg font-extrabold text-right bg-white">
+                        <button type="button" onclick="deleteMenuItem('${item.id}')" class="text-rose-500 hover:text-rose-700 p-1 cursor-pointer" title="നീക്കം ചെയ്യുക">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function updateMenuItemPrice(itemId, newPrice) {
+            const val = parseInt(newPrice, 10);
+            if (!val || val < 1) return;
+            const item = menuItems.find(m => m.id === itemId);
+            if (item) {
+                item.price = val;
+                saveState();
+                renderMenuGrid();
+                renderCart();
+                showToast(`${item.name} - വില ₹${val} ആയി പുതുക്കി.`);
+            }
+        }
+
+        function deleteMenuItem(itemId) {
+            menuItems = menuItems.filter(m => m.id !== itemId);
+            saveState();
+            renderManageMenuList();
+            renderMenuGrid();
+            renderCart();
+            showToast('ഐറ്റം മെനുവിൽ നിന്ന് നീക്കം ചെയ്തു.');
+        }
+
+        // --- Shop Settings Modal ---
+        function openShopSettingsModal() {
+            document.getElementById('setting-hotel-name').value = shopInfo.name;
+            document.getElementById('setting-hotel-place').value = shopInfo.place;
+            openModal('shop-settings-modal');
+        }
+
+        function setupForms() {
+            document.getElementById('add-item-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('new-item-name').value.trim();
+                const price = parseInt(document.getElementById('new-item-price').value, 10);
+                const cat = document.getElementById('new-item-cat').value;
+
+                if (!name || !price) return;
+
+                menuItems.push({
+                    id: 'm-' + Date.now(),
+                    name,
+                    price,
+                    cat
+                });
+
+                saveState();
+                document.getElementById('new-item-name').value = '';
+                document.getElementById('new-item-price').value = '';
+                renderManageMenuList();
+                renderMenuGrid();
+                showToast(`"${name}" (₹${price}) മെനുവിൽ ചേർത്തു!`);
+            });
+
+            document.getElementById('shop-settings-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('setting-hotel-name').value.trim();
+                const place = document.getElementById('setting-hotel-place').value.trim();
+                if (!name) return;
+
+                shopInfo.name = name;
+                shopInfo.place = place;
+                saveState();
+                renderHeader();
+                closeModal('shop-settings-modal');
+                showToast('ഹോട്ടൽ വിവരങ്ങൾ സേവ് ചെയ്തു.');
+            });
+        }
+
+        // --- Modal & Toast Helpers ---
+        function openModal(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+
+        function openConfirmDialog(title, msg, onYes) {
+            document.getElementById('confirm-dialog-title').textContent = title;
+            document.getElementById('confirm-dialog-msg').textContent = msg;
+            const yesBtn = document.getElementById('confirm-dialog-yes');
+            const cloned = yesBtn.cloneNode(true);
+            yesBtn.parentNode.replaceChild(cloned, yesBtn);
+            cloned.addEventListener('click', () => {
+                onYes();
+                closeModal('confirm-dialog');
+            });
+            openModal('confirm-dialog');
+        }
+
+        function showToast(msg) {
+            const box = document.getElementById('toast-box');
+            const toast = document.createElement('div');
+            toast.className = 'bg-stone-900 text-amber-300 border border-stone-700 px-4 py-2.5 rounded-2xl shadow-xl text-xs sm:text-sm font-bold text-center transition-opacity duration-300';
+            toast.textContent = msg;
+            box.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2600);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
