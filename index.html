@@ -100,7 +100,7 @@
                             <button onclick="openShopSettingsModal()" class="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition cursor-pointer" title="കടയുടെ പേര് / Shop ID / PIN മാറ്റുക">
                                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                             </button>
-                            <span id="cloud-sync-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
+                            <span id="cloud-sync-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
                                 കണക്ട് ചെയ്യുന്നു...
                             </span>
                         </div>
@@ -116,32 +116,32 @@
             </div>
 
             <!-- Live Sales Summary Bar -->
-            <div class="flex flex-wrap items-center justify-between gap-2 pt-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2.5 pt-2.5">
                 <div class="flex items-center gap-3 sm:gap-5">
-                    <div class="bg-emerald-950/80 border border-emerald-700/60 px-3 py-1.5 rounded-xl">
-                        <span class="text-[11px] text-emerald-300 block font-semibold">ഇന്നത്തെ വിറ്റുവരവ്</span>
+                    <div class="bg-emerald-950/80 border border-emerald-700/60 px-3.5 py-1.5 rounded-xl">
+                        <span class="text-xs text-emerald-300 block font-bold">ഇന്നത്തെ വിറ്റുവരവ്</span>
                         <span id="live-total-sales" class="text-base sm:text-xl font-extrabold text-emerald-400">₹0</span>
                     </div>
-                    <div class="bg-stone-800/90 border border-stone-700 px-3 py-1.5 rounded-xl">
-                        <span class="text-[11px] text-stone-400 block font-semibold">ആകെ ബില്ലുകൾ</span>
+                    <div class="bg-stone-800/90 border border-stone-700 px-3.5 py-1.5 rounded-xl">
+                        <span class="text-xs text-stone-300 block font-bold">ആകെ ബില്ലുകൾ</span>
                         <span id="live-total-bills" class="text-base sm:text-xl font-extrabold text-white">0</span>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <button onclick="openKitchenViewModal()" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-400 active:scale-95 text-stone-950 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold shadow-sm transition cursor-pointer">
+                    <button onclick="openKitchenViewModal()" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-400 active:scale-95 text-stone-950 px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-extrabold shadow-sm transition cursor-pointer">
                         <i data-lucide="chef-hat" class="w-4 h-4"></i>
                         <span>കിച്ചൻ വ്യൂ</span>
                     </button>
-                    <a href="parcel-credit-billing.html" class="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-950 border border-amber-300 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer">
+                    <a href="parcel-credit-billing.html" class="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-950 border border-amber-300 px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-extrabold transition cursor-pointer">
                         <i data-lucide="package" class="w-4 h-4"></i>
                         <span>പാർസൽ / കടം →</span>
                     </a>
-                    <button onclick="openAddItemModal()" class="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 active:scale-95 text-amber-300 border border-stone-600 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer">
+                    <button onclick="openAddItemModal()" class="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 active:scale-95 text-amber-300 border border-stone-600 px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-extrabold transition cursor-pointer">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
                         <span>പുതിയ ഐറ്റം</span>
                     </button>
-                    <button onclick="openDailyReportModal()" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-stone-950 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold shadow-md transition cursor-pointer">
+                    <button onclick="openDailyReportModal()" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-stone-950 px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-extrabold shadow-md transition cursor-pointer">
                         <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
                         <span>ഇന്നത്തെ കണക്ക്</span>
                     </button>
@@ -150,11 +150,11 @@
 
             <!-- Hold Slots Quick Recall Bar -->
             <div id="hold-slots-bar" class="mt-2.5 pt-2.5 border-t border-stone-800 flex flex-wrap items-center gap-2">
-                <span class="text-[11px] font-extrabold text-amber-300 flex items-center gap-1">
-                    <i data-lucide="pause-circle" class="w-3.5 h-3.5"></i>
+                <span class="text-xs sm:text-sm font-extrabold text-amber-300 flex items-center gap-1.5">
+                    <i data-lucide="pause-circle" class="w-4 h-4"></i>
                     ഹോൾഡ് ഓർഡറുകൾ:
                 </span>
-                <div id="hold-slots-buttons" class="flex flex-wrap items-center gap-1.5 flex-1"></div>
+                <div id="hold-slots-buttons" class="flex flex-wrap items-center gap-2 flex-1"></div>
             </div>
         </div>
     </header>
@@ -570,6 +570,8 @@
         let cloudReady = false;
         let unsubscribeSnapshot = null;
         let pendingSettingsDraft = null;
+        let isInitialSnapshotLoad = true;
+        let lastAnnouncedReadyMap = {};
 
         function getTablesList() {
             const count = parseInt(bizConfig.tableCount, 10) || 5;
@@ -602,12 +604,38 @@
             return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
         }
 
+        function notifyNewlyReadyOrders(prevKitchen, nextKitchen, ordersMap) {
+            const tables = getTablesList();
+            Object.entries(nextKitchen || {}).forEach(([tableId, status]) => {
+                const hasItems = ordersMap && ordersMap[tableId] && Object.values(ordersMap[tableId]).some(q => q > 0);
+                if (
+                    status === 'ready' &&
+                    hasItems &&
+                    prevKitchen[tableId] !== 'ready' &&
+                    lastAnnouncedReadyMap[tableId] !== 'ready'
+                ) {
+                    const tObj = tables.find(t => t.id === tableId);
+                    const label = tObj ? tObj.label : tableId;
+                    showToast(`✅ ${label}-ലെ ഓർഡർ കിച്ചണിൽ റെഡി ആയി!`);
+                }
+            });
+
+            const updatedAnnounced = {};
+            Object.entries(nextKitchen || {}).forEach(([tableId, status]) => {
+                if (status === 'ready') {
+                    updatedAnnounced[tableId] = 'ready';
+                }
+            });
+            lastAnnouncedReadyMap = updatedAnnounced;
+        }
+
         async function initFirebaseSync() {
             if (unsubscribeSnapshot) {
                 unsubscribeSnapshot();
                 unsubscribeSnapshot = null;
             }
 
+            isInitialSnapshotLoad = true;
             const cfg = DEFAULT_FIREBASE_CONFIG;
             const badge = document.getElementById('cloud-sync-badge');
 
@@ -616,7 +644,7 @@
                 firestoreDb = null;
                 if (badge) {
                     badge.textContent = 'ലോക്കൽ മോഡ്';
-                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700';
+                    badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700';
                 }
                 return;
             }
@@ -635,7 +663,7 @@
                         cloudReady = false;
                         if (badge) {
                             badge.textContent = 'PIN ആവശ്യമാണ്';
-                            badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-700';
+                            badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-700';
                         }
                         pendingSettingsDraft = {
                             name: remoteData.shopInfo?.name || shopInfo.name,
@@ -648,14 +676,14 @@
                         openPinVerificationModal(bizConfig.shopId);
                         return;
                     }
-                    applyRemoteShopData(remoteData);
+                    applyRemoteShopData(remoteData, true);
                 } else {
                     await pushToFirestore();
                 }
 
                 if (badge) {
                     badge.textContent = `Live: ${bizConfig.shopId}`;
-                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700';
+                    badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700';
                 }
 
                 unsubscribeSnapshot = onSnapshot(shopDocRef, (snap) => {
@@ -664,7 +692,8 @@
                     if (data.shopPin && bizConfig.shopPin && data.shopPin !== bizConfig.shopPin) {
                         return;
                     }
-                    applyRemoteShopData(data);
+                    applyRemoteShopData(data, isInitialSnapshotLoad);
+                    isInitialSnapshotLoad = false;
                 }, (err) => {
                     console.error('Snapshot error:', err);
                 });
@@ -673,12 +702,14 @@
                 cloudReady = false;
                 if (badge) {
                     badge.textContent = 'ഓഫ്‌ലൈൻ ബാക്ക്‌അപ്പ്';
-                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-700';
+                    badge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-700';
                 }
             }
         }
 
-        function applyRemoteShopData(data) {
+        function applyRemoteShopData(data, silentAlerts = false) {
+            const prevKitchen = Object.assign({}, kitchenStatus);
+
             if (data.shopInfo) shopInfo = Object.assign({}, shopInfo, data.shopInfo);
             if (data.tableCount) bizConfig.tableCount = parseInt(data.tableCount, 10) || bizConfig.tableCount;
             if (data.shopPin) bizConfig.shopPin = data.shopPin;
@@ -690,6 +721,16 @@
             if (data.billSequence) billSequence = parseInt(data.billSequence, 10) || billSequence;
 
             saveLocalOnly();
+
+            if (!silentAlerts) {
+                notifyNewlyReadyOrders(prevKitchen, kitchenStatus, tableOrders);
+            } else {
+                const seedReady = {};
+                Object.entries(kitchenStatus || {}).forEach(([k, v]) => {
+                    if (v === 'ready') seedReady[k] = 'ready';
+                });
+                lastAnnouncedReadyMap = seedReady;
+            }
 
             if (!isUserTypingInInput()) {
                 renderAll();
@@ -863,7 +904,7 @@
                 const data = holdSlots[s.id];
                 if (!data || !data.items || Object.keys(data.items).length === 0) {
                     return `
-                        <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-stone-800/70 text-stone-500 border border-stone-800">
+                        <span class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-stone-800/80 text-stone-400 border border-stone-700">
                             ${s.label} (ഒഴിവ്)
                         </span>
                     `;
@@ -873,12 +914,12 @@
                 const customerTag = data.parcel?.name ? ` • ${escapeHtml(data.parcel.name)}` : '';
 
                 return `
-                    <div class="inline-flex items-center bg-amber-400 text-stone-950 rounded-lg overflow-hidden shadow-xs">
-                        <button onclick="recallHoldSlot('${s.id}')" class="px-2.5 py-1 text-[11px] font-extrabold hover:bg-amber-300 cursor-pointer flex items-center gap-1" title="ഓർഡർ തിരികെ എടുക്കുക">
+                    <div class="inline-flex items-center bg-amber-400 text-stone-950 rounded-xl overflow-hidden shadow-xs">
+                        <button onclick="recallHoldSlot('${s.id}')" class="px-3 py-1.5 text-xs sm:text-sm font-extrabold hover:bg-amber-300 cursor-pointer flex items-center gap-1.5" title="ഓർഡർ തിരികെ എടുക്കുക">
                             <span>${s.label}${customerTag}</span>
-                            <span class="bg-stone-950 text-amber-300 px-1.5 py-0.2 rounded text-[10px]">₹${total}</span>
+                            <span class="bg-stone-950 text-amber-300 px-2 py-0.5 rounded-md text-xs">₹${total}</span>
                         </button>
-                        <button onclick="discardHoldSlot('${s.id}')" class="px-1.5 py-1 text-[11px] font-extrabold hover:bg-rose-500 hover:text-white cursor-pointer border-l border-amber-500/50" title="ഹോൾഡ് ഒഴിവാക്കുക">
+                        <button onclick="discardHoldSlot('${s.id}')" class="px-2 py-1.5 text-sm font-extrabold hover:bg-rose-500 hover:text-white cursor-pointer border-l border-amber-500/50" title="ഹോൾഡ് ഒഴിവാക്കുക">
                             ×
                         </button>
                     </div>
@@ -1045,7 +1086,13 @@
 
         function setKitchenOrderStatus(tableId, nextStatus) {
             kitchenStatus[tableId] = nextStatus;
+            if (nextStatus === 'ready') {
+                lastAnnouncedReadyMap[tableId] = 'ready';
+            } else {
+                delete lastAnnouncedReadyMap[tableId];
+            }
             saveState();
+            renderTables();
             renderKitchenView();
             showToast(`${tableId === 'parcel' ? 'പാർസൽ' : tableId.replace('t', 'ടേബിൾ ')} സ്റ്റാറ്റസ് അപ്ഡേറ്റ് ചെയ്തു.`);
         }
@@ -1083,20 +1130,34 @@
                 const isActive = t.id === activeTableId;
                 const orderMap = tableOrders[t.id] || {};
                 const itemCount = Object.values(orderMap).reduce((a, b) => a + b, 0);
+                const kStatus = itemCount > 0 ? kitchenStatus[t.id] : null;
+                const isKitchenReady = kStatus === 'ready';
+                const isKitchenPreparing = kStatus === 'preparing';
 
                 let btnClasses = 'relative py-2.5 px-2 rounded-xl text-xs sm:text-sm font-extrabold border-2 transition cursor-pointer flex flex-col items-center justify-center ';
                 if (isActive) {
                     btnClasses += 'bg-stone-900 text-amber-300 border-stone-900 shadow-md';
+                } else if (isKitchenReady) {
+                    btnClasses += 'bg-emerald-50 text-emerald-950 border-emerald-500 hover:bg-emerald-100';
                 } else if (itemCount > 0) {
                     btnClasses += 'bg-amber-50 text-amber-950 border-amber-400 hover:bg-amber-100';
                 } else {
                     btnClasses += 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100';
                 }
 
+                let subBadgeHtml = `<span class="mt-0.5 text-[10px] opacity-60">ഒഴിവ്</span>`;
+                if (isKitchenReady) {
+                    subBadgeHtml = `<span class="mt-0.5 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-600 text-white">✅ റെഡി</span>`;
+                } else if (isKitchenPreparing) {
+                    subBadgeHtml = `<span class="mt-0.5 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full bg-orange-500 text-white">🔥 പാചകം (${itemCount})</span>`;
+                } else if (itemCount > 0) {
+                    subBadgeHtml = `<span class="mt-0.5 text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-amber-400 text-stone-950' : 'bg-amber-500 text-white'}">${itemCount} ഐറ്റം</span>`;
+                }
+
                 return `
                     <button onclick="selectTable('${t.id}')" class="${btnClasses}">
                         <span>${t.label}</span>
-                        ${itemCount > 0 ? `<span class="mt-0.5 text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-amber-400 text-stone-950' : 'bg-amber-500 text-white'}">${itemCount} ഐറ്റം</span>` : `<span class="mt-0.5 text-[10px] opacity-60">ഒഴിവ്</span>`}
+                        ${subBadgeHtml}
                     </button>
                 `;
             }).join('');
@@ -1231,6 +1292,7 @@
             }
             tableOrders[activeTableId][itemId] = (tableOrders[activeTableId][itemId] || 0) + 1;
             kitchenStatus[activeTableId] = 'new';
+            delete lastAnnouncedReadyMap[activeTableId];
             saveState();
             renderTables();
             renderMenuGrid();
@@ -1245,6 +1307,7 @@
                 delete tableOrders[activeTableId][itemId];
                 if (Object.keys(tableOrders[activeTableId]).length === 0) {
                     delete kitchenStatus[activeTableId];
+                    delete lastAnnouncedReadyMap[activeTableId];
                 }
             } else {
                 tableOrders[activeTableId][itemId] = newQty;
@@ -1266,6 +1329,7 @@
                 () => {
                     delete tableOrders[activeTableId];
                     delete kitchenStatus[activeTableId];
+                    delete lastAnnouncedReadyMap[activeTableId];
                     if (activeTableId === 'parcel') {
                         parcelInfo = { name: '', phone: '', address: '' };
                         syncParcelInputs();
@@ -1377,6 +1441,7 @@
             billSequence += 1;
             delete tableOrders[activeTableId];
             delete kitchenStatus[activeTableId];
+            delete lastAnnouncedReadyMap[activeTableId];
             if (activeTableId === 'parcel') {
                 parcelInfo = { name: '', phone: '', address: '' };
                 syncParcelInputs();
