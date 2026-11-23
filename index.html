@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ് | POS ബില്ലിംഗ്</title>
+    <title>മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ് | ബിസിനസ് POS ബില്ലിംഗ്</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Noto Sans Malayalam & Inter -->
@@ -89,18 +89,21 @@
     <!-- Top Header & Live Daily Sales Bar -->
     <header class="bg-stone-900 text-white shadow-lg sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-3 sm:px-5 py-3">
-            <!-- Hotel Info & Date -->
+            <!-- Hotel Info, Sync Status & Date -->
             <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-stone-700/80">
                 <div class="flex items-center gap-2.5">
                     <div class="w-10 h-10 rounded-xl bg-amber-500 text-stone-950 flex items-center justify-center font-extrabold shadow-inner flex-shrink-0">
                         <i data-lucide="utensils" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <div class="flex items-center gap-1.5">
+                        <div class="flex items-center gap-1.5 flex-wrap">
                             <h1 id="header-hotel-name" class="text-base sm:text-xl font-extrabold tracking-tight text-amber-300 leading-tight">മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്</h1>
-                            <button onclick="openShopSettingsModal()" class="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition cursor-pointer" title="ഹോട്ടൽ പേര് മാറ്റുക">
+                            <button onclick="openShopSettingsModal()" class="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition cursor-pointer" title="ഹോട്ടൽ പേര് / Shop ID / Firebase Config മാറ്റുക">
                                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                             </button>
+                            <span id="cloud-sync-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
+                                കണക്ട് ചെയ്യുന്നു...
+                            </span>
                         </div>
                         <p id="header-hotel-place" class="text-xs text-stone-300 font-medium">പേരളശ്ശേരി / കണ്ണൂർ</p>
                     </div>
@@ -148,9 +151,7 @@
                     <i data-lucide="pause-circle" class="w-3.5 h-3.5"></i>
                     ഹോൾഡ് ഓർഡറുകൾ:
                 </span>
-                <div id="hold-slots-buttons" class="flex flex-wrap items-center gap-1.5 flex-1">
-                    <!-- Hold 1, Hold 2, Hold 3 buttons rendered via JS -->
-                </div>
+                <div id="hold-slots-buttons" class="flex flex-wrap items-center gap-1.5 flex-1"></div>
             </div>
         </div>
     </header>
@@ -172,11 +173,9 @@
                         ടേബിൾ 1
                     </span>
                 </div>
-                <div id="table-pills" class="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    <!-- Table pills injected via JS -->
-                </div>
+                <div id="table-pills" class="grid grid-cols-3 sm:grid-cols-6 gap-2"></div>
 
-                <!-- Parcel / Catering Customer Details Box (Shown when Parcel is active or toggled) -->
+                <!-- Parcel / Catering Customer Details Box -->
                 <div id="parcel-details-box" class="hidden bg-amber-50/80 border-2 border-amber-300 rounded-2xl p-3 space-y-2.5">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-extrabold text-amber-950 flex items-center gap-1.5">
@@ -206,21 +205,13 @@
 
             <!-- Menu Categories & Large Tap Grid -->
             <section class="bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-stone-200 space-y-3.5">
-                <!-- Category Filter Pills -->
-                <div id="category-pills" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-                    <!-- Category pills injected via JS -->
-                </div>
-
-                <!-- Large Touch Menu Grid -->
-                <div id="menu-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
-                    <!-- Menu buttons injected via JS -->
-                </div>
+                <div id="category-pills" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1"></div>
+                <div id="menu-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3"></div>
             </section>
         </div>
 
         <!-- Right Section: Current Bill / Cart Drawer (5 Columns on Large Screen) -->
         <section class="lg:col-span-5 bg-white rounded-2xl shadow-md border-2 border-stone-300 flex flex-col lg:sticky lg:top-36 overflow-hidden">
-            <!-- Bill Header -->
             <div class="bg-stone-100 px-4 py-3 border-b border-stone-200 flex items-center justify-between">
                 <div>
                     <span class="text-xs font-bold text-stone-500 block">നിലവിലെ ഓർഡർ</span>
@@ -233,19 +224,14 @@
                 </div>
             </div>
 
-            <!-- Selected Items List -->
-            <div id="cart-items-list" class="p-3 sm:p-4 space-y-2 max-h-[340px] lg:max-h-[380px] overflow-y-auto divide-y divide-stone-100">
-                <!-- Cart items injected via JS -->
-            </div>
+            <div id="cart-items-list" class="p-3 sm:p-4 space-y-2 max-h-[340px] lg:max-h-[380px] overflow-y-auto divide-y divide-stone-100"></div>
 
-            <!-- Grand Total & Action Buttons -->
             <div class="bg-stone-50 p-4 border-t-2 border-stone-200 space-y-3">
                 <div class="flex items-center justify-between">
                     <span class="text-base sm:text-lg font-extrabold text-stone-700">ആകെ തുക (Total):</span>
                     <span id="cart-grand-total" class="text-2xl sm:text-3xl font-extrabold text-emerald-700">₹0</span>
                 </div>
 
-                <!-- Primary Action Buttons -->
                 <div class="grid grid-cols-2 gap-2.5">
                     <button onclick="printAndCompleteBill()" class="col-span-2 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-base sm:text-lg py-3.5 px-4 rounded-xl shadow-md transition cursor-pointer">
                         <i data-lucide="printer" class="w-5 h-5"></i>
@@ -272,10 +258,10 @@
 
     </main>
 
-    <!-- Hidden 58mm Thermal Receipt Area (Only visible during window.print()) -->
+    <!-- Hidden 58mm Thermal Receipt Area -->
     <div id="thermal-print-area"></div>
 
-    <!-- Modal 1: Daily Sales Report (ഇന്നത്തെ കണക്ക്) -->
+    <!-- Modal 1: Daily Sales Report -->
     <div id="daily-report-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-stone-200 my-auto max-h-[92vh] flex flex-col">
             <div class="flex items-center justify-between pb-3 border-b border-stone-200">
@@ -289,7 +275,6 @@
             </div>
 
             <div class="overflow-y-auto py-4 space-y-5 flex-1 pr-1">
-                <!-- Summary KPI Boxes -->
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
                         <span class="text-xs font-bold text-emerald-800 block">ആകെ വിറ്റുവരവ്</span>
@@ -301,7 +286,6 @@
                     </div>
                 </div>
 
-                <!-- Item-wise Breakdown -->
                 <div>
                     <h3 class="text-sm font-extrabold text-stone-800 mb-2 flex items-center gap-1.5">
                         <i data-lucide="list-ordered" class="w-4 h-4 text-amber-600"></i>
@@ -316,26 +300,20 @@
                                     <th class="py-2.5 px-3 text-right">തുക (₹)</th>
                                 </tr>
                             </thead>
-                            <tbody id="rep-item-breakdown" class="divide-y divide-stone-100">
-                                <!-- Item rows injected via JS -->
-                            </tbody>
+                            <tbody id="rep-item-breakdown" class="divide-y divide-stone-100"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Recent Bills History -->
                 <div>
                     <h3 class="text-sm font-extrabold text-stone-800 mb-2 flex items-center gap-1.5">
                         <i data-lucide="receipt" class="w-4 h-4 text-amber-600"></i>
                         <span>ഇന്ന് അടിച്ച ബില്ലുകൾ</span>
                     </h3>
-                    <div id="rep-bills-history" class="space-y-2 max-h-48 overflow-y-auto">
-                        <!-- Recent bills injected via JS -->
-                    </div>
+                    <div id="rep-bills-history" class="space-y-2 max-h-48 overflow-y-auto"></div>
                 </div>
             </div>
 
-            <!-- Report Action Buttons -->
             <div class="pt-3 border-t border-stone-200 grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <button onclick="printDayEndReport()" class="flex items-center justify-center gap-1.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm py-3 px-3 rounded-xl cursor-pointer">
                     <i data-lucide="printer" class="w-4 h-4"></i>
@@ -399,11 +377,11 @@
         </div>
     </div>
 
-    <!-- Modal 3: Hotel Name & Place Settings -->
-    <div id="shop-settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200">
+    <!-- Modal 3: Business Shop, Table Count & Firebase Config Settings -->
+    <div id="shop-settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-stone-200 my-auto max-h-[92vh] overflow-y-auto">
             <div class="flex items-center justify-between pb-3 border-b border-stone-200">
-                <h2 class="text-lg font-extrabold text-stone-900">ഹോട്ടൽ വിവരങ്ങൾ മാറ്റുക</h2>
+                <h2 class="text-lg font-extrabold text-stone-900">ബിസിനസ് & Firebase സെറ്റിംഗ്സ്</h2>
                 <button onclick="closeModal('shop-settings-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -411,13 +389,52 @@
 
             <form id="shop-settings-form" class="space-y-4 mt-4">
                 <div>
-                    <label class="block text-xs font-extrabold text-stone-700 mb-1">ഹോട്ടലിന്റെ പേര് *</label>
+                    <label class="block text-xs font-extrabold text-stone-700 mb-1">ഹോട്ടലിന്റെ / സ്ഥാപനത്തിന്റെ പേര് *</label>
                     <input type="text" id="setting-hotel-name" required class="w-full px-3.5 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
                 </div>
-                <div>
-                    <label class="block text-xs font-extrabold text-stone-700 mb-1">സ്ഥലം / ഫോൺ നമ്പർ (ബില്ലിൽ വരാൻ)</label>
-                    <input type="text" id="setting-hotel-place" class="w-full px-3.5 py-2.5 text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">സ്ഥലം / ഫോൺ നമ്പർ</label>
+                        <input type="text" id="setting-hotel-place" class="w-full px-3.5 py-2.5 text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">ടേബിളുകളുടെ എണ്ണം</label>
+                        <select id="setting-table-count" class="w-full px-3 py-2.5 text-sm font-bold border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="5">5 ടേബിൾ + പാർസൽ</option>
+                            <option value="8">8 ടേബിൾ + പാർസൽ</option>
+                            <option value="10">10 ടേബിൾ + പാർസൽ</option>
+                            <option value="12">12 ടേബിൾ + പാർസൽ</option>
+                            <option value="15">15 ടേബിൾ + പാർസൽ</option>
+                        </select>
+                    </div>
                 </div>
+
+                <div class="pt-3 border-t border-stone-200 space-y-3">
+                    <span class="text-xs font-extrabold text-amber-900 block">Firebase (Firestore) ക്ലൗഡ് കണക്ഷൻ</span>
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">Shop ID (ഓരോ കടയ്ക്കും പ്രത്യേകം പേര്)</label>
+                        <input type="text" id="setting-shop-id" placeholder="ഉദാ: malabar-peralassery" class="w-full px-3.5 py-2 text-xs sm:text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">apiKey</label>
+                            <input type="text" id="setting-fb-apikey" placeholder="AIzaSy..." class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">projectId</label>
+                            <input type="text" id="setting-fb-projectid" placeholder="malabar-pos-business" class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">authDomain</label>
+                            <input type="text" id="setting-fb-authdomain" placeholder="malabar-pos-business.firebaseapp.com" class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">appId</label>
+                            <input type="text" id="setting-fb-appid" placeholder="1:1001726356903:web:..." class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-end gap-2 pt-2">
                     <button type="button" onclick="closeModal('shop-settings-modal')" class="px-4 py-2.5 rounded-xl text-sm font-bold text-stone-600 hover:bg-stone-100 cursor-pointer">റദ്ദാക്കുക</button>
                     <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-extrabold bg-stone-900 text-white cursor-pointer">സേവ് ചെയ്യുക</button>
@@ -441,8 +458,21 @@
         </div>
     </div>
 
-    <script>
-        // --- Storage Keys ---
+    <!-- Firebase SDK (Modular v11) + POS Application Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        // --- Firebase Config for malabar-pos-business ---
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCp5gTgS8RiEhMb9zXmoy4sxsaMLDZWiUk",
+            authDomain: "malabar-pos-business.firebaseapp.com",
+            projectId: "malabar-pos-business",
+            storageBucket: "malabar-pos-business.firebasestorage.app",
+            messagingSenderId: "1001726356903",
+            appId: "1:1001726356903:web:9e6328c610f2ba869d1a82"
+        };
+
         const KEYS = {
             SHOP: 'kerala_hotel_pos_shop_v1',
             MENU: 'kerala_hotel_pos_menu_v1',
@@ -450,10 +480,10 @@
             HOLDS: 'kerala_hotel_pos_holds_v1',
             PARCEL: 'kerala_hotel_pos_parcel_v1',
             BILLS: 'kerala_hotel_pos_bills_v1',
-            BILL_SEQ: 'kerala_hotel_pos_seq_v1'
+            BILL_SEQ: 'kerala_hotel_pos_seq_v1',
+            BIZ_CONFIG: 'kerala_hotel_pos_biz_cfg_v1'
         };
 
-        // --- Categories & Color Themes ---
         const CATEGORIES = [
             { id: 'all', label: 'എല്ലാം (All)' },
             { id: 'tea', label: '☕ ചായ & കടി' },
@@ -469,17 +499,6 @@
             dinner: 'bg-rose-50 border-rose-300 hover:bg-rose-100 text-rose-950'
         };
 
-        // --- Tables Configuration ---
-        const TABLES = [
-            { id: 't1', label: 'ടേബിൾ 1', fullLabel: 'ടേബിൾ 1 (Table 1)' },
-            { id: 't2', label: 'ടേബിൾ 2', fullLabel: 'ടേബിൾ 2 (Table 2)' },
-            { id: 't3', label: 'ടേബിൾ 3', fullLabel: 'ടേബിൾ 3 (Table 3)' },
-            { id: 't4', label: 'ടേബിൾ 4', fullLabel: 'ടേബിൾ 4 (Table 4)' },
-            { id: 't5', label: 'ടേബിൾ 5', fullLabel: 'ടേബിൾ 5 (Table 5)' },
-            { id: 'parcel', label: 'പാർസൽ', fullLabel: 'പാർസൽ / കാറ്ററിംഗ്' }
-        ];
-
-        // --- Default Authentic Kerala Rural Hotel Menu ---
         const DEFAULT_MENU = [
             { id: 'm1', name: 'ചായ', price: 12, cat: 'tea' },
             { id: 'm2', name: 'കാപ്പി', price: 15, cat: 'tea' },
@@ -501,8 +520,12 @@
             { id: 'm18', name: 'ലൈം ജ്യൂസ്', price: 25, cat: 'tea' }
         ];
 
-        // --- App State ---
         let shopInfo = { name: 'മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്', place: 'പേരളശ്ശേരി / കണ്ണൂർ' };
+        let bizConfig = {
+            tableCount: 5,
+            shopId: 'malabar-default',
+            firebase: { ...DEFAULT_FIREBASE_CONFIG }
+        };
         let menuItems = [];
         let tableOrders = {};
         let holdSlots = { h1: null, h2: null, h3: null };
@@ -512,7 +535,109 @@
         let activeTableId = 't1';
         let activeCategory = 'all';
 
-        // --- Date & Time Helpers (Strictly DD-MM-YYYY) ---
+        let firestoreDb = null;
+        let cloudReady = false;
+
+        function getTablesList() {
+            const count = parseInt(bizConfig.tableCount, 10) || 5;
+            const list = [];
+            for (let i = 1; i <= count; i++) {
+                list.push({
+                    id: `t${i}`,
+                    label: `ടേബിൾ ${i}`,
+                    fullLabel: `ടേബിൾ ${i} (Table ${i})`
+                });
+            }
+            list.push({ id: 'parcel', label: 'പാർസൽ', fullLabel: 'പാർസൽ / കാറ്ററിംഗ്' });
+            return list;
+        }
+
+        function isFirebaseConfigured(cfg) {
+            return Boolean(
+                cfg &&
+                cfg.apiKey &&
+                !cfg.apiKey.startsWith('YOUR_') &&
+                cfg.projectId &&
+                !cfg.projectId.startsWith('YOUR_')
+            );
+        }
+
+        async function initFirebaseSync() {
+            const cfg = bizConfig.firebase || DEFAULT_FIREBASE_CONFIG;
+            const badge = document.getElementById('cloud-sync-badge');
+
+            if (!isFirebaseConfigured(cfg)) {
+                cloudReady = false;
+                firestoreDb = null;
+                if (badge) {
+                    badge.textContent = 'ലോക്കൽ മോഡ്';
+                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700';
+                }
+                return;
+            }
+
+            try {
+                const app = initializeApp(cfg, `pos-${bizConfig.shopId || 'default'}-${Date.now()}`);
+                firestoreDb = getFirestore(app);
+                cloudReady = true;
+
+                if (badge) {
+                    badge.textContent = `Firestore: ${bizConfig.shopId}`;
+                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700';
+                }
+
+                await pullFromFirestore();
+            } catch (err) {
+                console.error('Firebase init error:', err);
+                cloudReady = false;
+                if (badge) {
+                    badge.textContent = 'ഓഫ്‌ലൈൻ ബാക്ക്‌അപ്പ്';
+                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-700';
+                }
+            }
+        }
+
+        async function pullFromFirestore() {
+            if (!cloudReady || !firestoreDb) return;
+            try {
+                const shopDocRef = doc(firestoreDb, 'shops', bizConfig.shopId || 'malabar-default');
+                const snap = await getDoc(shopDocRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data.shopInfo) shopInfo = Object.assign(shopInfo, data.shopInfo);
+                    if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
+                    if (data.tableOrders) tableOrders = data.tableOrders;
+                    if (data.holdSlots) holdSlots = Object.assign({ h1: null, h2: null, h3: null }, data.holdSlots);
+                    if (Array.isArray(data.completedBills)) completedBills = data.completedBills;
+                    if (data.billSequence) billSequence = parseInt(data.billSequence, 10) || billSequence;
+                    saveLocalOnly();
+                    renderAll();
+                } else {
+                    await pushToFirestore();
+                }
+            } catch (err) {
+                console.error('Firestore pull error:', err);
+            }
+        }
+
+        async function pushToFirestore() {
+            if (!cloudReady || !firestoreDb) return;
+            try {
+                const shopDocRef = doc(firestoreDb, 'shops', bizConfig.shopId || 'malabar-default');
+                await setDoc(shopDocRef, {
+                    shopInfo,
+                    menuItems,
+                    tableOrders,
+                    holdSlots,
+                    completedBills,
+                    billSequence,
+                    updatedAt: getTodayDDMMYYYY()
+                }, { merge: true });
+            } catch (err) {
+                console.error('Firestore push error:', err);
+            }
+        }
+
         function getTodayDDMMYYYY() {
             const d = new Date();
             const day = String(d.getDate()).padStart(2, '0');
@@ -525,17 +650,29 @@
             return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
         }
 
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             loadState();
             document.getElementById('header-date').textContent = getTodayDDMMYYYY();
             syncParcelInputs();
             setupForms();
             renderAll();
+            await initFirebaseSync();
         });
 
         function loadState() {
             try {
+                const savedBiz = localStorage.getItem(KEYS.BIZ_CONFIG);
+                if (savedBiz) {
+                    const parsedBiz = JSON.parse(savedBiz);
+                    bizConfig = Object.assign({
+                        tableCount: 5,
+                        shopId: 'malabar-default',
+                        firebase: { ...DEFAULT_FIREBASE_CONFIG }
+                    }, parsedBiz, {
+                        firebase: Object.assign({ ...DEFAULT_FIREBASE_CONFIG }, parsedBiz.firebase || {})
+                    });
+                }
+
                 const savedShop = localStorage.getItem(KEYS.SHOP);
                 if (savedShop) shopInfo = JSON.parse(savedShop);
 
@@ -562,8 +699,9 @@
             }
         }
 
-        function saveState() {
+        function saveLocalOnly() {
             try {
+                localStorage.setItem(KEYS.BIZ_CONFIG, JSON.stringify(bizConfig));
                 localStorage.setItem(KEYS.SHOP, JSON.stringify(shopInfo));
                 localStorage.setItem(KEYS.MENU, JSON.stringify(menuItems));
                 localStorage.setItem(KEYS.TABLES, JSON.stringify(tableOrders));
@@ -576,7 +714,11 @@
             }
         }
 
-        // --- Parcel Customer Helpers ---
+        function saveState() {
+            saveLocalOnly();
+            pushToFirestore();
+        }
+
         function syncParcelInputs() {
             const nameEl = document.getElementById('parcel-name');
             const phoneEl = document.getElementById('parcel-phone');
@@ -592,14 +734,14 @@
                 phone: (document.getElementById('parcel-phone')?.value || '').trim(),
                 address: (document.getElementById('parcel-address')?.value || '').trim()
             };
-            saveState();
+            saveLocalOnly();
             renderCartCustomerSummary();
         }
 
         function clearParcelDetails() {
             parcelInfo = { name: '', phone: '', address: '' };
             syncParcelInputs();
-            saveState();
+            saveLocalOnly();
             renderCartCustomerSummary();
             showToast('പാർസൽ കസ്റ്റമർ വിവരങ്ങൾ ഒഴിവാക്കി.');
         }
@@ -621,7 +763,6 @@
             }
         }
 
-        // --- Hold Slots 1, 2, 3 ---
         function renderHoldSlotsBar() {
             const container = document.getElementById('hold-slots-buttons');
             const slotDefs = [
@@ -729,8 +870,11 @@
             showToast('ഹോൾഡ് ഓർഡർ ഒഴിവാക്കി.');
         }
 
-        // --- Rendering ---
         function renderAll() {
+            const tables = getTablesList();
+            if (!tables.some(t => t.id === activeTableId)) {
+                activeTableId = 't1';
+            }
             renderHeader();
             renderHoldSlotsBar();
             renderTables();
@@ -753,8 +897,9 @@
         }
 
         function renderTables() {
+            const tables = getTablesList();
             const container = document.getElementById('table-pills');
-            container.innerHTML = TABLES.map(t => {
+            container.innerHTML = tables.map(t => {
                 const isActive = t.id === activeTableId;
                 const orderMap = tableOrders[t.id] || {};
                 const itemCount = Object.values(orderMap).reduce((a, b) => a + b, 0);
@@ -776,7 +921,7 @@
                 `;
             }).join('');
 
-            const activeObj = TABLES.find(t => t.id === activeTableId);
+            const activeObj = tables.find(t => t.id === activeTableId);
             document.getElementById('active-table-badge').textContent = activeObj ? activeObj.label : '';
 
             const parcelBox = document.getElementById('parcel-details-box');
@@ -832,7 +977,8 @@
         }
 
         function renderCart() {
-            const activeObj = TABLES.find(t => t.id === activeTableId);
+            const tables = getTablesList();
+            const activeObj = tables.find(t => t.id === activeTableId);
             document.getElementById('cart-table-title').textContent = activeObj ? activeObj.fullLabel : 'ടേബിൾ 1';
             document.getElementById('cart-bill-no').textContent = `#${billSequence}`;
             renderCartCustomerSummary();
@@ -885,7 +1031,6 @@
             document.getElementById('cart-grand-total').textContent = `₹${grandTotal}`;
         }
 
-        // --- Interactive Order Actions ---
         function selectTable(tableId) {
             activeTableId = tableId;
             renderTables();
@@ -971,7 +1116,8 @@
                 }
             });
 
-            const tableObj = TABLES.find(t => t.id === activeTableId);
+            const tables = getTablesList();
+            const tableObj = tables.find(t => t.id === activeTableId);
 
             return {
                 billNo: billSequence,
@@ -984,7 +1130,6 @@
             };
         }
 
-        // --- Print 58mm Thermal Receipt & Save Bill ---
         function printAndCompleteBill() {
             const bill = buildCurrentBillObject();
             if (!bill) {
@@ -1060,7 +1205,6 @@
             }, 150);
         }
 
-        // --- Direct WhatsApp Share (wa.me) ---
         function formatCleanPhoneForWa(rawPhone) {
             if (!rawPhone) return '';
             const digits = String(rawPhone).replace(/\D/g, '');
@@ -1107,7 +1251,6 @@
             window.open(url, '_blank');
         }
 
-        // --- Daily Sales Report Modal ---
         function openDailyReportModal() {
             const todayStr = getTodayDDMMYYYY();
             document.getElementById('report-date-subtitle').textContent = `തീയതി: ${todayStr}`;
@@ -1256,7 +1399,6 @@
             );
         }
 
-        // --- Add / Manage Menu Items Modal ---
         function openAddItemModal() {
             renderManageMenuList();
             openModal('add-item-modal');
@@ -1301,10 +1443,15 @@
             showToast('ഐറ്റം മെനുവിൽ നിന്ന് നീക്കം ചെയ്തു.');
         }
 
-        // --- Shop Settings Modal ---
         function openShopSettingsModal() {
             document.getElementById('setting-hotel-name').value = shopInfo.name;
             document.getElementById('setting-hotel-place').value = shopInfo.place;
+            document.getElementById('setting-table-count').value = String(bizConfig.tableCount || 5);
+            document.getElementById('setting-shop-id').value = bizConfig.shopId || 'malabar-default';
+            document.getElementById('setting-fb-apikey').value = bizConfig.firebase?.apiKey || '';
+            document.getElementById('setting-fb-projectid').value = bizConfig.firebase?.projectId || '';
+            document.getElementById('setting-fb-authdomain').value = bizConfig.firebase?.authDomain || '';
+            document.getElementById('setting-fb-appid').value = bizConfig.firebase?.appId || '';
             openModal('shop-settings-modal');
         }
 
@@ -1332,22 +1479,43 @@
                 showToast(`"${name}" (₹${price}) മെനുവിൽ ചേർത്തു!`);
             });
 
-            document.getElementById('shop-settings-form').addEventListener('submit', (e) => {
+            document.getElementById('shop-settings-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const name = document.getElementById('setting-hotel-name').value.trim();
                 const place = document.getElementById('setting-hotel-place').value.trim();
+                const tableCount = parseInt(document.getElementById('setting-table-count').value, 10) || 5;
+                const shopId = (document.getElementById('setting-shop-id').value || 'malabar-default').trim().replace(/\s+/g, '-').toLowerCase();
+
+                const apiKey = (document.getElementById('setting-fb-apikey').value || '').trim();
+                const projectId = (document.getElementById('setting-fb-projectid').value || '').trim();
+                const authDomain = (document.getElementById('setting-fb-authdomain').value || (projectId ? `${projectId}.firebaseapp.com` : '')).trim();
+                const appId = (document.getElementById('setting-fb-appid').value || '').trim();
+
                 if (!name) return;
 
-                shopInfo.name = name;
-                shopInfo.place = place;
-                saveState();
-                renderHeader();
+                shopInfo = { name, place };
+                bizConfig = {
+                    tableCount,
+                    shopId,
+                    firebase: {
+                        apiKey: apiKey || DEFAULT_FIREBASE_CONFIG.apiKey,
+                        projectId: projectId || DEFAULT_FIREBASE_CONFIG.projectId,
+                        authDomain: authDomain || DEFAULT_FIREBASE_CONFIG.authDomain,
+                        storageBucket: projectId ? `${projectId}.firebasestorage.app` : DEFAULT_FIREBASE_CONFIG.storageBucket,
+                        messagingSenderId: bizConfig.firebase?.messagingSenderId || DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+                        appId: appId || DEFAULT_FIREBASE_CONFIG.appId
+                    }
+                };
+
+                saveLocalOnly();
+                renderAll();
                 closeModal('shop-settings-modal');
-                showToast('ഹോട്ടൽ വിവരങ്ങൾ സേവ് ചെയ്തു.');
+                showToast('ബിസിനസ് സെറ്റിംഗ്സ് സേവ് ചെയ്തു.');
+                await initFirebaseSync();
+                await pushToFirestore();
             });
         }
 
-        // --- Modal & Toast Helpers ---
         function openModal(id) {
             const el = document.getElementById(id);
             el.classList.remove('hidden');
@@ -1395,6 +1563,29 @@
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
         }
+
+        // Expose inline HTML event handlers
+        window.openShopSettingsModal = openShopSettingsModal;
+        window.openAddItemModal = openAddItemModal;
+        window.openDailyReportModal = openDailyReportModal;
+        window.clearParcelDetails = clearParcelDetails;
+        window.saveParcelDetails = saveParcelDetails;
+        window.printAndCompleteBill = printAndCompleteBill;
+        window.holdCurrentTable = holdCurrentTable;
+        window.shareBillWhatsApp = shareBillWhatsApp;
+        window.clearCurrentTable = clearCurrentTable;
+        window.closeModal = closeModal;
+        window.printDayEndReport = printDayEndReport;
+        window.shareDayReportWhatsApp = shareDayReportWhatsApp;
+        window.confirmResetDay = confirmResetDay;
+        window.selectTable = selectTable;
+        window.selectCategory = selectCategory;
+        window.addItemToActiveTable = addItemToActiveTable;
+        window.updateItemQty = updateItemQty;
+        window.recallHoldSlot = recallHoldSlot;
+        window.discardHoldSlot = discardHoldSlot;
+        window.updateMenuItemPrice = updateMenuItemPrice;
+        window.deleteMenuItem = deleteMenuItem;
     </script>
 </body>
 </html>
