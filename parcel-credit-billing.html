@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>പാർസൽ & കാറ്ററിംഗ് POS ബില്ലിംഗ്</title>
+    <title>പാർസൽ & കാറ്ററിംഗ് POS ബില്ലിംഗ് | ബിസിനസ്</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Noto Sans Malayalam & Inter -->
@@ -88,18 +88,21 @@
     <!-- Top Header & Live Daily Sales Bar -->
     <header class="bg-stone-900 text-white shadow-lg sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-3 sm:px-5 py-3">
-            <!-- Shop Info & Date -->
+            <!-- Shop Info, Sync Status & Date -->
             <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-stone-700/80">
                 <div class="flex items-center gap-2.5">
                     <div class="w-10 h-10 rounded-xl bg-amber-500 text-stone-950 flex items-center justify-center font-extrabold shadow-inner flex-shrink-0">
                         <i data-lucide="package" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <div class="flex items-center gap-1.5">
+                        <div class="flex items-center gap-1.5 flex-wrap">
                             <h1 id="header-hotel-name" class="text-base sm:text-xl font-extrabold tracking-tight text-amber-300 leading-tight">മലബാർ ഹോട്ടൽ & കാറ്ററിംഗ്</h1>
-                            <button onclick="openShopSettingsModal()" class="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition cursor-pointer" title="സ്ഥാപനത്തിന്റെ പേര് മാറ്റുക">
+                            <button onclick="openShopSettingsModal()" class="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition cursor-pointer" title="സ്ഥാപനത്തിന്റെ പേര് / Shop ID / Firebase Config മാറ്റുക">
                                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                             </button>
+                            <span id="cloud-sync-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
+                                കണക്ട് ചെയ്യുന്നു...
+                            </span>
                         </div>
                         <p id="header-hotel-place" class="text-xs text-stone-300 font-medium">പേരളശ്ശേരി / കണ്ണൂർ • പാർസൽ സർവീസ്</p>
                     </div>
@@ -129,7 +132,11 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="index.html" class="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-950 border border-amber-300 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span>മെയിൻ ബില്ലിംഗ്</span>
+                    </a>
                     <button onclick="openAddItemModal()" class="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 active:scale-95 text-amber-300 border border-stone-600 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
                         <span>മെനു / ഐറ്റം</span>
@@ -397,11 +404,11 @@
         </div>
     </div>
 
-    <!-- Modal 3: Shop Settings -->
-    <div id="shop-settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200">
+    <!-- Modal 3: Business Shop & Firebase Config Settings -->
+    <div id="shop-settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-stone-200 my-auto max-h-[92vh] overflow-y-auto">
             <div class="flex items-center justify-between pb-3 border-b border-stone-200">
-                <h2 class="text-lg font-extrabold text-stone-900">സ്ഥാപനത്തിന്റെ വിവരങ്ങൾ</h2>
+                <h2 class="text-lg font-extrabold text-stone-900">സ്ഥാപനത്തിന്റെ വിവരങ്ങൾ & Firebase</h2>
                 <button onclick="closeModal('shop-settings-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -416,6 +423,33 @@
                     <label class="block text-xs font-extrabold text-stone-700 mb-1">സ്ഥലം / ഫോൺ നമ്പർ</label>
                     <input type="text" id="setting-hotel-place" class="w-full px-3.5 py-2.5 text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
                 </div>
+
+                <div class="pt-3 border-t border-stone-200 space-y-3">
+                    <span class="text-xs font-extrabold text-amber-900 block">Firebase (Firestore) ക്ലൗഡ് കണക്ഷൻ</span>
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">Shop ID (ഓരോ കടയ്ക്കും പ്രത്യേകം പേര്)</label>
+                        <input type="text" id="setting-shop-id" placeholder="ഉദാ: malabar-peralassery" class="w-full px-3.5 py-2 text-xs sm:text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">apiKey</label>
+                            <input type="text" id="setting-fb-apikey" placeholder="AIzaSy..." class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">projectId</label>
+                            <input type="text" id="setting-fb-projectid" placeholder="malabar-pos-business" class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">authDomain</label>
+                            <input type="text" id="setting-fb-authdomain" placeholder="malabar-pos-business.firebaseapp.com" class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">appId</label>
+                            <input type="text" id="setting-fb-appid" placeholder="1:1001726356903:web:..." class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-end gap-2 pt-2">
                     <button type="button" onclick="closeModal('shop-settings-modal')" class="px-4 py-2.5 rounded-xl text-sm font-bold text-stone-600 hover:bg-stone-100 cursor-pointer">റദ്ദാക്കുക</button>
                     <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-extrabold bg-stone-900 text-white cursor-pointer">സേവ് ചെയ്യുക</button>
@@ -439,7 +473,20 @@
         </div>
     </div>
 
-    <script>
+    <!-- Firebase SDK (Modular v11) + Parcel/Credit POS Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCp5gTgS8RiEhMb9zXmoy4sxsaMLDZWiUk",
+            authDomain: "malabar-pos-business.firebaseapp.com",
+            projectId: "malabar-pos-business",
+            storageBucket: "malabar-pos-business.firebasestorage.app",
+            messagingSenderId: "1001726356903",
+            appId: "1:1001726356903:web:9e6328c610f2ba869d1a82"
+        };
+
         // Separate Storage Keys so Table POS data stays untouched
         const KEYS = {
             SHOP: 'kerala_parcel_pos_shop_v1',
@@ -448,7 +495,8 @@
             CUST: 'kerala_parcel_pos_cust_v1',
             HOLDS: 'kerala_parcel_pos_holds_v1',
             BILLS: 'kerala_parcel_pos_bills_v1',
-            BILL_SEQ: 'kerala_parcel_pos_seq_v1'
+            BILL_SEQ: 'kerala_parcel_pos_seq_v1',
+            BIZ_CONFIG: 'kerala_parcel_pos_biz_cfg_v1'
         };
 
         const CATEGORIES = [
@@ -481,6 +529,10 @@
         ];
 
         let shopInfo = { name: 'മലബാർ ഹോട്ടൽ & കാറ്ററിംഗ്', place: 'പേരളശ്ശേരി / കണ്ണൂർ' };
+        let bizConfig = {
+            shopId: 'malabar-default',
+            firebase: { ...DEFAULT_FIREBASE_CONFIG }
+        };
         let menuItems = [];
         let currentOrder = {};
         let customerInfo = { name: '', phone: '', address: '', paymentMode: 'cash' };
@@ -488,6 +540,100 @@
         let completedBills = [];
         let billSequence = 101;
         let activeCategory = 'all';
+
+        let firestoreDb = null;
+        let cloudReady = false;
+
+        function isFirebaseConfigured(cfg) {
+            return Boolean(
+                cfg &&
+                cfg.apiKey &&
+                !cfg.apiKey.startsWith('YOUR_') &&
+                cfg.projectId &&
+                !cfg.projectId.startsWith('YOUR_')
+            );
+        }
+
+        function getParcelDocId() {
+            const baseId = (bizConfig.shopId || 'malabar-default').trim() || 'malabar-default';
+            return `${baseId}_parcel`;
+        }
+
+        async function initFirebaseSync() {
+            const cfg = bizConfig.firebase || DEFAULT_FIREBASE_CONFIG;
+            const badge = document.getElementById('cloud-sync-badge');
+
+            if (!isFirebaseConfigured(cfg)) {
+                cloudReady = false;
+                firestoreDb = null;
+                if (badge) {
+                    badge.textContent = 'ലോക്കൽ മോഡ്';
+                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700';
+                }
+                return;
+            }
+
+            try {
+                const app = initializeApp(cfg, `parcel-${getParcelDocId()}-${Date.now()}`);
+                firestoreDb = getFirestore(app);
+                cloudReady = true;
+
+                if (badge) {
+                    badge.textContent = `Firestore: ${getParcelDocId()}`;
+                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700';
+                }
+
+                await pullFromFirestore();
+            } catch (err) {
+                console.error('Firebase init error:', err);
+                cloudReady = false;
+                if (badge) {
+                    badge.textContent = 'ഓഫ്‌ലൈൻ ബാക്ക്‌അപ്പ്';
+                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-700';
+                }
+            }
+        }
+
+        async function pullFromFirestore() {
+            if (!cloudReady || !firestoreDb) return;
+            try {
+                const docRef = doc(firestoreDb, 'shops', getParcelDocId());
+                const snap = await getDoc(docRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data.shopInfo) shopInfo = Object.assign(shopInfo, data.shopInfo);
+                    if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
+                    if (data.currentOrder) currentOrder = data.currentOrder;
+                    if (data.holdSlots) holdSlots = Object.assign({ h1: null, h2: null, h3: null }, data.holdSlots);
+                    if (Array.isArray(data.completedBills)) completedBills = data.completedBills;
+                    if (data.billSequence) billSequence = parseInt(data.billSequence, 10) || billSequence;
+                    saveLocalOnly();
+                    renderAll();
+                } else {
+                    await pushToFirestore();
+                }
+            } catch (err) {
+                console.error('Firestore pull error:', err);
+            }
+        }
+
+        async function pushToFirestore() {
+            if (!cloudReady || !firestoreDb) return;
+            try {
+                const docRef = doc(firestoreDb, 'shops', getParcelDocId());
+                await setDoc(docRef, {
+                    shopInfo,
+                    menuItems,
+                    currentOrder,
+                    holdSlots,
+                    completedBills,
+                    billSequence,
+                    updatedAt: getTodayDDMMYYYY()
+                }, { merge: true });
+            } catch (err) {
+                console.error('Firestore push error:', err);
+            }
+        }
 
         function getTodayDDMMYYYY() {
             const d = new Date();
@@ -501,16 +647,28 @@
             return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             loadState();
             document.getElementById('header-date').textContent = getTodayDDMMYYYY();
             syncCustomerInputs();
             setupForms();
             renderAll();
+            await initFirebaseSync();
         });
 
         function loadState() {
             try {
+                const savedBiz = localStorage.getItem(KEYS.BIZ_CONFIG);
+                if (savedBiz) {
+                    const parsedBiz = JSON.parse(savedBiz);
+                    bizConfig = Object.assign({
+                        shopId: 'malabar-default',
+                        firebase: { ...DEFAULT_FIREBASE_CONFIG }
+                    }, parsedBiz, {
+                        firebase: Object.assign({ ...DEFAULT_FIREBASE_CONFIG }, parsedBiz.firebase || {})
+                    });
+                }
+
                 const savedShop = localStorage.getItem(KEYS.SHOP);
                 if (savedShop) shopInfo = JSON.parse(savedShop);
 
@@ -536,8 +694,9 @@
             }
         }
 
-        function saveState() {
+        function saveLocalOnly() {
             try {
+                localStorage.setItem(KEYS.BIZ_CONFIG, JSON.stringify(bizConfig));
                 localStorage.setItem(KEYS.SHOP, JSON.stringify(shopInfo));
                 localStorage.setItem(KEYS.MENU, JSON.stringify(menuItems));
                 localStorage.setItem(KEYS.ORDER, JSON.stringify(currentOrder));
@@ -546,6 +705,11 @@
                 localStorage.setItem(KEYS.BILLS, JSON.stringify(completedBills));
                 localStorage.setItem(KEYS.BILL_SEQ, String(billSequence));
             } catch (e) {}
+        }
+
+        function saveState() {
+            saveLocalOnly();
+            pushToFirestore();
         }
 
         // --- Customer & Payment Mode ---
@@ -560,13 +724,13 @@
             customerInfo.name = (document.getElementById('cust-name')?.value || '').trim();
             customerInfo.phone = (document.getElementById('cust-phone')?.value || '').trim();
             customerInfo.address = (document.getElementById('cust-address')?.value || '').trim();
-            saveState();
+            saveLocalOnly();
             renderCartCustomerSummary();
         }
 
         function setPaymentMode(mode) {
             customerInfo.paymentMode = mode === 'credit' ? 'credit' : 'cash';
-            saveState();
+            saveLocalOnly();
             renderPaymentButtons();
             renderCartCustomerSummary();
         }
@@ -588,7 +752,7 @@
         function clearCustomerDetails() {
             customerInfo = { name: '', phone: '', address: '', paymentMode: 'cash' };
             syncCustomerInputs();
-            saveState();
+            saveLocalOnly();
             renderCartCustomerSummary();
             showToast('കസ്റ്റമർ വിവരങ്ങൾ മായ്ച്ചു.');
         }
@@ -1256,10 +1420,15 @@
             );
         }
 
-        // --- Shop Settings ---
+        // --- Shop & Firebase Settings ---
         function openShopSettingsModal() {
             document.getElementById('setting-hotel-name').value = shopInfo.name;
             document.getElementById('setting-hotel-place').value = shopInfo.place;
+            document.getElementById('setting-shop-id').value = bizConfig.shopId || 'malabar-default';
+            document.getElementById('setting-fb-apikey').value = bizConfig.firebase?.apiKey || '';
+            document.getElementById('setting-fb-projectid').value = bizConfig.firebase?.projectId || '';
+            document.getElementById('setting-fb-authdomain').value = bizConfig.firebase?.authDomain || '';
+            document.getElementById('setting-fb-appid').value = bizConfig.firebase?.appId || '';
             openModal('shop-settings-modal');
         }
 
@@ -1287,18 +1456,38 @@
                 showToast(`"${name}" (₹${price}) മെനുവിൽ ചേർത്തു!`);
             });
 
-            document.getElementById('shop-settings-form').addEventListener('submit', (e) => {
+            document.getElementById('shop-settings-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const name = document.getElementById('setting-hotel-name').value.trim();
                 const place = document.getElementById('setting-hotel-place').value.trim();
+                const shopId = (document.getElementById('setting-shop-id').value || 'malabar-default').trim().replace(/\s+/g, '-').toLowerCase();
+
+                const apiKey = (document.getElementById('setting-fb-apikey').value || '').trim();
+                const projectId = (document.getElementById('setting-fb-projectid').value || '').trim();
+                const authDomain = (document.getElementById('setting-fb-authdomain').value || (projectId ? `${projectId}.firebaseapp.com` : '')).trim();
+                const appId = (document.getElementById('setting-fb-appid').value || '').trim();
+
                 if (!name) return;
 
-                shopInfo.name = name;
-                shopInfo.place = place;
-                saveState();
-                renderHeader();
+                shopInfo = { name, place };
+                bizConfig = {
+                    shopId,
+                    firebase: {
+                        apiKey: apiKey || DEFAULT_FIREBASE_CONFIG.apiKey,
+                        projectId: projectId || DEFAULT_FIREBASE_CONFIG.projectId,
+                        authDomain: authDomain || DEFAULT_FIREBASE_CONFIG.authDomain,
+                        storageBucket: projectId ? `${projectId}.firebasestorage.app` : DEFAULT_FIREBASE_CONFIG.storageBucket,
+                        messagingSenderId: bizConfig.firebase?.messagingSenderId || DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+                        appId: appId || DEFAULT_FIREBASE_CONFIG.appId
+                    }
+                };
+
+                saveLocalOnly();
+                renderAll();
                 closeModal('shop-settings-modal');
-                showToast('സ്ഥാപനത്തിന്റെ വിവരങ്ങൾ സേവ് ചെയ്തു.');
+                showToast('സ്ഥാപനത്തിന്റെ വിവരങ്ങൾ & Firebase സേവ് ചെയ്തു.');
+                await initFirebaseSync();
+                await pushToFirestore();
             });
         }
 
@@ -1349,6 +1538,32 @@
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
         }
+
+        // Expose inline HTML event handlers
+        window.openShopSettingsModal = openShopSettingsModal;
+        window.openAddItemModal = openAddItemModal;
+        window.openDailyReportModal = openDailyReportModal;
+        window.clearCustomerDetails = clearCustomerDetails;
+        window.saveCustomerDetails = saveCustomerDetails;
+        window.setPaymentMode = setPaymentMode;
+        window.completeAndPrintBill = completeAndPrintBill;
+        window.holdCurrentOrder = holdCurrentOrder;
+        window.shareBillWhatsApp = shareBillWhatsApp;
+        window.clearCurrentOrder = clearCurrentOrder;
+        window.closeModal = closeModal;
+        window.printDayEndReport = printDayEndReport;
+        window.shareDayReportWhatsApp = shareDayReportWhatsApp;
+        window.confirmResetDay = confirmResetDay;
+        window.selectCategory = selectCategory;
+        window.addItemToOrder = addItemToOrder;
+        window.updateItemQty = updateItemQty;
+        window.recallHoldSlot = recallHoldSlot;
+        window.discardHoldSlot = discardHoldSlot;
+        window.updateMenuItemName = updateMenuItemName;
+        window.updateMenuItemPrice = updateMenuItemPrice;
+        window.deleteMenuItem = deleteMenuItem;
+        window.confirmClearAllMenu = confirmClearAllMenu;
+        window.toggleBillPaymentStatus = toggleBillPaymentStatus;
     </script>
 </body>
 </html>
