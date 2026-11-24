@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>കിച്ചൻ ലൈവ് ഓർഡർ ബോർഡ് | POS</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans Malayalam & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+Malayalam:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans Malayalam"', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans Malayalam', 'Inter', sans-serif;
+            background-color: #f4f1ea;
+            color: #1c1917;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Toast Notification -->
+    <div id="toast-box" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center gap-2 w-11/12 max-w-md"></div>
+
+    <!-- Kitchen Header -->
+    <header class="bg-stone-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-3 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-orange-500 text-stone-950 flex items-center justify-center font-extrabold flex-shrink-0">
+                    <i data-lucide="chef-hat" class="w-5 h-5"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <h1 id="kitchen-shop-name" class="text-base sm:text-xl font-extrabold text-amber-300 leading-snug">മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്</h1>
+                        <button onclick="openShopSettingsModal()" class="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white transition cursor-pointer" title="Shop ID / PIN മാറ്റുക">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <span id="cloud-sync-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
+                            കണക്ട് ചെയ്യുന്നു...
+                        </span>
+                    </div>
+                    <p class="text-xs sm:text-sm font-bold text-stone-200">കിച്ചൻ ലൈവ് ഓർഡർ ബോർഡ് (ഷെഫ് വ്യൂ)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap">
+                <button id="sound-toggle-btn" type="button" onclick="enableAndToggleSound()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-900/90 hover:bg-emerald-800 text-emerald-200 border border-emerald-700 cursor-pointer">
+                    <i data-lucide="volume-2" class="w-4 h-4"></i>
+                    <span id="sound-toggle-label">ശബ്ദം ഓൺ</span>
+                </button>
+                <button type="button" onclick="testKitchenBeep()" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-500 hover:bg-amber-400 text-stone-950 cursor-pointer">
+                    🔔 ശബ്ദം ടെസ്റ്റ്
+                </button>
+                <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-800 hover:bg-stone-700 text-amber-200 border border-stone-600 cursor-pointer">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>POS പേജ്</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Kitchen Orders Board -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-5 py-4">
+        <div id="kitchen-orders-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </main>
+
+    <!-- Shop Settings Modal (Shop ID, Shop PIN + Hidden Firebase Fields) -->
+    <div id="shop-settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/75 backdrop-blur-xs p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200 my-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-stone-200">
+                <h2 class="text-lg font-extrabold text-stone-900">കിച്ചൻ കണക്ഷൻ & Shop PIN</h2>
+                <button onclick="closeModal('shop-settings-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="shop-settings-form" class="space-y-4 mt-4">
+                <div>
+                    <label class="block text-xs font-extrabold text-stone-700 mb-1">ഹോട്ടലിന്റെ പേര് *</label>
+                    <input type="text" id="setting-hotel-name" required class="w-full px-3.5 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-stone-700 mb-1">സ്ഥലം / ഫോൺ നമ്പർ</label>
+                    <input type="text" id="setting-hotel-place" class="w-full px-3.5 py-2.5 text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">ടേബിളുകളുടെ എണ്ണം</label>
+                        <select id="setting-table-count" class="w-full px-3 py-2.5 text-sm font-bold border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="5">5 ടേബിൾ + പാർസൽ</option>
+                            <option value="8">8 ടേബിൾ + പാർസൽ</option>
+                            <option value="10">10 ടേബിൾ + പാർസൽ</option>
+                            <option value="12">12 ടേബിൾ + പാർസൽ</option>
+                            <option value="15">15 ടേബിൾ + പാർസൽ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">Shop ID (കടയുടെ ഐഡി)</label>
+                        <input type="text" id="setting-shop-id" class="w-full px-3 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-stone-700 mb-1">Shop PIN</label>
+                    <input type="password" inputmode="numeric" id="setting-shop-pin" class="w-full px-3.5 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <!-- Hidden Firebase Fields Wrapper (Hidden by Default) -->
+                <div class="pt-2 border-t border-stone-200">
+                    <button type="button" onclick="toggleFirebaseFields()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-extrabold transition cursor-pointer">
+                        <span>⚙️ Firebase ക്രമീകരണങ്ങൾ (മറച്ചുവെച്ചത് - കാണുക / മറയ്ക്കുക)</span>
+                        <span id="firebase-toggle-indicator">+</span>
+                    </button>
+
+                    <div id="firebase-advanced-fields" style="display: none;" class="mt-3 space-y-2.5 p-3 rounded-2xl bg-stone-50 border border-stone-200">
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-600 mb-0.5">apiKey</label>
+                            <input type="text" id="setting-fb-apikey" class="w-full px-3 py-2 text-xs font-mono bg-white border border-stone-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-600 mb-0.5">projectId</label>
+                            <input type="text" id="setting-fb-projectid" class="w-full px-3 py-2 text-xs font-mono bg-white border border-stone-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-600 mb-0.5">authDomain</label>
+                            <input type="text" id="setting-fb-authdomain" class="w-full px-3 py-2 text-xs font-mono bg-white border border-stone-300 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-600 mb-0.5">appId</label>
+                            <input type="text" id="setting-fb-appid" class="w-full px-3 py-2 text-xs font-mono bg-white border border-stone-300 rounded-xl">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('shop-settings-modal')" class="px-4 py-2.5 rounded-xl text-sm font-bold text-stone-600 hover:bg-stone-100 cursor-pointer">റദ്ദാക്കുക</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-extrabold bg-stone-900 text-white cursor-pointer">സേവ് ചെയ്യുക</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PIN Verification Modal -->
+    <div id="pin-verify-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/80 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-stone-200 text-center">
+            <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="lock" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-extrabold text-stone-900">Shop PIN നൽകുക</h3>
+            <p id="pin-verify-shop-label" class="text-xs font-bold text-stone-500 mt-1"></p>
+
+            <form id="pin-verify-form" class="mt-4 space-y-3">
+                <input type="password" inputmode="numeric" id="verify-pin-input" required placeholder="PIN കോഡ്" class="w-full px-4 py-2.5 text-center text-base font-extrabold tracking-widest border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                <div class="flex items-center gap-2 pt-1">
+                    <button type="button" onclick="cancelPinVerification()" class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 cursor-pointer">റദ്ദാക്കുക</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl text-sm font-extrabold bg-stone-900 text-white cursor-pointer">തുറക്കുക</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCp5gTgS8RiEhMb9zXmoy4sxsaMLDZWiUk",
+            authDomain: "malabar-pos-business.firebaseapp.com",
+            projectId: "malabar-pos-business",
+            storageBucket: "malabar-pos-business.firebasestorage.app",
+            messagingSenderId: "1001726356903",
+            appId: "1:1001726356903:web:9e6328c610f2ba869d1a82"
+        };
+
+        const KEYS = {
+            SHOP: 'kerala_hotel_pos_shop_v1',
+            MENU: 'kerala_hotel_pos_menu_v1',
+            TABLES: 'kerala_hotel_pos_tables_v1',
+            KITCHEN_STATUS: 'kerala_hotel_pos_kitchen_v1',
+            BIZ_CONFIG: 'kerala_hotel_pos_biz_cfg_v1',
+            SOUND_ENABLED: 'kerala_hotel_pos_sound_v1'
+        };
+
+        const DEFAULT_MENU = [
+            { id: 'm1', name: 'ചായ', price: 12, cat: 'tea' },
+            { id: 'm2', name: 'കാപ്പി', price: 15, cat: 'tea' },
+            { id: 'm3', name: 'പഴംപൊരി', price: 15, cat: 'tea' },
+            { id: 'm4', name: 'ഉഴുന്നുവട', price: 12, cat: 'tea' },
+            { id: 'm5', name: 'പരിപ്പുവട', price: 12, cat: 'tea' },
+            { id: 'm6', name: 'പൊറോട്ട', price: 15, cat: 'breakfast' },
+            { id: 'm7', name: 'ദോശ', price: 15, cat: 'breakfast' },
+            { id: 'm8', name: 'ഇഡ്ഡലി', price: 12, cat: 'breakfast' },
+            { id: 'm9', name: 'പുട്ട്', price: 20, cat: 'breakfast' },
+            { id: 'm10', name: 'വെള്ളയപ്പം', price: 15, cat: 'breakfast' },
+            { id: 'm11', name: 'കടലക്കറി', price: 40, cat: 'breakfast' },
+            { id: 'm12', name: 'മുട്ടക്കറി', price: 45, cat: 'breakfast' },
+            { id: 'm13', name: 'ഊണ്', price: 70, cat: 'meals' },
+            { id: 'm14', name: 'ചിക്കൻ ബിരിയാണി', price: 140, cat: 'meals' },
+            { id: 'm15', name: 'ബീഫ് റോസ്റ്റ്', price: 110, cat: 'dinner' },
+            { id: 'm16', name: 'ചിക്കൻ ഫ്രൈ', price: 100, cat: 'dinner' },
+            { id: 'm17', name: 'മീൻ കറി', price: 60, cat: 'meals' },
+            { id: 'm18', name: 'ലൈം ജ്യൂസ്', price: 25, cat: 'tea' }
+        ];
+
+        let shopInfo = { name: 'മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്', place: 'പേരളശ്ശേരി / കണ്ണൂർ' };
+        let bizConfig = {
+            tableCount: 5,
+            shopId: 'malabar-default',
+            shopPin: '',
+            firebase: { ...DEFAULT_FIREBASE_CONFIG }
+        };
+        let menuItems = [...DEFAULT_MENU];
+        let tableOrders = {};
+        let kitchenStatus = {};
+        let soundEnabled = true;
+
+        let audioCtx = null;
+        let firestoreDb = null;
+        let cloudReady = false;
+        let unsubscribeSnapshot = null;
+        let pendingSettingsDraft = null;
+        let isInitialSnapshotLoad = true;
+        let lastOrderSignature = '';
+
+        function unlockAudioContext() {
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) return null;
+                if (!audioCtx) audioCtx = new AudioContextClass();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                return audioCtx;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function playTone(freq, durationSec, startOffsetSec = 0, gainPeak = 0.28) {
+            if (!soundEnabled) return;
+            const ctx = unlockAudioContext();
+            if (!ctx) return;
+
+            try {
+                const now = ctx.currentTime + startOffsetSec;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.exponentialRampToValueAtTime(gainPeak, now + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + durationSec + 0.02);
+            } catch (e) {
+                // Ignore audio errors
+            }
+        }
+
+        function playKitchenOrderBeep() {
+            playTone(880, 0.18, 0, 0.3);
+            playTone(1046.5, 0.24, 0.21, 0.3);
+        }
+
+        function testKitchenBeep() {
+            soundEnabled = true;
+            localStorage.setItem(KEYS.SOUND_ENABLED, '1');
+            updateSoundButtonUI();
+            playKitchenOrderBeep();
+            showToast('🔔 കിച്ചൻ ബീപ്പ് ശബ്ദം ടെസ്റ്റ് ചെയ്തു!');
+        }
+
+        function enableAndToggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem(KEYS.SOUND_ENABLED, soundEnabled ? '1' : '0');
+            if (soundEnabled) {
+                unlockAudioContext();
+                playKitchenOrderBeep();
+                showToast('🔊 കിച്ചൻ ശബ്ദം ഓൺ ചെയ്തു.');
+            } else {
+                showToast('🔇 കിച്ചൻ ശബ്ദം ഓഫ് ചെയ്തു.');
+            }
+            updateSoundButtonUI();
+        }
+
+        function updateSoundButtonUI() {
+            const label = document.getElementById('sound-toggle-label');
+            const btn = document.getElementById('sound-toggle-btn');
+            if (!label || !btn) return;
+            if (soundEnabled) {
+                label.textContent = 'ശബ്ദം ഓൺ';
+                btn.className = 'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-900/90 hover:bg-emerald-800 text-emerald-200 border border-emerald-700 cursor-pointer';
+            } else {
+                label.textContent = 'ശബ്ദം ഓഫ്';
+                btn.className = 'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-800 hover:bg-stone-700 text-stone-400 border border-stone-600 cursor-pointer';
+            }
+        }
+
+        document.addEventListener('pointerdown', () => {
+            if (soundEnabled) unlockAudioContext();
+        }, { passive: true });
+
+        function getTablesList() {
+            const count = parseInt(bizConfig.tableCount, 10) || 5;
+            const list = [];
+            for (let i = 1; i <= count; i++) {
+                list.push({ id: `t${i}`, label: `ടേബിൾ ${i}` });
+            }
+            list.push({ id: 'parcel', label: 'പാർസൽ' });
+            return list;
+        }
+
+        function getActiveFirebaseConfig() {
+            const custom = bizConfig.firebase || {};
+            return {
+                apiKey: (custom.apiKey || '').trim() || DEFAULT_FIREBASE_CONFIG.apiKey,
+                authDomain: (custom.authDomain || '').trim() || DEFAULT_FIREBASE_CONFIG.authDomain,
+                projectId: (custom.projectId || '').trim() || DEFAULT_FIREBASE_CONFIG.projectId,
+                storageBucket: DEFAULT_FIREBASE_CONFIG.storageBucket,
+                messagingSenderId: DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+                appId: (custom.appId || '').trim() || DEFAULT_FIREBASE_CONFIG.appId
+            };
+        }
+
+        function computeOrdersSignature(ordersMap) {
+            if (!ordersMap) return '';
+            return Object.keys(ordersMap)
+                .sort()
+                .map(tid => {
+                    const items = ordersMap[tid] || {};
+                    const pairs = Object.keys(items)
+                        .filter(k => items[k] > 0)
+                        .sort()
+                        .map(k => `${k}:${items[k]}`);
+                    return pairs.length ? `${tid}[${pairs.join(',')}]` : '';
+                })
+                .filter(Boolean)
+                .join('|');
+        }
+
+        function loadLocal() {
+            try {
+                const sSound = localStorage.getItem(KEYS.SOUND_ENABLED);
+                if (sSound !== null) soundEnabled = sSound === '1';
+
+                const sBiz = localStorage.getItem(KEYS.BIZ_CONFIG);
+                if (sBiz) {
+                    const parsed = JSON.parse(sBiz);
+                    bizConfig = Object.assign({
+                        tableCount: 5,
+                        shopId: 'malabar-default',
+                        shopPin: '',
+                        firebase: { ...DEFAULT_FIREBASE_CONFIG }
+                    }, parsed);
+                    bizConfig.firebase = Object.assign({ ...DEFAULT_FIREBASE_CONFIG }, parsed.firebase || {});
+                }
+
+                const sShop = localStorage.getItem(KEYS.SHOP);
+                if (sShop) shopInfo = JSON.parse(sShop);
+
+                const sMenu = localStorage.getItem(KEYS.MENU);
+                if (sMenu) menuItems = JSON.parse(sMenu);
+
+                const sTables = localStorage.getItem(KEYS.TABLES);
+                if (sTables) tableOrders = JSON.parse(sTables);
+
+                const sKitchen = localStorage.getItem(KEYS.KITCHEN_STATUS);
+                if (sKitchen) kitchenStatus = JSON.parse(sKitchen);
+
+                lastOrderSignature = computeOrdersSignature(tableOrders);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function saveLocal() {
+            try {
+                localStorage.setItem(KEYS.BIZ_CONFIG, JSON.stringify(bizConfig));
+                localStorage.setItem(KEYS.SHOP, JSON.stringify(shopInfo));
+                localStorage.setItem(KEYS.MENU, JSON.stringify(menuItems));
+                localStorage.setItem(KEYS.TABLES, JSON.stringify(tableOrders));
+                localStorage.setItem(KEYS.KITCHEN_STATUS, JSON.stringify(kitchenStatus));
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function pushKitchenStatus() {
+            saveLocal();
+            if (!cloudReady || !firestoreDb) return;
+            try {
+                const shopDocRef = doc(firestoreDb, 'shops', bizConfig.shopId || 'malabar-default');
+                await setDoc(shopDocRef, { kitchenStatus }, { merge: true });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function applyRemoteData(data, silent = false) {
+            const prevSig = lastOrderSignature;
+            if (data.shopInfo) shopInfo = Object.assign({}, shopInfo, data.shopInfo);
+            if (data.tableCount) bizConfig.tableCount = parseInt(data.tableCount, 10) || bizConfig.tableCount;
+            if (data.shopPin) bizConfig.shopPin = data.shopPin;
+            if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
+            if (data.tableOrders) tableOrders = data.tableOrders;
+            if (data.kitchenStatus) kitchenStatus = data.kitchenStatus;
+
+            saveLocal();
+
+            const nextSig = computeOrdersSignature(tableOrders);
+            if (!silent && nextSig && nextSig !== prevSig) {
+                playKitchenOrderBeep();
+                showToast('🔔 കിച്ചനിലേക്ക് പുതിയ ഓർഡർ വന്നു!');
+            }
+            lastOrderSignature = nextSig;
+
+            renderHeader();
+            renderKitchenOrders();
+        }
+
+        async function initSync() {
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
+            isInitialSnapshotLoad = true;
+            const cfg = getActiveFirebaseConfig();
+            const badge = document.getElementById('cloud-sync-badge');
+
+            try {
+                const app = initializeApp(cfg, `kitchen-${bizConfig.shopId || 'default'}-${Date.now()}`);
+                firestoreDb = getFirestore(app);
+                cloudReady = true;
+
+                const ref = doc(firestoreDb, 'shops', bizConfig.shopId || 'malabar-default');
+                const snap = await getDoc(ref);
+
+                if (snap.exists()) {
+                    const remote = snap.data();
+                    if (remote.shopPin && bizConfig.shopPin !== remote.shopPin) {
+                        cloudReady = false;
+                        if (badge) {
+                            badge.textContent = 'PIN ആവശ്യമാണ്';
+                            badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-700';
+                        }
+                        pendingSettingsDraft = {
+                            name: remote.shopInfo?.name || shopInfo.name,
+                            place: remote.shopInfo?.place || shopInfo.place,
+                            tableCount: remote.tableCount || bizConfig.tableCount || 5,
+                            shopId: bizConfig.shopId,
+                            shopPin: '',
+                            expectedPin: remote.shopPin,
+                            firebase: cfg
+                        };
+                        openPinVerificationModal(bizConfig.shopId);
+                        return;
+                    }
+                    applyRemoteData(remote, true);
+                    isInitialSnapshotLoad = false;
+                }
+
+                if (badge) {
+                    badge.textContent = `Live: ${bizConfig.shopId}`;
+                    badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700';
+                }
+
+                unsubscribeSnapshot = onSnapshot(ref, (docSnap) => {
+                    if (!docSnap.exists()) return;
+                    const data = docSnap.data();
+                    if (data.shopPin && bizConfig.shopPin && data.shopPin !== bizConfig.shopPin) return;
+                    applyRemoteData(data, isInitialSnapshotLoad);
+                    isInitialSnapshotLoad = false;
+                });
+            } catch (err) {
+                console.error(err);
+                cloudReady = false;
+                if (badge) {
+                    badge.textContent = 'ഓഫ്‌ലൈൻ ബാക്ക്‌അപ്പ്';
+                    badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-700';
+                }
+            }
+        }
+
+        function renderHeader() {
+            document.getElementById('kitchen-shop-name').textContent = shopInfo.name;
+        }
+
+        function renderKitchenOrders() {
+            const container = document.getElementById('kitchen-orders-grid');
+            const tables = getTablesList();
+
+            const activeEntries = tables
+                .map(t => {
+                    const orderMap = tableOrders[t.id] || {};
+                    const entries = Object.entries(orderMap)
+                        .filter(([, qty]) => qty > 0)
+                        .map(([itemId, qty]) => {
+                            const menu = menuItems.find(m => m.id === itemId);
+                            return { name: menu ? menu.name : itemId, qty };
+                        });
+                    return {
+                        table: t,
+                        items: entries,
+                        status: kitchenStatus[t.id] || 'new'
+                    };
+                })
+                .filter(e => e.items.length > 0);
+
+            if (activeEntries.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full bg-white rounded-3xl p-12 text-center border border-stone-200 shadow-xs">
+                        <p class="text-lg font-extrabold text-stone-700">നിലവിൽ കിച്ചനിലേക്ക് ഓർഡറുകൾ ഒന്നും വന്നിട്ടില്ല</p>
+                        <p class="text-sm text-stone-500 mt-1">സപ്ലയർ ടേബിളുകളിൽ ഓർഡർ ചേർക്കുമ്പോൾ ബീപ്പ് ശബ്ദത്തോടെ ഇവിടെ കാണാം</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = activeEntries.map(({ table, items, status }) => {
+                const isPreparing = status === 'preparing';
+                const isReady = status === 'ready';
+
+                let cardBorder = 'border-amber-400 bg-white';
+                let statusBadge = `<span class="text-xs font-extrabold px-3 py-1 rounded-full bg-amber-100 text-amber-900">പുതിയ ഓർഡർ</span>`;
+
+                if (isPreparing) {
+                    cardBorder = 'border-orange-500 bg-orange-50/50';
+                    statusBadge = `<span class="text-xs font-extrabold px-3 py-1 rounded-full bg-orange-500 text-white">തയ്യാറാക്കുന്നു...</span>`;
+                } else if (isReady) {
+                    cardBorder = 'border-emerald-500 bg-emerald-50/60';
+                    statusBadge = `<span class="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-600 text-white">റെഡി (Ready)</span>`;
+                }
+
+                const itemsHtml = items.map(it => `
+                    <li class="flex items-center justify-between py-2.5 border-b border-stone-200/70 last:border-b-0">
+                        <span class="text-lg sm:text-xl font-extrabold text-stone-900">${escapeHtml(it.name)}</span>
+                        <span class="px-3 py-1 rounded-xl bg-stone-900 text-amber-300 text-base font-extrabold">× ${it.qty}</span>
+                    </li>
+                `).join('');
+
+                return `
+                    <div class="rounded-3xl border-2 ${cardBorder} p-4 sm:p-5 shadow-sm flex flex-col justify-between gap-4">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-stone-200">
+                                <h2 class="text-xl font-extrabold text-stone-900">${escapeHtml(table.label)}</h2>
+                                ${statusBadge}
+                            </div>
+                            <ul class="mt-1">${itemsHtml}</ul>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button onclick="setKitchenOrderStatus('${table.id}', 'preparing')" class="py-3 px-3 rounded-xl text-sm font-extrabold border ${isPreparing ? 'bg-orange-500 text-white border-orange-600' : 'bg-white text-orange-800 border-orange-300 hover:bg-orange-50'} cursor-pointer">
+                                തയ്യാറാക്കുന്നു
+                            </button>
+                            <button onclick="setKitchenOrderStatus('${table.id}', 'ready')" class="py-3 px-3 rounded-xl text-sm font-extrabold border ${isReady ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white text-emerald-800 border-emerald-300 hover:bg-emerald-50'} cursor-pointer">
+                                റെഡി (Ready)
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        async function setKitchenOrderStatus(tableId, nextStatus) {
+            kitchenStatus[tableId] = nextStatus;
+            await pushKitchenStatus();
+            renderKitchenOrders();
+            const label = tableId === 'parcel' ? 'പാർസൽ' : tableId.replace('t', 'ടേബിൾ ');
+            showToast(`${label} സ്റ്റാറ്റസ് അപ്ഡേറ്റ് ചെയ്തു.`);
+        }
+
+        function toggleFirebaseFields() {
+            const box = document.getElementById('firebase-advanced-fields');
+            const ind = document.getElementById('firebase-toggle-indicator');
+            if (!box) return;
+            const isHidden = box.style.display === 'none' || box.style.display === '';
+            box.style.display = isHidden ? 'block' : 'none';
+            if (ind) ind.textContent = isHidden ? '−' : '+';
+        }
+
+        function openShopSettingsModal() {
+            const fb = getActiveFirebaseConfig();
+            document.getElementById('setting-hotel-name').value = shopInfo.name;
+            document.getElementById('setting-hotel-place').value = shopInfo.place;
+            document.getElementById('setting-table-count').value = String(bizConfig.tableCount || 5);
+            document.getElementById('setting-shop-id').value = bizConfig.shopId || 'malabar-default';
+            document.getElementById('setting-shop-pin').value = bizConfig.shopPin || '';
+
+            document.getElementById('setting-fb-apikey').value = fb.apiKey || '';
+            document.getElementById('setting-fb-projectid').value = fb.projectId || '';
+            document.getElementById('setting-fb-authdomain').value = fb.authDomain || '';
+            document.getElementById('setting-fb-appid').value = fb.appId || '';
+
+            const box = document.getElementById('firebase-advanced-fields');
+            const ind = document.getElementById('firebase-toggle-indicator');
+            if (box) box.style.display = 'none';
+            if (ind) ind.textContent = '+';
+
+            openModal('shop-settings-modal');
+        }
+
+        function openPinVerificationModal(shopId) {
+            document.getElementById('pin-verify-shop-label').textContent = `Shop ID: ${shopId}`;
+            document.getElementById('verify-pin-input').value = '';
+            openModal('pin-verify-modal');
+        }
+
+        function cancelPinVerification() {
+            pendingSettingsDraft = null;
+            closeModal('pin-verify-modal');
+        }
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+
+        function showToast(msg) {
+            const box = document.getElementById('toast-box');
+            const toast = document.createElement('div');
+            toast.className = 'bg-stone-900 text-amber-300 border border-stone-700 px-4 py-2.5 rounded-2xl shadow-xl text-xs sm:text-sm font-bold text-center';
+            toast.textContent = msg;
+            box.appendChild(toast);
+            setTimeout(() => toast.remove(), 2600);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadLocal();
+            updateSoundButtonUI();
+            renderHeader();
+            renderKitchenOrders();
+
+            document.getElementById('shop-settings-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('setting-hotel-name').value.trim();
+                const place = document.getElementById('setting-hotel-place').value.trim();
+                const tableCount = parseInt(document.getElementById('setting-table-count').value, 10) || 5;
+                const shopId = (document.getElementById('setting-shop-id').value || 'malabar-default').trim().replace(/\s+/g, '-').toLowerCase();
+                const shopPin = (document.getElementById('setting-shop-pin').value || '').trim();
+                const nextFirebase = {
+                    apiKey: (document.getElementById('setting-fb-apikey')?.value || '').trim() || DEFAULT_FIREBASE_CONFIG.apiKey,
+                    projectId: (document.getElementById('setting-fb-projectid')?.value || '').trim() || DEFAULT_FIREBASE_CONFIG.projectId,
+                    authDomain: (document.getElementById('setting-fb-authdomain')?.value || '').trim() || DEFAULT_FIREBASE_CONFIG.authDomain,
+                    storageBucket: DEFAULT_FIREBASE_CONFIG.storageBucket,
+                    messagingSenderId: DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+                    appId: (document.getElementById('setting-fb-appid')?.value || '').trim() || DEFAULT_FIREBASE_CONFIG.appId
+                };
+
+                if (!name) return;
+
+                try {
+                    const tempApp = initializeApp(nextFirebase, `kcheck-${Date.now()}`);
+                    const tempDb = getFirestore(tempApp);
+                    const snap = await getDoc(doc(tempDb, 'shops', shopId));
+                    if (snap.exists()) {
+                        const existingPin = (snap.data().shopPin || '').trim();
+                        if (existingPin && existingPin !== shopPin) {
+                            pendingSettingsDraft = { name, place, tableCount, shopId, shopPin, expectedPin: existingPin, firebase: nextFirebase };
+                            closeModal('shop-settings-modal');
+                            openPinVerificationModal(shopId);
+                            showToast('ഈ Shop ID-ക്ക് മറ്റൊരു PIN ആണ് ഉള്ളത്!');
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+
+                shopInfo = { name, place };
+                bizConfig = { tableCount, shopId, shopPin, firebase: nextFirebase };
+                saveLocal();
+                renderHeader();
+                renderKitchenOrders();
+                closeModal('shop-settings-modal');
+                showToast(`കിച്ചൻ കണക്ട് ചെയ്തു (${shopId}).`);
+                await initSync();
+            });
+
+            document.getElementById('pin-verify-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const enteredPin = (document.getElementById('verify-pin-input').value || '').trim();
+                if (!pendingSettingsDraft) return;
+                if (enteredPin !== pendingSettingsDraft.expectedPin) {
+                    showToast('തെറ്റായ Shop PIN!');
+                    return;
+                }
+                shopInfo = { name: pendingSettingsDraft.name, place: pendingSettingsDraft.place };
+                bizConfig = {
+                    tableCount: pendingSettingsDraft.tableCount,
+                    shopId: pendingSettingsDraft.shopId,
+                    shopPin: enteredPin,
+                    firebase: pendingSettingsDraft.firebase || { ...DEFAULT_FIREBASE_CONFIG }
+                };
+                pendingSettingsDraft = null;
+                saveLocal();
+                closeModal('pin-verify-modal');
+                renderHeader();
+                renderKitchenOrders();
+                await initSync();
+            });
+
+            await initSync();
+        });
+
+        window.openShopSettingsModal = openShopSettingsModal;
+        window.toggleFirebaseFields = toggleFirebaseFields;
+        window.enableAndToggleSound = enableAndToggleSound;
+        window.testKitchenBeep = testKitchenBeep;
+        window.cancelPinVerification = cancelPinVerification;
+        window.closeModal = closeModal;
+        window.setKitchenOrderStatus = setKitchenOrderStatus;
+    </script>
+</body>
+</html>
