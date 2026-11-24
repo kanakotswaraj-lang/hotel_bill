@@ -111,7 +111,7 @@
                 <!-- Date Badge -->
                 <div class="flex items-center gap-2 bg-stone-800 px-3 py-1.5 rounded-xl border border-stone-700">
                     <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
-                    <span id="header-date" class="text-xs sm:text-sm font-bold text-stone-100">23-11-2026</span>
+                    <span id="header-date" class="text-xs sm:text-sm font-bold text-stone-100">24-11-2026</span>
                 </div>
             </div>
 
@@ -278,7 +278,7 @@
             <div class="flex items-center justify-between pb-3 border-b border-stone-200">
                 <div>
                     <h2 class="text-xl font-extrabold text-stone-900">ഇന്നത്തെ വിറ്റുവരവ് & കടം റിപ്പോർട്ട്</h2>
-                    <p id="report-date-subtitle" class="text-xs font-bold text-stone-500 mt-0.5">തീയതി: 23-11-2026</p>
+                    <p id="report-date-subtitle" class="text-xs font-bold text-stone-500 mt-0.5">തീയതി: 24-11-2026</p>
                 </div>
                 <button onclick="closeModal('daily-report-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -404,11 +404,11 @@
         </div>
     </div>
 
-    <!-- Modal 3: Business Shop & Firebase Config Settings -->
+    <!-- Modal 3: Business Shop & Hidden Firebase Config Settings -->
     <div id="shop-settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-stone-200 my-auto max-h-[92vh] overflow-y-auto">
             <div class="flex items-center justify-between pb-3 border-b border-stone-200">
-                <h2 class="text-lg font-extrabold text-stone-900">സ്ഥാപനത്തിന്റെ വിവരങ്ങൾ & Firebase</h2>
+                <h2 class="text-lg font-extrabold text-stone-900">സ്ഥാപനത്തിന്റെ വിവരങ്ങൾ & Shop ID</h2>
                 <button onclick="closeModal('shop-settings-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -424,28 +424,38 @@
                     <input type="text" id="setting-hotel-place" class="w-full px-3.5 py-2.5 text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
                 </div>
 
-                <div class="pt-3 border-t border-stone-200 space-y-3">
-                    <span class="text-xs font-extrabold text-amber-900 block">Firebase (Firestore) ക്ലൗഡ് കണക്ഷൻ</span>
+                <div class="pt-2 border-t border-stone-200 space-y-3">
                     <div>
                         <label class="block text-xs font-extrabold text-stone-700 mb-1">Shop ID (ഓരോ കടയ്ക്കും പ്രത്യേകം പേര്)</label>
                         <input type="text" id="setting-shop-id" placeholder="ഉദാ: malabar-peralassery" class="w-full px-3.5 py-2 text-xs sm:text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <div>
-                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">apiKey</label>
-                            <input type="text" id="setting-fb-apikey" placeholder="AIzaSy..." class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">projectId</label>
-                            <input type="text" id="setting-fb-projectid" placeholder="malabar-pos-business" class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">authDomain</label>
-                            <input type="text" id="setting-fb-authdomain" placeholder="malabar-pos-business.firebaseapp.com" class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-extrabold text-stone-700 mb-1">appId</label>
-                            <input type="text" id="setting-fb-appid" placeholder="1:1001726356903:web:..." class="w-full px-3 py-2 text-xs font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+
+                    <!-- Hidden Firebase Fields Wrapper (Hidden by Default) -->
+                    <div>
+                        <button type="button" onclick="toggleFirebaseFields()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-extrabold transition cursor-pointer">
+                            <span>⚙️ Firebase ക്രമീകരണങ്ങൾ (മറച്ചുവെച്ചത് - കാണുക / മറയ്ക്കുക)</span>
+                            <span id="firebase-toggle-indicator">+</span>
+                        </button>
+
+                        <div id="firebase-advanced-fields" style="display: none;" class="mt-3 space-y-2.5 p-3 rounded-2xl bg-stone-50 border border-stone-200">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-stone-700 mb-1">apiKey</label>
+                                    <input type="text" id="setting-fb-apikey" placeholder="AIzaSy..." class="w-full px-3 py-2 text-xs font-mono border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-stone-700 mb-1">projectId</label>
+                                    <input type="text" id="setting-fb-projectid" placeholder="malabar-pos-business" class="w-full px-3 py-2 text-xs font-mono border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-stone-700 mb-1">authDomain</label>
+                                    <input type="text" id="setting-fb-authdomain" placeholder="malabar-pos-business.firebaseapp.com" class="w-full px-3 py-2 text-xs font-mono border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-stone-700 mb-1">appId</label>
+                                    <input type="text" id="setting-fb-appid" placeholder="1:1001726356903:web:..." class="w-full px-3 py-2 text-xs font-mono border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -544,6 +554,18 @@
         let firestoreDb = null;
         let cloudReady = false;
 
+        function getActiveFirebaseConfig() {
+            const custom = bizConfig.firebase || {};
+            return {
+                apiKey: (custom.apiKey || '').trim() || DEFAULT_FIREBASE_CONFIG.apiKey,
+                authDomain: (custom.authDomain || '').trim() || DEFAULT_FIREBASE_CONFIG.authDomain,
+                projectId: (custom.projectId || '').trim() || DEFAULT_FIREBASE_CONFIG.projectId,
+                storageBucket: (custom.storageBucket || '').trim() || DEFAULT_FIREBASE_CONFIG.storageBucket,
+                messagingSenderId: (custom.messagingSenderId || '').trim() || DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+                appId: (custom.appId || '').trim() || DEFAULT_FIREBASE_CONFIG.appId
+            };
+        }
+
         function isFirebaseConfigured(cfg) {
             return Boolean(
                 cfg &&
@@ -560,7 +582,7 @@
         }
 
         async function initFirebaseSync() {
-            const cfg = bizConfig.firebase || DEFAULT_FIREBASE_CONFIG;
+            const cfg = getActiveFirebaseConfig();
             const badge = document.getElementById('cloud-sync-badge');
 
             if (!isFirebaseConfigured(cfg)) {
@@ -601,7 +623,12 @@
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
                     const data = snap.data();
-                    if (data.shopInfo) shopInfo = Object.assign(shopInfo, data.shopInfo);
+                    if (data.shopInfo && data.shopInfo.name) {
+                        shopInfo = Object.assign({}, shopInfo, {
+                            name: String(data.shopInfo.name).trim(),
+                            place: String(data.shopInfo.place || shopInfo.place || '').trim()
+                        });
+                    }
                     if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
                     if (data.currentOrder) currentOrder = data.currentOrder;
                     if (data.holdSlots) holdSlots = Object.assign({ h1: null, h2: null, h3: null }, data.holdSlots);
@@ -670,7 +697,7 @@
                 }
 
                 const savedShop = localStorage.getItem(KEYS.SHOP);
-                if (savedShop) shopInfo = JSON.parse(savedShop);
+                if (savedShop) shopInfo = Object.assign({}, shopInfo, JSON.parse(savedShop));
 
                 const savedMenu = localStorage.getItem(KEYS.MENU);
                 menuItems = savedMenu !== null ? JSON.parse(savedMenu) : [...DEFAULT_MENU];
@@ -1420,15 +1447,31 @@
             );
         }
 
-        // --- Shop & Firebase Settings ---
+        // --- Shop & Hidden Firebase Settings ---
+        function toggleFirebaseFields() {
+            const box = document.getElementById('firebase-advanced-fields');
+            const ind = document.getElementById('firebase-toggle-indicator');
+            if (!box) return;
+            const isHidden = box.style.display === 'none' || box.style.display === '';
+            box.style.display = isHidden ? 'block' : 'none';
+            if (ind) ind.textContent = isHidden ? '−' : '+';
+        }
+
         function openShopSettingsModal() {
+            const fb = getActiveFirebaseConfig();
             document.getElementById('setting-hotel-name').value = shopInfo.name;
             document.getElementById('setting-hotel-place').value = shopInfo.place;
             document.getElementById('setting-shop-id').value = bizConfig.shopId || 'malabar-default';
-            document.getElementById('setting-fb-apikey').value = bizConfig.firebase?.apiKey || '';
-            document.getElementById('setting-fb-projectid').value = bizConfig.firebase?.projectId || '';
-            document.getElementById('setting-fb-authdomain').value = bizConfig.firebase?.authDomain || '';
-            document.getElementById('setting-fb-appid').value = bizConfig.firebase?.appId || '';
+            document.getElementById('setting-fb-apikey').value = fb.apiKey || '';
+            document.getElementById('setting-fb-projectid').value = fb.projectId || '';
+            document.getElementById('setting-fb-authdomain').value = fb.authDomain || '';
+            document.getElementById('setting-fb-appid').value = fb.appId || '';
+
+            const box = document.getElementById('firebase-advanced-fields');
+            const ind = document.getElementById('firebase-toggle-indicator');
+            if (box) box.style.display = 'none';
+            if (ind) ind.textContent = '+';
+
             openModal('shop-settings-modal');
         }
 
@@ -1541,6 +1584,7 @@
 
         // Expose inline HTML event handlers
         window.openShopSettingsModal = openShopSettingsModal;
+        window.toggleFirebaseFields = toggleFirebaseFields;
         window.openAddItemModal = openAddItemModal;
         window.openDailyReportModal = openDailyReportModal;
         window.clearCustomerDetails = clearCustomerDetails;
