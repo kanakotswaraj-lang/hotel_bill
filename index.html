@@ -85,10 +85,10 @@
     <!-- Toast Notification -->
     <div id="toast-box" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center gap-2 w-11/12 max-w-md"></div>
 
-    <!-- Compact, High-Readability Header (Scrolls naturally so menu/cart stays clearly visible on small screens) -->
+    <!-- Compact Header: Supplier Quick Actions + Collapsible Owner/Manager Section -->
     <header class="bg-stone-900 text-white shadow-md z-20">
         <div class="max-w-7xl mx-auto px-3 sm:px-5 py-2.5 space-y-2">
-            <!-- Row 1: Hotel Name, Edit, Sync Status, Sound Toggle & Date -->
+            <!-- Row 1: Hotel Name, Sync Status, Owner Toggle, Sound & Date -->
             <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-stone-800">
                 <div class="flex items-center gap-2 min-w-0">
                     <div class="w-9 h-9 rounded-xl bg-amber-500 text-stone-950 flex items-center justify-center font-extrabold flex-shrink-0">
@@ -97,9 +97,6 @@
                     <div class="min-w-0">
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <h1 id="header-hotel-name" class="text-base sm:text-xl font-extrabold tracking-tight text-amber-300 leading-snug">മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്</h1>
-                            <button onclick="openShopSettingsModal()" class="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white transition cursor-pointer" title="കടയുടെ പേര് / Shop ID / PIN മാറ്റുക">
-                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                            </button>
                             <span id="cloud-sync-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
                                 കണക്ട് ചെയ്യുന്നു...
                             </span>
@@ -108,59 +105,78 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <button id="owner-panel-toggle-btn" type="button" onclick="toggleOwnerPanel()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/50 cursor-pointer" title="മുതലാളി / കണക്ക് ഭാഗം കാണുക അല്ലെങ്കിൽ മറയ്ക്കുക">
+                        <i data-lucide="user-cog" class="w-4 h-4"></i>
+                        <span id="owner-panel-toggle-label">മുതലാളി / കണക്ക്</span>
+                    </button>
+
                     <button id="sound-toggle-btn" type="button" onclick="enableAndToggleSound()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-900/90 hover:bg-emerald-800 text-emerald-200 border border-emerald-700 cursor-pointer" title="കിച്ചൻ / സപ്ലയർ ശബ്ദം ഓൺ/ഓഫ് ചെയ്യുക">
                         <i data-lucide="volume-2" class="w-4 h-4"></i>
                         <span id="sound-toggle-label">ശബ്ദം ഓൺ</span>
                     </button>
+
                     <div class="flex items-center gap-1.5 bg-stone-800 px-2.5 py-1.5 rounded-xl border border-stone-700">
                         <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
-                        <span id="header-date" class="text-xs sm:text-sm font-extrabold text-stone-100">24-11-2026</span>
+                        <span id="header-date" class="text-xs sm:text-sm font-extrabold text-stone-100">25-11-2026</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Row 2: Compact Sales Summary + Action Buttons -->
+            <!-- Supplier Quick Navigation Bar (Always accessible for Supplier) -->
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <div class="bg-emerald-950/90 border border-emerald-700/70 px-3 py-1 rounded-xl flex items-baseline gap-2">
-                        <span class="text-xs sm:text-sm text-emerald-300 font-bold">ഇന്നത്തെ വിറ്റുവരവ്:</span>
-                        <span id="live-total-sales" class="text-base sm:text-lg font-extrabold text-emerald-400">₹0</span>
-                    </div>
-                    <div class="bg-stone-800 border border-stone-700 px-3 py-1 rounded-xl flex items-baseline gap-2">
-                        <span class="text-xs sm:text-sm text-stone-300 font-bold">ബില്ലുകൾ:</span>
-                        <span id="live-total-bills" class="text-base sm:text-lg font-extrabold text-white">0</span>
-                    </div>
-                </div>
-
+                <span class="text-xs font-extrabold text-stone-300">സപ്ലയർ / ഓർഡർ:</span>
                 <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <a href="kitchen.html" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-400 active:scale-95 text-stone-950 px-3 py-2 rounded-xl text-sm font-extrabold shadow-xs transition cursor-pointer">
-    <i data-lucide="chef-hat" class="w-4 h-4"></i>
-    <span>കിച്ചൻ വ്യൂ</span>
-</a>
+                    <a href="kitchen.html" class="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-400 active:scale-95 text-stone-950 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold shadow-xs transition cursor-pointer">
+                        <i data-lucide="chef-hat" class="w-4 h-4"></i>
+                        <span>കിച്ചൻ വ്യൂ</span>
+                    </a>
 
-                    <a href="parcel-credit-billing.html" class="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-950 border border-amber-300 px-3 py-2 rounded-xl text-sm font-extrabold transition cursor-pointer">
+                    <a href="parcel-credit-billing.html" class="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-950 border border-amber-300 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer">
                         <i data-lucide="package" class="w-4 h-4"></i>
                         <span>പാർസൽ / കടം →</span>
                     </a>
-                    <button onclick="openAddItemModal()" class="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 active:scale-95 text-amber-300 border border-stone-600 px-3 py-2 rounded-xl text-sm font-extrabold transition cursor-pointer">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                        <span>പുതിയ ഐറ്റം</span>
-                    </button>
-                    <button onclick="openDailyReportModal()" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-stone-950 px-3 py-2 rounded-xl text-sm font-extrabold shadow-xs transition cursor-pointer">
-                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
-                        <span>ഇന്നത്തെ കണക്ക്</span>
-                    </button>
                 </div>
             </div>
 
-            <!-- Row 3: Compact Hold Slots Bar -->
-            <div id="hold-slots-bar" class="pt-1.5 border-t border-stone-800 flex flex-wrap items-center gap-2">
-                <span class="text-xs sm:text-sm font-extrabold text-amber-300 flex items-center gap-1">
-                    <i data-lucide="pause-circle" class="w-4 h-4"></i>
-                    ഹോൾഡ്:
-                </span>
-                <div id="hold-slots-buttons" class="flex flex-wrap items-center gap-1.5 flex-1"></div>
+            <!-- Collapsible Owner / Manager Section (Hidden by Default so Supplier View Stays Clean) -->
+            <div id="owner-manager-panel" class="hidden pt-2 mt-1 border-t border-amber-500/30 bg-stone-950/50 rounded-2xl p-2.5 space-y-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="bg-emerald-950/90 border border-emerald-700/70 px-3 py-1 rounded-xl flex items-baseline gap-2">
+                            <span class="text-xs sm:text-sm text-emerald-300 font-bold">ഇന്നത്തെ വിറ്റുവരവ്:</span>
+                            <span id="live-total-sales" class="text-base sm:text-lg font-extrabold text-emerald-400">₹0</span>
+                        </div>
+                        <div class="bg-stone-800 border border-stone-700 px-3 py-1 rounded-xl flex items-baseline gap-2">
+                            <span class="text-xs sm:text-sm text-stone-300 font-bold">ബില്ലുകൾ:</span>
+                            <span id="live-total-bills" class="text-base sm:text-lg font-extrabold text-white">0</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button onclick="openShopSettingsModal()" class="flex items-center gap-1 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer" title="കടയുടെ പേര് / Shop ID / PIN മാറ്റുക">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            <span>സെറ്റിംഗ്സ്</span>
+                        </button>
+                        <button onclick="openAddItemModal()" class="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 active:scale-95 text-amber-300 border border-stone-600 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            <span>പുതിയ ഐറ്റം</span>
+                        </button>
+                        <button onclick="openDailyReportModal()" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-stone-950 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold shadow-xs transition cursor-pointer">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                            <span>ഇന്നത്തെ കണക്ക്</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hold Slots Bar (Inside Owner/Manager Panel) -->
+                <div id="hold-slots-bar" class="pt-1.5 border-t border-stone-800 flex flex-wrap items-center gap-2">
+                    <span class="text-xs sm:text-sm font-extrabold text-amber-300 flex items-center gap-1">
+                        <i data-lucide="pause-circle" class="w-4 h-4"></i>
+                        ഹോൾഡ്:
+                    </span>
+                    <div id="hold-slots-buttons" class="flex flex-wrap items-center gap-1.5 flex-1"></div>
+                </div>
             </div>
         </div>
     </header>
@@ -298,7 +314,7 @@
             <div class="flex items-center justify-between pb-3 border-b border-stone-200">
                 <div>
                     <h2 class="text-xl font-extrabold text-stone-900">ഇന്നത്തെ വിറ്റുവരവ് റിപ്പോർട്ട്</h2>
-                    <p id="report-date-subtitle" class="text-xs sm:text-sm font-bold text-stone-500 mt-0.5">തീയതി: 24-11-2026</p>
+                    <p id="report-date-subtitle" class="text-xs sm:text-sm font-bold text-stone-500 mt-0.5">തീയതി: 25-11-2026</p>
                 </div>
                 <button onclick="closeModal('daily-report-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -583,7 +599,7 @@
             { id: 'm18', name: 'ലൈം ജ്യൂസ്', price: 25, cat: 'tea' }
         ];
 
-        let shopInfo = { name: 'മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്', place: 'പേരളശ്ശേരി / കണ്ണൂർ' };
+        let shopInfo = { name: 'മിനു കാറ്ററിംഗ്', place: 'കോളയാട് / കണ്ണൂർ' };
         let bizConfig = {
             tableCount: 5,
             shopId: 'malabar-default',
@@ -592,7 +608,7 @@
         };
         let menuItems = [];
         let tableOrders = {};
-        let kitchenStatus = {}; // { t1: 'new' | 'preparing' | 'ready' }
+        let kitchenStatus = {};
         let holdSlots = { h1: null, h2: null, h3: null };
         let parcelInfo = { name: '', phone: '', address: '' };
         let completedBills = [];
@@ -600,6 +616,7 @@
         let activeTableId = 't1';
         let activeCategory = 'all';
         let soundEnabled = true;
+        let ownerPanelOpen = false;
 
         let audioCtx = null;
         let firestoreDb = null;
@@ -609,6 +626,27 @@
         let isInitialSnapshotLoad = true;
         let lastAnnouncedReadyMap = {};
         let lastKitchenOrderSignature = '';
+
+        /* ---------------- Owner / Manager Section Toggle ---------------- */
+        function toggleOwnerPanel() {
+            ownerPanelOpen = !ownerPanelOpen;
+            updateOwnerPanelUI();
+        }
+
+        function updateOwnerPanelUI() {
+            const panel = document.getElementById('owner-manager-panel');
+            const label = document.getElementById('owner-panel-toggle-label');
+            if (panel) {
+                if (ownerPanelOpen) {
+                    panel.classList.remove('hidden');
+                } else {
+                    panel.classList.add('hidden');
+                }
+            }
+            if (label) {
+                label.textContent = ownerPanelOpen ? 'കണക്ക് മറയ്ക്കുക' : 'മുതലാളി / കണക്ക്';
+            }
+        }
 
         /* ---------------- Audio Beep Alert System (Web Audio API) ---------------- */
         function unlockAudioContext() {
@@ -648,9 +686,7 @@
 
                 osc.start(now);
                 osc.stop(now + durationSec + 0.02);
-            } catch (e) {
-                // Ignore audio errors if browser blocks autoplay before tap
-            }
+            } catch (e) {}
         }
 
         function playKitchenOrderBeep() {
@@ -868,7 +904,12 @@
             const prevKitchen = Object.assign({}, kitchenStatus);
             const prevSig = lastKitchenOrderSignature;
 
-            if (data.shopInfo) shopInfo = Object.assign({}, shopInfo, data.shopInfo);
+            if (data.shopInfo && data.shopInfo.name) {
+                shopInfo = Object.assign({}, shopInfo, {
+                    name: String(data.shopInfo.name).trim(),
+                    place: String(data.shopInfo.place || shopInfo.place || '').trim()
+                });
+            }
             if (data.tableCount) bizConfig.tableCount = parseInt(data.tableCount, 10) || bizConfig.tableCount;
             if (data.shopPin) bizConfig.shopPin = data.shopPin;
             if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
@@ -946,6 +987,7 @@
             loadState();
             document.getElementById('header-date').textContent = getTodayDDMMYYYY();
             updateSoundButtonUI();
+            updateOwnerPanelUI();
             syncParcelInputs();
             setupForms();
             renderAll();
@@ -972,7 +1014,7 @@
                 }
 
                 const savedShop = localStorage.getItem(KEYS.SHOP);
-                if (savedShop) shopInfo = JSON.parse(savedShop);
+                if (savedShop) shopInfo = Object.assign({}, shopInfo, JSON.parse(savedShop));
 
                 const savedMenu = localStorage.getItem(KEYS.MENU);
                 menuItems = savedMenu ? JSON.parse(savedMenu) : [...DEFAULT_MENU];
@@ -1917,7 +1959,6 @@
             document.getElementById('setting-fb-authdomain').value = fb.authDomain || '';
             document.getElementById('setting-fb-appid').value = fb.appId || '';
 
-            // Keep Firebase fields hidden by default each time modal opens
             const box = document.getElementById('firebase-advanced-fields');
             const ind = document.getElementById('firebase-toggle-indicator');
             if (box) box.style.display = 'none';
@@ -2094,6 +2135,7 @@
                 .replace(/'/g, '&#039;');
         }
 
+        window.toggleOwnerPanel = toggleOwnerPanel;
         window.openShopSettingsModal = openShopSettingsModal;
         window.toggleFirebaseFields = toggleFirebaseFields;
         window.enableAndToggleSound = enableAndToggleSound;
