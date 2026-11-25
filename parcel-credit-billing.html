@@ -286,6 +286,50 @@
     <!-- Hidden 58mm Thermal Receipt Area -->
     <div id="thermal-print-area"></div>
 
+    <!-- Variation & New Variety Tag Picker Modal -->
+    <div id="variation-picker-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/75 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-2.5 border-b border-stone-200">
+                <div>
+                    <h3 id="var-modal-title" class="text-lg font-extrabold text-stone-900">വേരിയേഷൻ തിരഞ്ഞെടുക്കുക</h3>
+                    <p id="var-modal-subtitle" class="text-xs font-bold text-stone-500 mt-0.5">ടാഗിൽ തൊടുക അല്ലെങ്കിൽ പുതിയ വെറൈറ്റി പേര് ചേർക്കുക</p>
+                </div>
+                <button type="button" onclick="closeModal('variation-picker-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="var-preset-tags" class="flex flex-wrap gap-2"></div>
+
+            <!-- Add New Variety Name Tag Inline -->
+            <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
+                <label for="var-new-tag-input" class="block text-xs font-extrabold text-amber-950">
+                    പുതിയ വെറൈറ്റി പേര് ടാഗ് ആയി ചേർക്കുക
+                </label>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="var-new-tag-input" placeholder="ഉദാ: മധുരം കൂടുതൽ / ഏലക്ക..." class="flex-1 px-3 py-2 text-xs sm:text-sm font-bold bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <button type="button" onclick="addCustomVariationTag()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-500 hover:bg-amber-400 text-stone-950 whitespace-nowrap cursor-pointer">
+                        + ചേർക്കുക
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-extrabold text-stone-700 mb-1">പ്രത്യേക കുറിപ്പ് (ആവശ്യമുണ്ടെങ്കിൽ മാത്രം)</label>
+                <input type="text" id="var-custom-note" placeholder="ഉദാ: ചൂട് കുറച്ച് / ചാറ് വേറെ..." class="w-full px-3.5 py-2 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5 pt-1">
+                <button type="button" onclick="confirmPlainVariationItem()" class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-100 hover:bg-stone-200 text-stone-800 cursor-pointer">
+                    സാധാരണ (കുറിപ്പില്ലാതെ)
+                </button>
+                <button type="button" onclick="confirmCustomVariationNote()" class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
+                    + ഓർഡറിൽ ചേർക്കുക
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal 1: Daily Sales & Credit Report -->
     <div id="daily-report-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-stone-200 my-auto max-h-[92vh] flex flex-col">
@@ -519,7 +563,21 @@
             HOLDS: 'kerala_parcel_pos_holds_v1',
             BILLS: 'kerala_parcel_pos_bills_v1',
             BILL_SEQ: 'kerala_parcel_pos_seq_v1',
-            BIZ_CONFIG: 'kerala_parcel_pos_biz_cfg_v1'
+            BIZ_CONFIG: 'kerala_parcel_pos_biz_cfg_v1',
+            CUSTOM_TAGS: 'kerala_parcel_pos_custom_tags_v1'
+        };
+
+        const VARIATION_GROUPS = {
+            tea_group: ['മധുരം കുറവ്', 'മധുരമില്ലാത്തത്', 'സ്ട്രോങ്ങ്', 'മീഡിയം', 'കട്ടൻ - മധുരം', 'കട്ടൻ - മധുരമില്ല'],
+            coffee_group: ['മധുരം കുറവ്', 'മധുരമില്ലാത്തത്', 'സ്ട്രോങ്ങ്', 'ബ്ലാക്ക് കോഫി'],
+            porotta_group: ['ഗോതമ്പ് പൊറോട്ട', 'സാധാരണ മൈദ പൊറോട്ട'],
+            dosa_group: ['നെയ് റോസ്റ്റ്', 'മസാല ദോശ', 'സാദാ ദോശ'],
+            egg_group: ['മുട്ട റോസ്റ്റ്', 'ബോയിൽഡ് എഗ്ഗ്', 'ഓംലെറ്റ്', 'മുട്ട ബുർജി'],
+            meals_group: ['ചോറ് മാത്രം', 'മീൻ കറി കൂടെ', 'സാമ്പാർ കൂടെ'],
+            puttu_group: ['അരി പുട്ട്', 'ഗോതമ്പ് പുട്ട്', 'ചെറുപയർ കൂടെ'],
+            biriyani_group: ['ചിക്കൻ പീസ് കൂടുതൽ', 'ലെഗ് പീസ്', 'ചാറ് കൂടുതൽ'],
+            curry_group: ['ചാറ് കൂടുതൽ', 'ചാറ് കുറവ്', 'നല്ല എരിവ്'],
+            juice_group: ['ഐസ് വേണ്ട', 'മധുരം കുറവ്', 'ഉപ്പ് ലൈം']
         };
 
         const CATEGORIES = [
@@ -564,9 +622,160 @@
         let billSequence = 101;
         let activeCategory = 'all';
         let ownerPanelOpen = false;
+        let customTagsByGroup = {};
+        let pendingVariationItemId = null;
+        let pendingVariationGroupKey = 'general_group';
 
         let firestoreDb = null;
         let cloudReady = false;
+
+        function getVariationGroupForItem(item) {
+            if (!item) return null;
+            const n = String(item.name || '').toLowerCase();
+            if (n.includes('ചായ') || n.includes('tea')) return 'tea_group';
+            if (n.includes('കാപ്പി') || n.includes('coffee')) return 'coffee_group';
+            if (n.includes('പൊറോട്ട') || n.includes('porotta')) return 'porotta_group';
+            if (n.includes('ദോശ') || n.includes('dosa')) return 'dosa_group';
+            if (n.includes('മുട്ട') || n.includes('egg')) return 'egg_group';
+            if (n.includes('ഊണ്') || n.includes('meals')) return 'meals_group';
+            if (n.includes('പുട്ട്') || n.includes('puttu')) return 'puttu_group';
+            if (n.includes('ബിരിയാണി') || n.includes('biriyani')) return 'biriyani_group';
+            if (n.includes('കറി') || n.includes('റോസ്റ്റ്') || n.includes('ഫ്രൈ')) return 'curry_group';
+            if (n.includes('ജ്യൂസ്') || n.includes('ലൈം') || n.includes('juice')) return 'juice_group';
+            return null;
+        }
+
+        function getTagsForGroup(groupKey) {
+            const base = VARIATION_GROUPS[groupKey] || [];
+            const custom = Array.isArray(customTagsByGroup[groupKey]) ? customTagsByGroup[groupKey] : [];
+            return [...new Set([...base, ...custom])];
+        }
+
+        function encodeOrderEntryKey(itemId, note) {
+            const cleanNote = String(note || '').trim();
+            return cleanNote ? `${itemId}::${cleanNote}` : itemId;
+        }
+
+        function decodeOrderEntryKey(rawKey) {
+            const raw = String(rawKey || '');
+            const sepIdx = raw.indexOf('::');
+            if (sepIdx === -1) {
+                return { itemId: raw, note: '' };
+            }
+            return {
+                itemId: raw.slice(0, sepIdx),
+                note: raw.slice(sepIdx + 2)
+            };
+        }
+
+        function getOrderDisplayName(rawKey) {
+            const { itemId, note } = decodeOrderEntryKey(rawKey);
+            const menu = menuItems.find(m => m.id === itemId);
+            const baseName = menu ? menu.name : itemId;
+            return note ? `${baseName} (${note})` : baseName;
+        }
+
+        function getOrderItemPrice(rawKey) {
+            const { itemId } = decodeOrderEntryKey(rawKey);
+            const menu = menuItems.find(m => m.id === itemId);
+            return menu ? menu.price : 0;
+        }
+
+        function openVariationPickerModal(itemId) {
+            const item = menuItems.find(m => m.id === itemId);
+            if (!item) return;
+
+            const groupKey = getVariationGroupForItem(item) || `item_${item.id}`;
+            pendingVariationItemId = itemId;
+            pendingVariationGroupKey = groupKey;
+
+            document.getElementById('var-modal-title').textContent = `${item.name} — ₹${item.price}`;
+            document.getElementById('var-modal-subtitle').textContent = 'വേരിയേഷൻ തിരഞ്ഞെടുക്കുക അല്ലെങ്കിൽ പുതിയ വെറൈറ്റി പേര് ചേർക്കുക';
+            document.getElementById('var-custom-note').value = '';
+            document.getElementById('var-new-tag-input').value = '';
+
+            renderVariationTagButtons();
+            openModal('variation-picker-modal');
+        }
+
+        function renderVariationTagButtons() {
+            const tags = getTagsForGroup(pendingVariationGroupKey);
+            const tagsContainer = document.getElementById('var-preset-tags');
+            if (!tagsContainer) return;
+
+            if (tags.length === 0) {
+                tagsContainer.innerHTML = `<p class="text-xs font-semibold text-stone-500">ഈ ഐറ്റത്തിന് നിലവിൽ ടാഗുകൾ ഇല്ല. താഴെ പുതിയ വെറൈറ്റി പേര് ചേർക്കാം.</p>`;
+                return;
+            }
+
+            tagsContainer.innerHTML = tags.map(tag => `
+                <button type="button" onclick="selectVariationTag(${JSON.stringify(tag)})" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-50 hover:bg-amber-100 text-amber-950 border-2 border-amber-300 cursor-pointer">
+                    ${escapeHtml(tag)}
+                </button>
+            `).join('');
+        }
+
+        function addCustomVariationTag() {
+            const inputEl = document.getElementById('var-new-tag-input');
+            const newTag = (inputEl?.value || '').trim();
+            if (!newTag) {
+                showToast('പുതിയ വെറൈറ്റി പേര് ടൈപ്പ് ചെയ്യുക!');
+                inputEl?.focus();
+                return;
+            }
+
+            const existing = Array.isArray(customTagsByGroup[pendingVariationGroupKey]) ? customTagsByGroup[pendingVariationGroupKey] : [];
+            if (!existing.includes(newTag)) {
+                customTagsByGroup[pendingVariationGroupKey] = [...existing, newTag];
+            }
+
+            if (inputEl) inputEl.value = '';
+            renderVariationTagButtons();
+            saveState();
+            showToast(`"${newTag}" ടാഗ് ചേർത്തു!`);
+            selectVariationTag(newTag);
+        }
+
+        function selectVariationTag(tagText) {
+            if (!pendingVariationItemId) return;
+            const entryKey = encodeOrderEntryKey(pendingVariationItemId, tagText);
+            currentOrder[entryKey] = (currentOrder[entryKey] || 0) + 1;
+            const item = menuItems.find(m => m.id === pendingVariationItemId);
+            const label = item ? `${item.name} (${tagText})` : tagText;
+            pendingVariationItemId = null;
+            closeModal('variation-picker-modal');
+            saveState();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+            showToast(`${label} ഓർഡറിൽ ചേർത്തു!`);
+        }
+
+        function confirmPlainVariationItem() {
+            if (!pendingVariationItemId) return;
+            const itemId = pendingVariationItemId;
+            pendingVariationItemId = null;
+            closeModal('variation-picker-modal');
+            currentOrder[itemId] = (currentOrder[itemId] || 0) + 1;
+            saveState();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function confirmCustomVariationNote() {
+            if (!pendingVariationItemId) return;
+            const note = (document.getElementById('var-custom-note')?.value || '').trim();
+            const itemId = pendingVariationItemId;
+            pendingVariationItemId = null;
+            closeModal('variation-picker-modal');
+            const entryKey = encodeOrderEntryKey(itemId, note);
+            currentOrder[entryKey] = (currentOrder[entryKey] || 0) + 1;
+            saveState();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
 
         function toggleOwnerPanel() {
             ownerPanelOpen = !ownerPanelOpen;
@@ -665,6 +874,9 @@
                     }
                     if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
                     if (data.currentOrder) currentOrder = data.currentOrder;
+                    if (data.customTagsByGroup && typeof data.customTagsByGroup === 'object') {
+                        customTagsByGroup = Object.assign({}, customTagsByGroup, data.customTagsByGroup);
+                    }
                     if (data.holdSlots) holdSlots = Object.assign({ h1: null, h2: null, h3: null }, data.holdSlots);
                     if (Array.isArray(data.completedBills)) completedBills = data.completedBills;
                     if (data.billSequence) billSequence = parseInt(data.billSequence, 10) || billSequence;
@@ -686,6 +898,7 @@
                     shopInfo,
                     menuItems,
                     currentOrder,
+                    customTagsByGroup,
                     holdSlots,
                     completedBills,
                     billSequence,
@@ -740,6 +953,9 @@
                 const savedOrder = localStorage.getItem(KEYS.ORDER);
                 currentOrder = savedOrder ? JSON.parse(savedOrder) : {};
 
+                const savedTags = localStorage.getItem(KEYS.CUSTOM_TAGS);
+                if (savedTags) customTagsByGroup = JSON.parse(savedTags) || {};
+
                 const savedCust = localStorage.getItem(KEYS.CUST);
                 if (savedCust) customerInfo = Object.assign({ name: '', phone: '', address: '', paymentMode: 'cash' }, JSON.parse(savedCust));
 
@@ -762,6 +978,7 @@
                 localStorage.setItem(KEYS.SHOP, JSON.stringify(shopInfo));
                 localStorage.setItem(KEYS.MENU, JSON.stringify(menuItems));
                 localStorage.setItem(KEYS.ORDER, JSON.stringify(currentOrder));
+                localStorage.setItem(KEYS.CUSTOM_TAGS, JSON.stringify(customTagsByGroup));
                 localStorage.setItem(KEYS.CUST, JSON.stringify(customerInfo));
                 localStorage.setItem(KEYS.HOLDS, JSON.stringify(holdSlots));
                 localStorage.setItem(KEYS.BILLS, JSON.stringify(completedBills));
@@ -870,9 +1087,8 @@
 
         function calculateOrderTotal(orderMap) {
             if (!orderMap) return 0;
-            return Object.entries(orderMap).reduce((sum, [id, qty]) => {
-                const item = menuItems.find(m => m.id === id);
-                return sum + (item ? item.price * qty : 0);
+            return Object.entries(orderMap).reduce((sum, [rawKey, qty]) => {
+                return sum + (getOrderItemPrice(rawKey) * qty);
             }, 0);
         }
 
@@ -958,6 +1174,13 @@
             }).join('');
         }
 
+        function getItemTotalQtyInOrder(itemId) {
+            return Object.entries(currentOrder).reduce((sum, [rawKey, qty]) => {
+                const { itemId: keyItemId } = decodeOrderEntryKey(rawKey);
+                return keyItemId === itemId ? sum + qty : sum;
+            }, 0);
+        }
+
         function renderMenuGrid() {
             const container = document.getElementById('menu-grid');
             const filtered = activeCategory === 'all'
@@ -970,8 +1193,9 @@
             }
 
             container.innerHTML = filtered.map(item => {
-                const qty = currentOrder[item.id] || 0;
+                const qty = getItemTotalQtyInOrder(item.id);
                 const styleClass = CAT_STYLES[item.cat] || CAT_STYLES.tea;
+                const hasVar = Boolean(getVariationGroupForItem(item));
 
                 return `
                     <button onclick="addItemToOrder('${item.id}')" class="tap-card relative text-left p-3.5 sm:p-4 rounded-2xl border-2 ${styleClass} shadow-xs flex flex-col justify-between min-h-[96px] cursor-pointer">
@@ -979,7 +1203,7 @@
                         <span class="text-base sm:text-lg font-extrabold leading-snug block pr-2">${escapeHtml(item.name)}</span>
                         <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-black/10">
                             <span class="text-sm sm:text-base font-extrabold">₹${item.price}</span>
-                            <span class="text-xs font-bold opacity-80">+ ചേർക്കുക</span>
+                            <span class="text-xs font-bold opacity-80">${hasVar ? 'വേരിയേഷൻ / +' : '+ ചേർക്കുക'}</span>
                         </div>
                     </button>
                 `;
@@ -991,9 +1215,9 @@
             renderCartCustomerSummary();
 
             const listEl = document.getElementById('cart-items-list');
-            const itemIds = Object.keys(currentOrder).filter(id => currentOrder[id] > 0);
+            const orderKeys = Object.keys(currentOrder).filter(k => currentOrder[k] > 0);
 
-            if (itemIds.length === 0) {
+            if (orderKeys.length === 0) {
                 listEl.innerHTML = `
                     <div class="py-10 text-center text-stone-400">
                         <i data-lucide="shopping-bag" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
@@ -1007,24 +1231,26 @@
 
             let grandTotal = 0;
 
-            listEl.innerHTML = itemIds.map(id => {
-                const item = menuItems.find(m => m.id === id);
-                if (!item) return '';
-                const qty = currentOrder[id];
-                const lineTotal = item.price * qty;
+            listEl.innerHTML = orderKeys.map(rawKey => {
+                const unitPrice = getOrderItemPrice(rawKey);
+                if (!unitPrice) return '';
+                const displayName = getOrderDisplayName(rawKey);
+                const qty = currentOrder[rawKey];
+                const lineTotal = unitPrice * qty;
                 grandTotal += lineTotal;
+                const encodedArg = JSON.stringify(rawKey);
 
                 return `
                     <div class="py-2.5 flex items-center justify-between gap-2">
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm sm:text-base font-extrabold text-stone-900 truncate">${escapeHtml(item.name)}</p>
-                            <p class="text-xs font-semibold text-stone-500">₹${item.price} × ${qty}</p>
+                            <p class="text-sm sm:text-base font-extrabold text-stone-900 truncate">${escapeHtml(displayName)}</p>
+                            <p class="text-xs font-semibold text-stone-500">₹${unitPrice} × ${qty}</p>
                         </div>
 
                         <div class="flex items-center gap-1.5 bg-stone-100 p-1 rounded-xl border border-stone-200">
-                            <button onclick="updateItemQty('${id}', -1)" class="w-8 h-8 rounded-lg bg-white hover:bg-rose-50 text-rose-600 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">-</button>
+                            <button onclick='updateItemQty(${encodedArg}, -1)' class="w-8 h-8 rounded-lg bg-white hover:bg-rose-50 text-rose-600 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">-</button>
                             <span class="w-7 text-center text-sm font-extrabold text-stone-900">${qty}</span>
-                            <button onclick="updateItemQty('${id}', 1)" class="w-8 h-8 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">+</button>
+                            <button onclick='updateItemQty(${encodedArg}, 1)' class="w-8 h-8 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">+</button>
                         </div>
 
                         <div class="w-16 text-right">
@@ -1044,6 +1270,11 @@
         }
 
         function addItemToOrder(itemId) {
+            const item = menuItems.find(m => m.id === itemId);
+            if (item && getVariationGroupForItem(item)) {
+                openVariationPickerModal(itemId);
+                return;
+            }
             currentOrder[itemId] = (currentOrder[itemId] || 0) + 1;
             saveState();
             renderMenuGrid();
@@ -1051,12 +1282,12 @@
             lucide.createIcons();
         }
 
-        function updateItemQty(itemId, delta) {
-            const newQty = (currentOrder[itemId] || 0) + delta;
+        function updateItemQty(rawKey, delta) {
+            const newQty = (currentOrder[rawKey] || 0) + delta;
             if (newQty <= 0) {
-                delete currentOrder[itemId];
+                delete currentOrder[rawKey];
             } else {
-                currentOrder[itemId] = newQty;
+                currentOrder[rawKey] = newQty;
             }
             saveState();
             renderMenuGrid();
@@ -1081,21 +1312,22 @@
         }
 
         function buildCurrentBillObject() {
-            const itemIds = Object.keys(currentOrder).filter(id => currentOrder[id] > 0);
-            if (itemIds.length === 0) return null;
+            const orderKeys = Object.keys(currentOrder).filter(k => currentOrder[k] > 0);
+            if (orderKeys.length === 0) return null;
 
             const items = [];
             let total = 0;
 
-            itemIds.forEach(id => {
-                const menu = menuItems.find(m => m.id === id);
+            orderKeys.forEach(rawKey => {
+                const { itemId } = decodeOrderEntryKey(rawKey);
+                const menu = menuItems.find(m => m.id === itemId);
                 if (menu) {
-                    const qty = currentOrder[id];
+                    const qty = currentOrder[rawKey];
                     const amount = menu.price * qty;
                     total += amount;
                     items.push({
-                        id: menu.id,
-                        name: menu.name,
+                        id: rawKey,
+                        name: getOrderDisplayName(rawKey),
                         price: menu.price,
                         qty: qty,
                         amount: amount
@@ -1450,7 +1682,10 @@
 
         function deleteMenuItem(itemId) {
             menuItems = menuItems.filter(m => m.id !== itemId);
-            delete currentOrder[itemId];
+            Object.keys(currentOrder).forEach(k => {
+                const { itemId: kItemId } = decodeOrderEntryKey(k);
+                if (kItemId === itemId) delete currentOrder[k];
+            });
             saveState();
             renderManageMenuList();
             renderMenuGrid();
@@ -1634,6 +1869,10 @@
         window.deleteMenuItem = deleteMenuItem;
         window.confirmClearAllMenu = confirmClearAllMenu;
         window.toggleBillPaymentStatus = toggleBillPaymentStatus;
+        window.addCustomVariationTag = addCustomVariationTag;
+        window.selectVariationTag = selectVariationTag;
+        window.confirmPlainVariationItem = confirmPlainVariationItem;
+        window.confirmCustomVariationNote = confirmCustomVariationNote;
     </script>
 </body>
 </html>
