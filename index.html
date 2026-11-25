@@ -111,7 +111,7 @@
                         <span id="owner-panel-toggle-label">മുതലാളി / കണക്ക്</span>
                     </button>
 
-                    <button id="sound-toggle-btn" type="button" onclick="enableAndToggleSound()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-900/90 hover:bg-emerald-800 text-emerald-200 border border-emerald-700 cursor-pointer" title="കിച്ചൻ / സപ്ലയർ ശബ്ദം ഓൺ/ഓഫ് ചെയ്യുക">
+                    <button id="sound-toggle-btn" type="button" onclick="enableAndToggleSound()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-900/90 hover:bg-emerald-800 text-emerald-200 border border-emerald-700 cursor-pointer" title="കിച്ചൻ / സപ്ലയർ ശബ്ദം & സ്ക്രീൻ ലോക്ക് അലേർട്ട്">
                         <i data-lucide="volume-2" class="w-4 h-4"></i>
                         <span id="sound-toggle-label">ശബ്ദം ഓൺ</span>
                     </button>
@@ -123,7 +123,7 @@
                 </div>
             </div>
 
-            <!-- Supplier Quick Navigation Bar (Always accessible for Supplier) -->
+            <!-- Supplier Quick Navigation Bar -->
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <span class="text-xs font-extrabold text-stone-300">സപ്ലയർ / ഓർഡർ:</span>
                 <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
@@ -139,7 +139,7 @@
                 </div>
             </div>
 
-            <!-- Collapsible Owner / Manager Section (Hidden by Default so Supplier View Stays Clean) -->
+            <!-- Collapsible Owner / Manager Section (Hidden by Default) -->
             <div id="owner-manager-panel" class="hidden pt-2 mt-1 border-t border-amber-500/30 bg-stone-950/50 rounded-2xl p-2.5 space-y-2">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex flex-wrap items-center gap-2">
@@ -169,7 +169,7 @@
                     </div>
                 </div>
 
-                <!-- Hold Slots Bar (Inside Owner/Manager Panel) -->
+                <!-- Hold Slots Bar -->
                 <div id="hold-slots-bar" class="pt-1.5 border-t border-stone-800 flex flex-wrap items-center gap-2">
                     <span class="text-xs sm:text-sm font-extrabold text-amber-300 flex items-center gap-1">
                         <i data-lucide="pause-circle" class="w-4 h-4"></i>
@@ -249,7 +249,7 @@
                 </div>
             </div>
 
-            <div id="cart-items-list" class="p-3 sm:p-4 space-y-2 max-h-[340px] lg:max-h-[400px] overflow-y-auto divide-y divide-stone-100"></div>
+            <div id="cart-items-list" class="p-3 sm:p-4 space-y-2 max-h-[360px] lg:max-h-[420px] overflow-y-auto divide-y divide-stone-100"></div>
 
             <div class="bg-stone-50 p-4 border-t-2 border-stone-200 space-y-3">
                 <div class="flex items-center justify-between">
@@ -283,10 +283,43 @@
 
     </main>
 
+    <!-- Variation / Quick Note Selector Modal (Tea, Porotta, Dosa, Egg, Meals, Puttu/Appam, Biryani, Curry, Coffee, Juice) -->
+    <div id="variation-picker-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/75 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border-2 border-amber-300">
+            <div class="flex items-center justify-between pb-3 border-b border-stone-200">
+                <div>
+                    <h3 id="variation-item-title" class="text-lg font-extrabold text-stone-900">ഐറ്റം വേരിയേഷൻ തിരഞ്ഞെടുക്കുക</h3>
+                    <p id="variation-item-subtitle" class="text-xs font-bold text-stone-500 mt-0.5"></p>
+                </div>
+                <button onclick="closeVariationModal()" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="mt-4 space-y-4">
+                <div id="variation-tags-grid" class="flex flex-wrap gap-2"></div>
+
+                <div>
+                    <label class="block text-xs font-extrabold text-stone-700 mb-1">പ്രത്യേക കുറിപ്പ് (ആവശ്യമുണ്ടെങ്കിൽ മാത്രം)</label>
+                    <input type="text" id="variation-custom-note" placeholder="ഉദാ: ചൂട് കുറച്ച് / ചാറ് വേറെ..." class="w-full px-3.5 py-2 text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-stone-200">
+                    <button type="button" onclick="confirmVariationOrder('')" class="py-3 px-3 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 cursor-pointer">
+                        സാധാരണ (കുറിപ്പില്ലാതെ)
+                    </button>
+                    <button type="button" onclick="submitCustomOrSelectedVariation()" class="py-3 px-3 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm cursor-pointer">
+                        + ഓർഡറിൽ ചേർക്കുക
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Hidden 58mm Thermal Receipt Area -->
     <div id="thermal-print-area"></div>
 
-    <!-- Modal 0: Live Kitchen Order Display (Kitchen View) -->
+    <!-- Modal 0: Live Kitchen Order Display -->
     <div id="kitchen-view-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/80 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
         <div class="bg-stone-100 rounded-3xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl border-2 border-stone-300 my-auto max-h-[92vh] flex flex-col">
             <div class="flex items-center justify-between pb-3 border-b border-stone-300 bg-stone-100">
@@ -424,7 +457,7 @@
         </div>
     </div>
 
-    <!-- Modal 3: Shop Setup (Name, Place, Tables, Shop ID, Shop PIN + Hidden Firebase Fields) -->
+    <!-- Modal 3: Shop Setup -->
     <div id="shop-settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200 my-auto">
             <div class="flex items-center justify-between pb-3 border-b border-stone-200">
@@ -463,11 +496,7 @@
                     <label class="block text-xs font-extrabold text-stone-700 mb-1">Shop PIN (4-6 അക്ക രഹസ്യ കോഡ്)</label>
                     <input type="password" inputmode="numeric" id="setting-shop-pin" placeholder="ഉദാ: 1234" class="w-full px-3.5 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
                 </div>
-                <p class="text-xs text-stone-500 font-semibold">
-                    സപ്ലയർ, മുതലാളി, അടുക്കള ഫോണുകളിൽ ഒരേ Shop ID-യും PIN-ഉം നൽകിയാൽ ഡാറ്റ തത്സമയം സിങ്ക് ആകും.
-                </p>
 
-                <!-- Hidden Firebase Fields Wrapper (Hidden by Default) -->
                 <div class="pt-2 border-t border-stone-200">
                     <button type="button" onclick="toggleFirebaseFields()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-extrabold transition cursor-pointer">
                         <span>⚙️ Firebase ക്രമീകരണങ്ങൾ (മറച്ചുവെച്ചത് - കാണുക / മറയ്ക്കുക)</span>
@@ -599,6 +628,84 @@
             { id: 'm18', name: 'ലൈം ജ്യൂസ്', price: 25, cat: 'tea' }
         ];
 
+        // Item Variation Rules requested by user
+        const VARIATION_GROUPS = [
+            {
+                match: ['ചായ'],
+                exclude: ['കട്ടൻ', 'ലൈം'],
+                tags: ['മധുരം കുറവ്', 'മധുരമില്ലാത്തത്', 'സ്ട്രോങ്ങ്', 'മീഡിയം', 'കട്ടൻ - മധുരം', 'കട്ടൻ - മധുരമില്ല']
+            },
+            {
+                match: ['പൊറോട്ട', 'പൊറോട്ട'],
+                tags: ['ഗോതമ്പ് പൊറോട്ട', 'സാധാരണ മൈദ പൊറോട്ട']
+            },
+            {
+                match: ['ദോശ'],
+                tags: ['സാധാരണ ദോശ', 'നെയ്യ് റോസ്റ്റ് / ഗീ റോസ്റ്റ്', 'മസാല ദോശ', 'തട്ടുകട ദോശ / സ്പെഷ്യൽ ദോശ']
+            },
+            {
+                match: ['മുട്ട', 'ബുൾസ്', 'ഓംലെറ്റ്'],
+                tags: ['ബുൾസ് ഐ - ഹാഫ് ബോയിൽ', 'ബുൾസ് ഐ - നന്നായി വേവിച്ചത്', 'ഓംലെറ്റ് - സവാള ഉള്ളത്', 'ഓംലെറ്റ് - മുട്ട മാത്രം', 'പുഴുങ്ങിയ മുട്ട', 'മുട്ട റോസ്റ്റ്']
+            },
+            {
+                match: ['ഊണ്'],
+                tags: ['സാധാരണ ഊണ്', 'മീൻ കറി കൂട്ടിയ ഊണ്', 'ചിക്കൻ / ബീഫ് കൂട്ടിയ ഊണ്', 'പാർസൽ ഊണ് - കറി വേറെ', 'പാർസൽ ഊണ് - കറി ഒപ്പം']
+            },
+            {
+                match: ['പുട്ട്', 'അപ്പം', 'വെള്ളയപ്പം', 'പാലപ്പം'],
+                tags: ['അരിപ്പുട്ട്', 'ഗോതമ്പ് പുട്ട്', 'റാഗി പുട്ട്', 'വെള്ളയപ്പം', 'പാലപ്പം']
+            },
+            {
+                match: ['ബിരിയാണി'],
+                tags: ['ഫുൾ', 'ഹാഫ്', 'ക്വാർട്ടർ']
+            },
+            {
+                match: ['കറി', 'റോസ്റ്റ്', 'ഫ്രൈ', 'ചിക്കൻ', 'ബീഫ്', 'മീൻ'],
+                exclude: ['ബിരിയാണി', 'ഊണ്', 'മുട്ട'],
+                tags: ['ഗ്രേവി കൂടുതൽ', 'ഫ്രൈ', 'റോസ്റ്റ്', 'ചാറ് കുറവ്']
+            },
+            {
+                match: ['കാപ്പി', 'കോഫി'],
+                tags: ['മധുരം കുറവ്', 'മധുരമില്ലാത്തത്', 'സ്ട്രോങ്ങ്', 'ബ്ലാക്ക് കോഫി']
+            },
+            {
+                match: ['ലൈം', 'ജ്യൂസ്'],
+                tags: ['പഞ്ചസാര കുറവ്', 'പഞ്ചസാര ഇല്ലാതെ', 'തണുപ്പ് കുറവ്']
+            }
+        ];
+
+        function getVariationsForMenuItem(item) {
+            if (!item || !item.name) return null;
+            const lowerName = item.name.toLowerCase();
+
+            for (const group of VARIATION_GROUPS) {
+                const hasExcluded = (group.exclude || []).some(ex => item.name.includes(ex) || lowerName.includes(ex.toLowerCase()));
+                if (hasExcluded) continue;
+
+                const matched = group.match.some(kw => item.name.includes(kw) || lowerName.includes(kw.toLowerCase()));
+                if (matched) {
+                    return group.tags;
+                }
+            }
+            return null;
+        }
+
+        function parseOrderEntryKey(key) {
+            const sepIdx = key.indexOf('::');
+            if (sepIdx === -1) {
+                return { itemId: key, note: '' };
+            }
+            return {
+                itemId: key.slice(0, sepIdx),
+                note: key.slice(sepIdx + 2)
+            };
+        }
+
+        function buildOrderEntryKey(itemId, note) {
+            const cleanNote = (note || '').trim();
+            return cleanNote ? `${itemId}::${cleanNote}` : itemId;
+        }
+
         let shopInfo = { name: 'മിനു കാറ്ററിംഗ്', place: 'കോളയാട് / കണ്ണൂർ' };
         let bizConfig = {
             tableCount: 5,
@@ -617,8 +724,10 @@
         let activeCategory = 'all';
         let soundEnabled = true;
         let ownerPanelOpen = false;
+        let pendingVariationItemId = null;
 
         let audioCtx = null;
+        let wakeLockSentinel = null;
         let firestoreDb = null;
         let cloudReady = false;
         let unsubscribeSnapshot = null;
@@ -627,7 +736,6 @@
         let lastAnnouncedReadyMap = {};
         let lastKitchenOrderSignature = '';
 
-        /* ---------------- Owner / Manager Section Toggle ---------------- */
         function toggleOwnerPanel() {
             ownerPanelOpen = !ownerPanelOpen;
             updateOwnerPanelUI();
@@ -648,7 +756,48 @@
             }
         }
 
-        /* ---------------- Audio Beep Alert System (Web Audio API) ---------------- */
+        /* ---------------- Screen Wake Lock + Audio + Browser Notification ---------------- */
+        async function requestScreenWakeLock() {
+            if (!soundEnabled) return;
+            try {
+                if ('wakeLock' in navigator && !wakeLockSentinel) {
+                    wakeLockSentinel = await navigator.wakeLock.request('screen');
+                    wakeLockSentinel.addEventListener('release', () => {
+                        wakeLockSentinel = null;
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function releaseScreenWakeLock() {
+            try {
+                if (wakeLockSentinel) {
+                    wakeLockSentinel.release();
+                    wakeLockSentinel = null;
+                }
+            } catch (e) {}
+        }
+
+        function requestBrowserNotificationPermission() {
+            try {
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+            } catch (e) {}
+        }
+
+        function sendSystemNotification(title, body) {
+            if (!soundEnabled) return;
+            try {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification(title, {
+                        body,
+                        silent: false
+                    });
+                }
+            } catch (e) {}
+        }
+
         function unlockAudioContext() {
             try {
                 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -665,7 +814,7 @@
             }
         }
 
-        function playTone(freq, durationSec, startOffsetSec = 0, gainPeak = 0.22) {
+        function playTone(freq, durationSec, startOffsetSec = 0, gainPeak = 0.24) {
             if (!soundEnabled) return;
             const ctx = unlockAudioContext();
             if (!ctx) return;
@@ -695,9 +844,9 @@
         }
 
         function playSupplierReadyBeep() {
-            playTone(659.25, 0.14, 0, 0.24);
-            playTone(880, 0.14, 0.16, 0.24);
-            playTone(1174.66, 0.25, 0.32, 0.26);
+            playTone(659.25, 0.14, 0, 0.25);
+            playTone(880, 0.14, 0.16, 0.25);
+            playTone(1174.66, 0.25, 0.32, 0.28);
         }
 
         function enableAndToggleSound() {
@@ -705,9 +854,12 @@
             localStorage.setItem(KEYS.SOUND_ENABLED, soundEnabled ? '1' : '0');
             if (soundEnabled) {
                 unlockAudioContext();
-                playTone(880, 0.14, 0, 0.2);
-                showToast('🔊 ശബ്ദ അലേർട്ട് ഓൺ ചെയ്തു.');
+                requestScreenWakeLock();
+                requestBrowserNotificationPermission();
+                playTone(880, 0.14, 0, 0.22);
+                showToast('🔊 ശബ്ദ അലേർട്ട് & സ്ക്രീൻ അലേർട്ട് ഓൺ ചെയ്തു.');
             } else {
+                releaseScreenWakeLock();
                 showToast('🔇 ശബ്ദ അലേർട്ട് ഓഫ് ചെയ്തു.');
             }
             updateSoundButtonUI();
@@ -727,8 +879,19 @@
         }
 
         document.addEventListener('pointerdown', () => {
-            if (soundEnabled) unlockAudioContext();
+            if (soundEnabled) {
+                unlockAudioContext();
+                requestScreenWakeLock();
+            }
         }, { passive: true });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && soundEnabled) {
+                unlockAudioContext();
+                requestScreenWakeLock();
+                pushToFirestore();
+            }
+        });
 
         /* ---------------- Helpers & Firebase Sync ---------------- */
         function getTablesList() {
@@ -805,6 +968,7 @@
                     const tObj = tables.find(t => t.id === tableId);
                     const label = tObj ? tObj.label : tableId;
                     showToast(`✅ ${label}-ലെ ഓർഡർ കിച്ചണിൽ റെഡി ആയി!`);
+                    sendSystemNotification(`${shopInfo.name} - ഓർഡർ റെഡി`, `${label}-ലെ ഓർഡർ കിച്ചണിൽ തയ്യാറായിട്ടുണ്ട്.`);
                     anyNewReady = true;
                 }
             });
@@ -926,9 +1090,13 @@
 
             if (!silentAlerts) {
                 notifyNewlyReadyOrders(prevKitchen, kitchenStatus, tableOrders);
-                if (kitchenOpen && nextSig && nextSig !== prevSig) {
-                    playKitchenOrderBeep();
-                    showToast('🔔 കിച്ചനിലേക്ക് പുതിയ ഓർഡർ വന്നു!');
+                if (nextSig && nextSig !== prevSig) {
+                    if (kitchenOpen) {
+                        playKitchenOrderBeep();
+                        showToast('🔔 കിച്ചനിലേക്ക് പുതിയ ഓർഡർ വന്നു!');
+                    } else {
+                        sendSystemNotification(`${shopInfo.name} - പുതിയ ഓർഡർ`, 'കിച്ചനിലേക്ക് പുതിയ ഓർഡർ വന്നിട്ടുണ്ട്.');
+                    }
                 }
             } else {
                 const seedReady = {};
@@ -991,6 +1159,9 @@
             syncParcelInputs();
             setupForms();
             renderAll();
+            if (soundEnabled) {
+                requestScreenWakeLock();
+            }
             await initFirebaseSync();
         });
 
@@ -1147,8 +1318,9 @@
 
         function calculateOrderTotal(orderMap) {
             if (!orderMap) return 0;
-            return Object.entries(orderMap).reduce((sum, [id, qty]) => {
-                const item = menuItems.find(m => m.id === id);
+            return Object.entries(orderMap).reduce((sum, [key, qty]) => {
+                const { itemId } = parseOrderEntryKey(key);
+                const item = menuItems.find(m => m.id === itemId);
                 return sum + (item ? item.price * qty : 0);
             }, 0);
         }
@@ -1162,10 +1334,6 @@
 
             const freeSlot = ['h1', 'h2', 'h3'].find(id => !holdSlots[id]);
             const targetSlot = freeSlot || 'h1';
-
-            if (!freeSlot) {
-                showToast('ഹോൾഡ് 1, 2, 3 നിറഞ്ഞതിനാൽ ഹോൾഡ് 1 അപ്ഡേറ്റ് ചെയ്തു.');
-            }
 
             holdSlots[targetSlot] = {
                 items: JSON.parse(JSON.stringify(currentOrder)),
@@ -1226,6 +1394,7 @@
 
         function openKitchenViewModal() {
             unlockAudioContext();
+            requestScreenWakeLock();
             renderKitchenView();
             openModal('kitchen-view-modal');
         }
@@ -1240,10 +1409,12 @@
                     const orderMap = tableOrders[t.id] || {};
                     const entries = Object.entries(orderMap)
                         .filter(([, qty]) => qty > 0)
-                        .map(([itemId, qty]) => {
+                        .map(([key, qty]) => {
+                            const { itemId, note } = parseOrderEntryKey(key);
                             const menu = menuItems.find(m => m.id === itemId);
+                            const baseName = menu ? menu.name : itemId;
                             return {
-                                name: menu ? menu.name : itemId,
+                                displayLabel: note ? `${baseName} (${note})` : baseName,
                                 qty
                             };
                         });
@@ -1281,9 +1452,9 @@
                 }
 
                 const itemsHtml = items.map(it => `
-                    <li class="flex items-center justify-between py-2 border-b border-stone-100 last:border-b-0">
-                        <span class="text-base font-extrabold text-stone-900">${escapeHtml(it.name)}</span>
-                        <span class="px-2.5 py-0.5 rounded-lg bg-stone-900 text-amber-300 text-sm font-extrabold">× ${it.qty}</span>
+                    <li class="flex items-center justify-between gap-2 py-2 border-b border-stone-100 last:border-b-0">
+                        <span class="text-sm sm:text-base font-extrabold text-stone-900">${escapeHtml(it.displayLabel)}</span>
+                        <span class="px-2.5 py-0.5 rounded-lg bg-stone-900 text-amber-300 text-sm font-extrabold flex-shrink-0">× ${it.qty}</span>
                     </li>
                 `).join('');
 
@@ -1412,6 +1583,14 @@
             }).join('');
         }
 
+        function getTotalQtyForMenuItem(orderMap, itemId) {
+            if (!orderMap) return 0;
+            return Object.entries(orderMap).reduce((sum, [key, qty]) => {
+                const parsed = parseOrderEntryKey(key);
+                return parsed.itemId === itemId ? sum + qty : sum;
+            }, 0);
+        }
+
         function renderMenuGrid() {
             const container = document.getElementById('menu-grid');
             const currentOrder = tableOrders[activeTableId] || {};
@@ -1426,16 +1605,17 @@
             }
 
             container.innerHTML = filtered.map(item => {
-                const qty = currentOrder[item.id] || 0;
+                const qty = getTotalQtyForMenuItem(currentOrder, item.id);
                 const styleClass = CAT_STYLES[item.cat] || CAT_STYLES.tea;
+                const hasVariations = Boolean(getVariationsForMenuItem(item));
 
                 return `
-                    <button onclick="addItemToActiveTable('${item.id}')" class="tap-card relative text-left p-3.5 sm:p-4 rounded-2xl border-2 ${styleClass} shadow-xs flex flex-col justify-between min-h-[92px] cursor-pointer">
+                    <button onclick="handleMenuItemClick('${item.id}')" class="tap-card relative text-left p-3.5 sm:p-4 rounded-2xl border-2 ${styleClass} shadow-xs flex flex-col justify-between min-h-[96px] cursor-pointer">
                         ${qty > 0 ? `<span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-stone-900 text-amber-300 text-xs font-extrabold flex items-center justify-center shadow-md border-2 border-white">${qty}</span>` : ''}
                         <span class="text-base sm:text-lg font-extrabold leading-snug block pr-2">${escapeHtml(item.name)}</span>
                         <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-black/10">
                             <span class="text-sm sm:text-base font-extrabold">₹${item.price}</span>
-                            <span class="text-xs font-bold opacity-80">+ ചേർക്കുക</span>
+                            <span class="text-xs font-bold opacity-85">${hasVariations ? 'വേരിയേഷൻ / +' : '+ ചേർക്കുക'}</span>
                         </div>
                     </button>
                 `;
@@ -1451,9 +1631,9 @@
 
             const listEl = document.getElementById('cart-items-list');
             const currentOrder = tableOrders[activeTableId] || {};
-            const itemIds = Object.keys(currentOrder).filter(id => currentOrder[id] > 0);
+            const entryKeys = Object.keys(currentOrder).filter(k => currentOrder[k] > 0);
 
-            if (itemIds.length === 0) {
+            if (entryKeys.length === 0) {
                 listEl.innerHTML = `
                     <div class="py-10 text-center text-stone-400">
                         <i data-lucide="shopping-bag" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
@@ -1467,24 +1647,28 @@
 
             let grandTotal = 0;
 
-            listEl.innerHTML = itemIds.map(id => {
-                const item = menuItems.find(m => m.id === id);
+            listEl.innerHTML = entryKeys.map(key => {
+                const { itemId, note } = parseOrderEntryKey(key);
+                const item = menuItems.find(m => m.id === itemId);
                 if (!item) return '';
-                const qty = currentOrder[id];
+                const qty = currentOrder[key];
                 const lineTotal = item.price * qty;
                 grandTotal += lineTotal;
+
+                const encodedKey = encodeURIComponent(key);
 
                 return `
                     <div class="py-2.5 flex items-center justify-between gap-2">
                         <div class="flex-1 min-w-0">
                             <p class="text-sm sm:text-base font-extrabold text-stone-900 truncate">${escapeHtml(item.name)}</p>
+                            ${note ? `<p class="text-xs font-extrabold text-amber-800 truncate">${escapeHtml(note)}</p>` : ''}
                             <p class="text-xs font-semibold text-stone-500">₹${item.price} × ${qty}</p>
                         </div>
 
                         <div class="flex items-center gap-1.5 bg-stone-100 p-1 rounded-xl border border-stone-200">
-                            <button onclick="updateItemQty('${id}', -1)" class="w-8 h-8 rounded-lg bg-white hover:bg-rose-50 text-rose-600 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">-</button>
+                            <button onclick="updateEntryQty('${encodedKey}', -1)" class="w-8 h-8 rounded-lg bg-white hover:bg-rose-50 text-rose-600 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">-</button>
                             <span class="w-7 text-center text-sm font-extrabold text-stone-900">${qty}</span>
-                            <button onclick="updateItemQty('${id}', 1)" class="w-8 h-8 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">+</button>
+                            <button onclick="updateEntryQty('${encodedKey}', 1)" class="w-8 h-8 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">+</button>
                         </div>
 
                         <div class="w-16 text-right">
@@ -1511,12 +1695,71 @@
             renderMenuGrid();
         }
 
-        function addItemToActiveTable(itemId) {
+        function handleMenuItemClick(itemId) {
             unlockAudioContext();
+            requestScreenWakeLock();
+
+            const item = menuItems.find(m => m.id === itemId);
+            if (!item) return;
+
+            const tags = getVariationsForMenuItem(item);
+            if (tags && tags.length > 0) {
+                openVariationPickerModal(item, tags);
+                return;
+            }
+
+            addItemWithNote(itemId, '');
+        }
+
+        function openVariationPickerModal(item, tags) {
+            pendingVariationItemId = item.id;
+            document.getElementById('variation-item-title').textContent = `${item.name} — ₹${item.price}`;
+            document.getElementById('variation-item-subtitle').textContent = 'വേരിയേഷൻ തിരഞ്ഞെടുക്കുക അല്ലെങ്കിൽ സാധാരണയായി ചേർക്കുക';
+            document.getElementById('variation-custom-note').value = '';
+
+            const grid = document.getElementById('variation-tags-grid');
+            grid.innerHTML = tags.map(tag => {
+                const safeTag = escapeHtml(tag);
+                return `
+                    <button type="button" onclick="confirmVariationOrder('${safeTag}')" class="px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-50 hover:bg-amber-200 text-amber-950 border-2 border-amber-300 cursor-pointer transition">
+                        ${safeTag}
+                    </button>
+                `;
+            }).join('');
+
+            openModal('variation-picker-modal');
+        }
+
+        function closeVariationModal() {
+            pendingVariationItemId = null;
+            closeModal('variation-picker-modal');
+        }
+
+        function confirmVariationOrder(selectedTag) {
+            if (!pendingVariationItemId) return;
+            const customNote = (document.getElementById('variation-custom-note')?.value || '').trim();
+            const parts = [];
+            if (selectedTag) parts.push(selectedTag);
+            if (customNote) parts.push(customNote);
+            const finalNote = parts.join(' • ');
+
+            const targetItemId = pendingVariationItemId;
+            closeVariationModal();
+            addItemWithNote(targetItemId, finalNote);
+        }
+
+        function submitCustomOrSelectedVariation() {
+            if (!pendingVariationItemId) return;
+            const customNote = (document.getElementById('variation-custom-note')?.value || '').trim();
+            confirmVariationOrder(customNote);
+        }
+
+        function addItemWithNote(itemId, note) {
             if (!tableOrders[activeTableId]) {
                 tableOrders[activeTableId] = {};
             }
-            tableOrders[activeTableId][itemId] = (tableOrders[activeTableId][itemId] || 0) + 1;
+            const entryKey = buildOrderEntryKey(itemId, note);
+            tableOrders[activeTableId][entryKey] = (tableOrders[activeTableId][entryKey] || 0) + 1;
             kitchenStatus[activeTableId] = 'new';
             delete lastAnnouncedReadyMap[activeTableId];
 
@@ -1531,18 +1774,19 @@
             lucide.createIcons();
         }
 
-        function updateItemQty(itemId, delta) {
+        function updateEntryQty(encodedKey, delta) {
             unlockAudioContext();
+            const entryKey = decodeURIComponent(encodedKey);
             if (!tableOrders[activeTableId]) return;
-            const newQty = (tableOrders[activeTableId][itemId] || 0) + delta;
+            const newQty = (tableOrders[activeTableId][entryKey] || 0) + delta;
             if (newQty <= 0) {
-                delete tableOrders[activeTableId][itemId];
+                delete tableOrders[activeTableId][entryKey];
                 if (Object.keys(tableOrders[activeTableId]).length === 0) {
                     delete kitchenStatus[activeTableId];
                     delete lastAnnouncedReadyMap[activeTableId];
                 }
             } else {
-                tableOrders[activeTableId][itemId] = newQty;
+                tableOrders[activeTableId][entryKey] = newQty;
                 if (delta > 0 && document.getElementById('kitchen-view-modal')?.classList.contains('flex')) {
                     playKitchenOrderBeep();
                 }
@@ -1578,21 +1822,24 @@
 
         function buildCurrentBillObject() {
             const currentOrder = tableOrders[activeTableId] || {};
-            const itemIds = Object.keys(currentOrder).filter(id => currentOrder[id] > 0);
-            if (itemIds.length === 0) return null;
+            const entryKeys = Object.keys(currentOrder).filter(k => currentOrder[k] > 0);
+            if (entryKeys.length === 0) return null;
 
             const items = [];
             let total = 0;
 
-            itemIds.forEach(id => {
-                const menu = menuItems.find(m => m.id === id);
+            entryKeys.forEach(key => {
+                const { itemId, note } = parseOrderEntryKey(key);
+                const menu = menuItems.find(m => m.id === itemId);
                 if (menu) {
-                    const qty = currentOrder[id];
+                    const qty = currentOrder[key];
                     const amount = menu.price * qty;
                     total += amount;
                     items.push({
                         id: menu.id,
                         name: menu.name,
+                        note: note || '',
+                        displayName: note ? `${menu.name} (${note})` : menu.name,
                         price: menu.price,
                         qty: qty,
                         amount: amount
@@ -1624,7 +1871,7 @@
             const printArea = document.getElementById('thermal-print-area');
             const itemsRowsHtml = bill.items.map(it => `
                 <tr>
-                    <td style="padding: 2px 0; text-align: left;">${escapeHtml(it.name)}</td>
+                    <td style="padding: 2px 0; text-align: left;">${escapeHtml(it.displayName || it.name)}</td>
                     <td style="padding: 2px 0; text-align: center;">${it.qty}</td>
                     <td style="padding: 2px 0; text-align: right;">${it.amount}</td>
                 </tr>
@@ -1722,7 +1969,7 @@
             text += `------------------------\n`;
 
             bill.items.forEach(it => {
-                text += `• ${it.name} (${it.qty} × ₹${it.price}) = *₹${it.amount}*\n`;
+                text += `• ${it.displayName || it.name} (${it.qty} × ₹${it.price}) = *₹${it.amount}*\n`;
             });
 
             text += `------------------------\n`;
@@ -1750,11 +1997,12 @@
             const itemMap = {};
             todaysBills.forEach(bill => {
                 bill.items.forEach(it => {
-                    if (!itemMap[it.name]) {
-                        itemMap[it.name] = { qty: 0, amount: 0 };
+                    const label = it.displayName || it.name;
+                    if (!itemMap[label]) {
+                        itemMap[label] = { qty: 0, amount: 0 };
                     }
-                    itemMap[it.name].qty += it.qty;
-                    itemMap[it.name].amount += it.amount;
+                    itemMap[label].qty += it.qty;
+                    itemMap[label].amount += it.amount;
                 });
             });
 
@@ -1802,9 +2050,10 @@
             const itemMap = {};
             todaysBills.forEach(bill => {
                 bill.items.forEach(it => {
-                    if (!itemMap[it.name]) itemMap[it.name] = { qty: 0, amount: 0 };
-                    itemMap[it.name].qty += it.qty;
-                    itemMap[it.name].amount += it.amount;
+                    const label = it.displayName || it.name;
+                    if (!itemMap[label]) itemMap[label] = { qty: 0, amount: 0 };
+                    itemMap[label].qty += it.qty;
+                    itemMap[label].amount += it.amount;
                 });
             });
 
@@ -1850,9 +2099,10 @@
             const itemMap = {};
             todaysBills.forEach(bill => {
                 bill.items.forEach(it => {
-                    if (!itemMap[it.name]) itemMap[it.name] = { qty: 0, amount: 0 };
-                    itemMap[it.name].qty += it.qty;
-                    itemMap[it.name].amount += it.amount;
+                    const label = it.displayName || it.name;
+                    if (!itemMap[label]) itemMap[label] = { qty: 0, amount: 0 };
+                    itemMap[label].qty += it.qty;
+                    itemMap[label].amount += it.amount;
                 });
             });
 
@@ -2156,8 +2406,12 @@
         window.confirmResetDay = confirmResetDay;
         window.selectTable = selectTable;
         window.selectCategory = selectCategory;
-        window.addItemToActiveTable = addItemToActiveTable;
-        window.updateItemQty = updateItemQty;
+        window.handleMenuItemClick = handleMenuItemClick;
+        window.openVariationPickerModal = openVariationPickerModal;
+        window.closeVariationModal = closeVariationModal;
+        window.confirmVariationOrder = confirmVariationOrder;
+        window.submitCustomOrSelectedVariation = submitCustomOrSelectedVariation;
+        window.updateEntryQty = updateEntryQty;
         window.recallHoldSlot = recallHoldSlot;
         window.discardHoldSlot = discardHoldSlot;
         window.updateMenuItemPrice = updateMenuItemPrice;
