@@ -219,6 +219,18 @@
             { id: 'm18', name: 'ലൈം ജ്യൂസ്', price: 25, cat: 'tea' }
         ];
 
+        function parseOrderEntryKey(key) {
+            const raw = String(key || '');
+            const sepIdx = raw.indexOf('::');
+            if (sepIdx === -1) {
+                return { itemId: raw, note: '' };
+            }
+            return {
+                itemId: raw.slice(0, sepIdx),
+                note: raw.slice(sepIdx + 2)
+            };
+        }
+
         let shopInfo = { name: 'മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്', place: 'പേരളശ്ശേരി / കണ്ണൂർ' };
         let bizConfig = {
             tableCount: 5,
@@ -232,12 +244,34 @@
         let soundEnabled = true;
 
         let audioCtx = null;
+        let wakeLockSentinel = null;
         let firestoreDb = null;
         let cloudReady = false;
         let unsubscribeSnapshot = null;
         let pendingSettingsDraft = null;
         let isInitialSnapshotLoad = true;
         let lastOrderSignature = '';
+
+        async function requestScreenWakeLock() {
+            if (!soundEnabled) return;
+            try {
+                if ('wakeLock' in navigator && !wakeLockSentinel) {
+                    wakeLockSentinel = await navigator.wakeLock.request('screen');
+                    wakeLockSentinel.addEventListener('release', () => {
+                        wakeLockSentinel = null;
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function releaseScreenWakeLock() {
+            try {
+                if (wakeLockSentinel) {
+                    wakeLockSentinel.release();
+                    wakeLockSentinel = null;
+                }
+            } catch (e) {}
+        }
 
         function unlockAudioContext() {
             try {
@@ -271,9 +305,7 @@
                 gain.connect(ctx.destination);
                 osc.start(now);
                 osc.stop(now + durationSec + 0.02);
-            } catch (e) {
-                // Ignore audio errors
-            }
+            } catch (e) {}
         }
 
         function playKitchenOrderBeep() {
@@ -285,6 +317,7 @@
             soundEnabled = true;
             localStorage.setItem(KEYS.SOUND_ENABLED, '1');
             updateSoundButtonUI();
+            requestScreenWakeLock();
             playKitchenOrderBeep();
             showToast('🔔 കിച്ചൻ ബീപ്പ് ശബ്ദം ടെസ്റ്റ് ചെയ്തു!');
         }
@@ -294,9 +327,11 @@
             localStorage.setItem(KEYS.SOUND_ENABLED, soundEnabled ? '1' : '0');
             if (soundEnabled) {
                 unlockAudioContext();
+                requestScreenWakeLock();
                 playKitchenOrderBeep();
-                showToast('🔊 കിച്ചൻ ശബ്ദം ഓൺ ചെയ്തു.');
+                showToast('🔊 കിച്ചൻ ശബ്ദം & സ്ക്രീൻ അലേർട്ട് ഓൺ ചെയ്തു.');
             } else {
+                releaseScreenWakeLock();
                 showToast('🔇 കിച്ചൻ ശബ്ദം ഓഫ് ചെയ്തു.');
             }
             updateSoundButtonUI();
@@ -316,8 +351,22 @@
         }
 
         document.addEventListener('pointerdown', () => {
-            if (soundEnabled) unlockAudioContext();
+            if (soundEnabled) {
+                unlockAudioContext();
+                requestScreenWakeLock();
+            }
         }, { passive: true });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && soundEnabled) {
+                unlockAudioContext();
+                requestScreenWakeLock();
+                const currentSig = computeOrdersSignature(tableOrders);
+                if (currentSig) {
+                    playKitchenOrderBeep();
+                }
+            }
+        });
 
         function getTablesList() {
             const count = parseInt(bizConfig.tableCount, 10) || 5;
@@ -513,9 +562,14 @@
                     const orderMap = tableOrders[t.id] || {};
                     const entries = Object.entries(orderMap)
                         .filter(([, qty]) => qty > 0)
-                        .map(([itemId, qty]) => {
+                        .map(([rawKey, qty]) => {
+                            const { itemId, note } = parseOrderEntryKey(rawKey);
                             const menu = menuItems.find(m => m.id === itemId);
-                            return { name: menu ? menu.name : itemId, qty };
+                            const baseName = menu ? menu.name : itemId;
+                            return {
+                                name: note ? `${baseName} (${note})` : baseName,
+                                qty
+                            };
                         });
                     return {
                         table: t,
@@ -669,6 +723,9 @@
             updateSoundButtonUI();
             renderHeader();
             renderKitchenOrders();
+            if (soundEnabled) {
+                requestScreenWakeLock();
+            }
 
             document.getElementById('shop-settings-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
