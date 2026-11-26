@@ -296,6 +296,11 @@
                         <span>ബിൽ പ്രിന്റ് & സേവ് (Print Bill)</span>
                     </button>
 
+                    <button onclick="saveBillWithoutPrint()" class="col-span-2 flex items-center justify-center gap-2 bg-stone-800 hover:bg-stone-900 active:scale-98 text-amber-300 font-extrabold text-sm sm:text-base py-3 px-4 rounded-xl shadow-xs transition cursor-pointer">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span>ബിൽ സേവ് ചെയ്യുക (പ്രിന്റ് ഇല്ലാതെ)</span>
+                    </button>
+
                     <button onclick="holdCurrentTable()" class="flex items-center justify-center gap-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-950 border border-amber-300 font-extrabold text-xs sm:text-sm py-3 px-3 rounded-xl transition cursor-pointer">
                         <i data-lucide="pause-circle" class="w-4 h-4"></i>
                         <span>ഹോൾഡ് (1/2/3)</span>
@@ -525,9 +530,25 @@
                         <input type="text" id="setting-shop-id" placeholder="ഉദാ: shop-peravoor-01" class="w-full px-3 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-extrabold text-stone-700 mb-1">Shop PIN (4-6 അക്ക രഹസ്യ കോഡ്)</label>
-                    <input type="password" inputmode="numeric" id="setting-shop-pin" placeholder="ഉദാ: 1234" class="w-full px-3.5 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">Shop PIN (ഉടമ / അഡ്മിൻ PIN)</label>
+                        <input type="password" inputmode="numeric" id="setting-shop-pin" placeholder="ഉദാ: 1234" class="w-full px-3.5 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">Staff PIN (സപ്ലയർ / ഷെഫ് PIN)</label>
+                        <input type="password" inputmode="numeric" id="setting-staff-pin" placeholder="ഒഴിവായിട്ടാൽ ഓപ്പൺ" class="w-full px-3.5 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <div class="bg-amber-50/90 border border-amber-200 rounded-2xl p-3 flex items-center justify-between gap-2 flex-wrap">
+                    <div class="text-xs">
+                        <span class="font-extrabold text-amber-950 block">സ്റ്റാഫ് മാറിപ്പോയാൽ ആക്സസ് ഒഴിവാക്കാൻ:</span>
+                        <span class="text-stone-600 font-semibold">പുതിയ Staff PIN നൽകി റദ്ദാക്കാം (പഴയ PIN പ്രവർത്തിക്കില്ല).</span>
+                    </div>
+                    <button type="button" onclick="revokeStaffAccessWithNewPin()" class="px-3 py-2 rounded-xl text-xs font-extrabold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer">
+                        സ്റ്റാഫ് PIN മാറ്റുക / റദ്ദാക്കുക
+                    </button>
                 </div>
 
                 <div class="pt-2 border-t border-stone-200">
@@ -570,7 +591,7 @@
             <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-3">
                 <i data-lucide="lock" class="w-6 h-6"></i>
             </div>
-            <h3 class="text-lg font-extrabold text-stone-900">Shop PIN നൽകുക</h3>
+            <h3 class="text-lg font-extrabold text-stone-900">PIN നൽകുക</h3>
             <p id="pin-verify-shop-label" class="text-xs font-bold text-stone-500 mt-1"></p>
 
             <form id="pin-verify-form" class="mt-4 space-y-3">
@@ -757,10 +778,10 @@
             tableCount: 15,
             shopId: 'malabar-default',
             shopPin: '',
+            staffPin: '',
             firebase: { ...DEFAULT_FIREBASE_CONFIG }
         };
         let menuItems = [];
-        // tableOrders structure: { [tableId]: { [seatId]: { [entryKey]: qty } } }
         let tableOrders = {};
         let kitchenStatus = {};
         let holdSlots = { h1: null, h2: null, h3: null };
@@ -788,7 +809,6 @@
         let lastKitchenOrderSignature = '';
         let justSavedLocalTableCountAt = 0;
 
-        /* Backward-compatible normalization for any saved table order map */
         function normalizeSeatOrdersForTable(rawTableOrder) {
             if (!rawTableOrder || typeof rawTableOrder !== 'object') {
                 return { s1: {}, s2: {}, s3: {}, s4: {} };
@@ -801,7 +821,6 @@
                 });
                 return out;
             }
-            // Legacy flat { [entryKey]: qty } -> put into s1
             return {
                 s1: Object.assign({}, rawTableOrder),
                 s2: {},
@@ -1203,6 +1222,18 @@
             lastAnnouncedReadyMap = updatedAnnounced;
         }
 
+        function checkPinAuthorized(remoteData) {
+            const reqShopPin = (remoteData?.shopPin || '').trim();
+            const reqStaffPin = (remoteData?.staffPin || '').trim();
+            const localPin = (bizConfig.shopPin || '').trim();
+
+            if (!reqShopPin && !reqStaffPin) return true;
+            if (!localPin) return false;
+            if (reqShopPin && localPin === reqShopPin) return true;
+            if (reqStaffPin && localPin === reqStaffPin) return true;
+            return false;
+        }
+
         async function initFirebaseSync() {
             if (unsubscribeSnapshot) {
                 unsubscribeSnapshot();
@@ -1233,7 +1264,7 @@
 
                 if (initialSnap.exists()) {
                     const remoteData = initialSnap.data();
-                    if (remoteData.shopPin && bizConfig.shopPin !== remoteData.shopPin) {
+                    if (!checkPinAuthorized(remoteData)) {
                         cloudReady = false;
                         if (badge) {
                             badge.textContent = 'PIN ആവശ്യമാണ്';
@@ -1245,7 +1276,9 @@
                             tableCount: normalizeTableCount(remoteData.tableCount || bizConfig.tableCount || 15),
                             shopId: bizConfig.shopId,
                             shopPin: '',
-                            expectedPin: remoteData.shopPin
+                            staffPin: remoteData.staffPin || '',
+                            expectedShopPin: (remoteData.shopPin || '').trim(),
+                            expectedStaffPin: (remoteData.staffPin || '').trim()
                         };
                         openPinVerificationModal(bizConfig.shopId);
                         return;
@@ -1263,9 +1296,15 @@
                 unsubscribeSnapshot = onSnapshot(shopDocRef, (snap) => {
                     if (!snap.exists()) return;
                     const data = snap.data();
-                    if (data.shopPin && bizConfig.shopPin && data.shopPin !== bizConfig.shopPin) {
+                    if (!checkPinAuthorized(data)) {
+                        cloudReady = false;
+                        if (badge) {
+                            badge.textContent = 'PIN മാറ്റി (ലോക്ക്)';
+                            badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-700';
+                        }
                         return;
                     }
+                    cloudReady = true;
                     applyRemoteShopData(data, isInitialSnapshotLoad);
                     isInitialSnapshotLoad = false;
                 }, (err) => {
@@ -1295,7 +1334,8 @@
             if (!recentlySavedLocal && data.tableCount !== undefined && data.tableCount !== null) {
                 bizConfig.tableCount = normalizeTableCount(data.tableCount);
             }
-            if (data.shopPin) bizConfig.shopPin = data.shopPin;
+            if (data.shopPin !== undefined) bizConfig.shopPin = data.shopPin;
+            if (data.staffPin !== undefined) bizConfig.staffPin = data.staffPin;
             if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
             if (data.tableOrders) tableOrders = data.tableOrders;
             if (data.kitchenStatus) kitchenStatus = data.kitchenStatus;
@@ -1346,6 +1386,7 @@
                     shopInfo,
                     tableCount: normalizeTableCount(bizConfig.tableCount),
                     shopPin: bizConfig.shopPin || '',
+                    staffPin: bizConfig.staffPin || '',
                     menuItems,
                     tableOrders,
                     kitchenStatus,
@@ -1399,6 +1440,7 @@
                         tableCount: 15,
                         shopId: 'malabar-default',
                         shopPin: '',
+                        staffPin: '',
                         firebase: { ...DEFAULT_FIREBASE_CONFIG }
                     }, parsedBiz);
                     bizConfig.tableCount = normalizeTableCount(bizConfig.tableCount);
@@ -1887,7 +1929,6 @@
 
             const listEl = document.getElementById('cart-items-list');
 
-            // If multi-table combine is active, show grouped items per table; otherwise show active seat's items
             if (mergedTableIds.length > 0) {
                 const groupIds = [activeTableId, ...mergedTableIds];
                 let grandTotal = 0;
@@ -2307,6 +2348,21 @@
             }
         }
 
+        function saveBillWithoutPrint() {
+            const bill = buildCurrentBillObject();
+            if (!bill) {
+                showToast('ബിൽ സേവ് ചെയ്യാൻ ആദ്യം ഐറ്റങ്ങൾ ചേർക്കുക!');
+                return;
+            }
+
+            completedBills.unshift(bill);
+            billSequence += 1;
+            clearBilledOrdersFromState();
+            saveState();
+            renderAll();
+            showToast(`ബിൽ #${bill.billNo} സേവ് ചെയ്തു! ടേബിൾ ഒഴിവായി.`);
+        }
+
         function printAndCompleteBill() {
             const bill = buildCurrentBillObject();
             if (!bill) {
@@ -2644,6 +2700,7 @@
             document.getElementById('setting-table-count').value = String(currentCount);
             document.getElementById('setting-shop-id').value = bizConfig.shopId || 'malabar-default';
             document.getElementById('setting-shop-pin').value = bizConfig.shopPin || '';
+            document.getElementById('setting-staff-pin').value = bizConfig.staffPin || '';
 
             document.getElementById('setting-fb-apikey').value = fb.apiKey || '';
             document.getElementById('setting-fb-projectid').value = fb.projectId || '';
@@ -2656,6 +2713,29 @@
             if (ind) ind.textContent = '+';
 
             openModal('shop-settings-modal');
+        }
+
+        async function revokeStaffAccessWithNewPin() {
+            const nextStaffPin = (document.getElementById('setting-staff-pin')?.value || '').trim();
+            if (!nextStaffPin) {
+                showToast('ആദ്യം പുതിയ Staff PIN നൽകിയിട്ട് ഈ ബട്ടൺ അമർത്തുക!');
+                return;
+            }
+            if (bizConfig.staffPin && nextStaffPin === bizConfig.staffPin) {
+                showToast('പഴയ PIN തന്നെയാണ്! ഒഴിവാക്കാൻ പുതിയൊരു PIN നൽകുക.');
+                return;
+            }
+
+            openConfirmDialog(
+                'സ്റ്റാഫ് ആക്സസ് റദ്ദാക്കണോ?',
+                'പഴയ Staff PIN ഉപയോഗിക്കുന്നവരുടെ ആക്സസ് ഉടൻ റദ്ദാക്കുകയും പുതിയ Staff PIN സജീവമാകുകയും ചെയ്യും. ഉറപ്പാണോ?',
+                async () => {
+                    bizConfig.staffPin = nextStaffPin;
+                    saveLocalOnly();
+                    await pushToFirestore();
+                    showToast('പുതിയ Staff PIN സെറ്റ് ചെയ്തു! പഴയ ആക്സസ് റദ്ദായി.');
+                }
+            );
         }
 
         function openPinVerificationModal(shopId) {
@@ -2701,6 +2781,7 @@
                 const tableCount = normalizeTableCount(document.getElementById('setting-table-count').value);
                 const shopId = (document.getElementById('setting-shop-id').value || 'malabar-default').trim().replace(/\s+/g, '-').toLowerCase();
                 const shopPin = (document.getElementById('setting-shop-pin').value || '').trim();
+                const staffPin = (document.getElementById('setting-staff-pin').value || '').trim();
 
                 const nextFirebase = {
                     apiKey: (document.getElementById('setting-fb-apikey')?.value || '').trim() || DEFAULT_FIREBASE_CONFIG.apiKey,
@@ -2719,9 +2800,26 @@
                     const snap = await getDoc(doc(tempDb, 'shops', shopId));
 
                     if (snap.exists()) {
-                        const existingPin = (snap.data().shopPin || '').trim();
-                        if (existingPin && existingPin !== shopPin) {
-                            pendingSettingsDraft = { name, place, tableCount, shopId, shopPin, expectedPin: existingPin, firebase: nextFirebase };
+                        const existingData = snap.data();
+                        const existingShopPin = (existingData.shopPin || '').trim();
+                        const existingStaffPin = (existingData.staffPin || '').trim();
+                        const enteredMatchesExisting =
+                            (!existingShopPin && !existingStaffPin) ||
+                            (existingShopPin && shopPin === existingShopPin) ||
+                            (existingStaffPin && shopPin === existingStaffPin);
+
+                        if (!enteredMatchesExisting) {
+                            pendingSettingsDraft = {
+                                name,
+                                place,
+                                tableCount,
+                                shopId,
+                                shopPin,
+                                staffPin: existingStaffPin,
+                                expectedShopPin: existingShopPin,
+                                expectedStaffPin: existingStaffPin,
+                                firebase: nextFirebase
+                            };
                             closeModal('shop-settings-modal');
                             openPinVerificationModal(shopId);
                             showToast('ഈ Shop ID-ക്ക് മറ്റൊരു PIN ആണ് ഉള്ളത്!');
@@ -2737,6 +2835,7 @@
                     tableCount,
                     shopId,
                     shopPin,
+                    staffPin,
                     firebase: nextFirebase
                 };
                 justSavedLocalTableCountAt = Date.now();
@@ -2754,8 +2853,11 @@
                 const enteredPin = (document.getElementById('verify-pin-input').value || '').trim();
                 if (!pendingSettingsDraft) return;
 
-                if (enteredPin !== pendingSettingsDraft.expectedPin) {
-                    showToast('തെറ്റായ Shop PIN! വീണ്ടും ശ്രമിക്കുക.');
+                const validShop = pendingSettingsDraft.expectedShopPin && enteredPin === pendingSettingsDraft.expectedShopPin;
+                const validStaff = pendingSettingsDraft.expectedStaffPin && enteredPin === pendingSettingsDraft.expectedStaffPin;
+
+                if (!validShop && !validStaff) {
+                    showToast('തെറ്റായ PIN! വീണ്ടും ശ്രമിക്കുക.');
                     return;
                 }
 
@@ -2767,6 +2869,7 @@
                     tableCount: normalizeTableCount(pendingSettingsDraft.tableCount),
                     shopId: pendingSettingsDraft.shopId,
                     shopPin: enteredPin,
+                    staffPin: pendingSettingsDraft.staffPin || '',
                     firebase: pendingSettingsDraft.firebase || { ...DEFAULT_FIREBASE_CONFIG }
                 };
 
@@ -2834,6 +2937,7 @@
         window.clearMergedTables = clearMergedTables;
         window.toggleMergeTableSelection = toggleMergeTableSelection;
         window.openShopSettingsModal = openShopSettingsModal;
+        window.revokeStaffAccessWithNewPin = revokeStaffAccessWithNewPin;
         window.toggleFirebaseFields = toggleFirebaseFields;
         window.enableAndToggleSound = enableAndToggleSound;
         window.cancelPinVerification = cancelPinVerification;
@@ -2843,6 +2947,7 @@
         window.openDailyReportModal = openDailyReportModal;
         window.clearParcelDetails = clearParcelDetails;
         window.saveParcelDetails = saveParcelDetails;
+        window.saveBillWithoutPrint = saveBillWithoutPrint;
         window.printAndCompleteBill = printAndCompleteBill;
         window.holdCurrentTable = holdCurrentTable;
         window.shareBillWhatsApp = shareBillWhatsApp;
