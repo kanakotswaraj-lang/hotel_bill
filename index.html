@@ -189,19 +189,30 @@
 
             <!-- Table / Parcel Quick Selector -->
             <section class="bg-white rounded-2xl p-3 sm:p-3.5 shadow-xs border border-stone-200 space-y-2.5">
-                <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
                     <span class="text-xs sm:text-sm font-extrabold text-stone-700 flex items-center gap-1.5">
                         <i data-lucide="layout-grid" class="w-4 h-4 text-amber-600"></i>
                         ടേബിൾ / പാർസൽ തിരഞ്ഞെടുക്കുക
                     </span>
                     <div class="flex items-center gap-1.5">
+                        <button id="split-seat-toggle-btn" type="button" onclick="toggleSeatSplitBar()" class="text-[11px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-950 border border-stone-300 cursor-pointer transition" title="ഒരു ടേബിളിൽ 4 പേർക്ക് വേറെ വേറെ ബിൽ">
+                            വ്യക്തി 1/2/3/4
+                        </button>
                         <span id="table-count-summary" class="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200">
-                            5 ടേബിൾ
+                            15 ടേബിൾ + പാർസൽ
                         </span>
                         <span id="active-table-badge" class="text-xs sm:text-sm font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900">
                             ടേബിൾ 1
                         </span>
                     </div>
+                </div>
+
+                <!-- Optional Per-Table Person Tabs (Hidden by Default for Clean Normal Flow) -->
+                <div id="table-seat-tabs" class="hidden bg-amber-50/70 border border-amber-200 rounded-xl p-2 flex items-center justify-between gap-2 flex-wrap">
+                    <div id="seat-tabs-buttons" class="flex items-center gap-1.5 flex-wrap"></div>
+                    <button type="button" onclick="toggleSeatSplitBar()" class="text-[11px] font-extrabold text-stone-500 hover:text-stone-800 px-1.5 py-0.5 cursor-pointer">
+                        മറയ്ക്കുക ×
+                    </button>
                 </div>
 
                 <!-- Spacious Grid that never squishes even with 15 tables -->
@@ -244,16 +255,31 @@
 
         <!-- Right Section: Current Bill / Cart Drawer (5 Columns) -->
         <section class="lg:col-span-5 bg-white rounded-2xl shadow-md border-2 border-stone-300 flex flex-col overflow-hidden">
-            <div class="bg-stone-100 px-4 py-3 border-b border-stone-200 flex items-center justify-between">
+            <div class="bg-stone-100 px-4 py-3 border-b border-stone-200 flex items-start justify-between gap-2">
                 <div>
                     <span class="text-xs font-bold text-stone-600 block">നിലവിലെ ഓർഡർ</span>
                     <h2 id="cart-table-title" class="text-lg sm:text-xl font-extrabold text-stone-900">ടേബിൾ 1 (Table 1)</h2>
                     <p id="cart-customer-summary" class="text-xs sm:text-sm font-bold text-amber-900 mt-0.5 hidden"></p>
+                    <button type="button" onclick="toggleMergeTablesPanel()" class="mt-1.5 inline-flex items-center gap-1 text-xs font-extrabold px-2.5 py-1 rounded-lg bg-white hover:bg-amber-50 text-stone-800 border border-stone-300 cursor-pointer transition">
+                        <i data-lucide="layers" class="w-3.5 h-3.5 text-amber-700"></i>
+                        <span id="merge-tables-btn-label">ടേബിളുകൾ ചേർക്കുക</span>
+                    </button>
                 </div>
-                <div class="text-right">
+                <div class="text-right flex-shrink-0">
                     <span class="text-xs font-bold text-stone-600 block">ബിൽ നമ്പർ</span>
                     <span id="cart-bill-no" class="text-base font-extrabold text-amber-800">#101</span>
                 </div>
+            </div>
+
+            <!-- Optional Multi-Table Combine Drawer (Hidden by Default) -->
+            <div id="merge-tables-panel" class="hidden bg-amber-50/90 border-b border-amber-200 px-4 py-3 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-extrabold text-amber-950">ഒരുമിച്ച് ബിൽ അടിക്കാൻ മറ്റു ടേബിളുകൾ തിരഞ്ഞെടുക്കുക:</span>
+                    <button type="button" onclick="clearMergedTables()" class="text-[11px] font-extrabold text-rose-600 hover:underline cursor-pointer">
+                        ഒഴിവാക്കുക
+                    </button>
+                </div>
+                <div id="merge-table-checkboxes" class="flex flex-wrap gap-1.5"></div>
             </div>
 
             <div id="cart-items-list" class="p-3 sm:p-4 space-y-2 max-h-[360px] lg:max-h-[420px] overflow-y-auto divide-y divide-stone-100"></div>
@@ -680,6 +706,13 @@
             }
         ];
 
+        const SEAT_IDS = ['s1', 's2', 's3', 's4'];
+
+        function getSeatLabel(seatId) {
+            const idx = SEAT_IDS.indexOf(seatId);
+            return idx >= 0 ? `വ്യക്തി ${idx + 1}` : 'വ്യക്തി 1';
+        }
+
         function normalizeTableCount(val) {
             const parsed = parseInt(val, 10);
             if (!parsed || parsed < 1) return 15;
@@ -727,6 +760,7 @@
             firebase: { ...DEFAULT_FIREBASE_CONFIG }
         };
         let menuItems = [];
+        // tableOrders structure: { [tableId]: { [seatId]: { [entryKey]: qty } } }
         let tableOrders = {};
         let kitchenStatus = {};
         let holdSlots = { h1: null, h2: null, h3: null };
@@ -734,6 +768,10 @@
         let completedBills = [];
         let billSequence = 101;
         let activeTableId = 't1';
+        let activeSeatId = 's1';
+        let seatSplitBarOpen = false;
+        let mergePanelOpen = false;
+        let mergedTableIds = [];
         let activeCategory = 'all';
         let soundEnabled = true;
         let ownerPanelOpen = false;
@@ -749,6 +787,57 @@
         let lastAnnouncedReadyMap = {};
         let lastKitchenOrderSignature = '';
         let justSavedLocalTableCountAt = 0;
+
+        /* Backward-compatible normalization for any saved table order map */
+        function normalizeSeatOrdersForTable(rawTableOrder) {
+            if (!rawTableOrder || typeof rawTableOrder !== 'object') {
+                return { s1: {}, s2: {}, s3: {}, s4: {} };
+            }
+            const hasSeatKeys = SEAT_IDS.some(sid => rawTableOrder[sid] && typeof rawTableOrder[sid] === 'object');
+            if (hasSeatKeys) {
+                const out = {};
+                SEAT_IDS.forEach(sid => {
+                    out[sid] = Object.assign({}, rawTableOrder[sid] || {});
+                });
+                return out;
+            }
+            // Legacy flat { [entryKey]: qty } -> put into s1
+            return {
+                s1: Object.assign({}, rawTableOrder),
+                s2: {},
+                s3: {},
+                s4: {}
+            };
+        }
+
+        function getSeatOrderMap(tableId, seatId = activeSeatId) {
+            const seats = normalizeSeatOrdersForTable(tableOrders[tableId]);
+            return seats[seatId] || {};
+        }
+
+        function getCombinedTableOrderMap(tableId) {
+            const seats = normalizeSeatOrdersForTable(tableOrders[tableId]);
+            const merged = {};
+            SEAT_IDS.forEach(sid => {
+                const sMap = seats[sid] || {};
+                Object.entries(sMap).forEach(([k, q]) => {
+                    if (q > 0) {
+                        merged[k] = (merged[k] || 0) + q;
+                    }
+                });
+            });
+            return merged;
+        }
+
+        function tableHasAnyItems(tableId) {
+            const merged = getCombinedTableOrderMap(tableId);
+            return Object.values(merged).some(q => q > 0);
+        }
+
+        function getTableTotalItemCount(tableId) {
+            const merged = getCombinedTableOrderMap(tableId);
+            return Object.values(merged).reduce((a, b) => a + b, 0);
+        }
 
         function toggleOwnerPanel() {
             ownerPanelOpen = !ownerPanelOpen;
@@ -768,6 +857,120 @@
             if (label) {
                 label.textContent = ownerPanelOpen ? 'കണക്ക് മറയ്ക്കുക' : 'മുതലാളി / കണക്ക്';
             }
+        }
+
+        function toggleSeatSplitBar() {
+            seatSplitBarOpen = !seatSplitBarOpen;
+            if (!seatSplitBarOpen) {
+                activeSeatId = 's1';
+            }
+            renderSeatSplitBar();
+            renderMenuGrid();
+            renderCart();
+        }
+
+        function renderSeatSplitBar() {
+            const bar = document.getElementById('table-seat-tabs');
+            const toggleBtn = document.getElementById('split-seat-toggle-btn');
+            const btnsWrap = document.getElementById('seat-tabs-buttons');
+            if (!bar || !btnsWrap) return;
+
+            const hasMultiSeatOrders = SEAT_IDS.slice(1).some(sid => {
+                const sm = getSeatOrderMap(activeTableId, sid);
+                return Object.values(sm).some(q => q > 0);
+            });
+
+            if (seatSplitBarOpen || hasMultiSeatOrders) {
+                seatSplitBarOpen = true;
+                bar.classList.remove('hidden');
+            } else {
+                bar.classList.add('hidden');
+            }
+
+            if (toggleBtn) {
+                toggleBtn.className = seatSplitBarOpen
+                    ? 'text-[11px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500 text-stone-950 border border-amber-600 cursor-pointer transition'
+                    : 'text-[11px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-950 border border-stone-300 cursor-pointer transition';
+            }
+
+            btnsWrap.innerHTML = SEAT_IDS.map(sid => {
+                const sm = getSeatOrderMap(activeTableId, sid);
+                const cnt = Object.values(sm).reduce((a, b) => a + b, 0);
+                const isSel = activeSeatId === sid;
+                return `
+                    <button type="button" onclick="selectSeat('${sid}')" class="px-2.5 py-1 rounded-lg text-xs font-extrabold border cursor-pointer transition ${isSel ? 'bg-stone-900 text-amber-300 border-stone-900' : 'bg-white text-stone-700 border-stone-300 hover:bg-amber-100'}">
+                        ${getSeatLabel(sid)}${cnt > 0 ? ` (${cnt})` : ''}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectSeat(seatId) {
+            activeSeatId = seatId;
+            renderSeatSplitBar();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function toggleMergeTablesPanel() {
+            mergePanelOpen = !mergePanelOpen;
+            renderMergeTablesPanel();
+        }
+
+        function clearMergedTables() {
+            mergedTableIds = [];
+            renderMergeTablesPanel();
+            renderCart();
+            lucide.createIcons();
+            showToast('ചേർത്ത ടേബിളുകൾ ഒഴിവാക്കി.');
+        }
+
+        function toggleMergeTableSelection(targetTableId) {
+            if (targetTableId === activeTableId) return;
+            const idx = mergedTableIds.indexOf(targetTableId);
+            if (idx >= 0) {
+                mergedTableIds.splice(idx, 1);
+            } else {
+                mergedTableIds.push(targetTableId);
+            }
+            renderMergeTablesPanel();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function renderMergeTablesPanel() {
+            const panel = document.getElementById('merge-tables-panel');
+            const box = document.getElementById('merge-table-checkboxes');
+            const btnLabel = document.getElementById('merge-tables-btn-label');
+            if (!panel || !box) return;
+
+            mergedTableIds = mergedTableIds.filter(id => id !== activeTableId);
+
+            if (btnLabel) {
+                btnLabel.textContent = mergedTableIds.length > 0
+                    ? `ടേബിളുകൾ ചേർത്തു (${mergedTableIds.length})`
+                    : 'ടേബിളുകൾ ചേർക്കുക';
+            }
+
+            if (mergePanelOpen || mergedTableIds.length > 0) {
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+
+            const tables = getTablesList();
+            box.innerHTML = tables
+                .filter(t => t.id !== activeTableId)
+                .map(t => {
+                    const checked = mergedTableIds.includes(t.id);
+                    const hasOrd = tableHasAnyItems(t.id);
+                    return `
+                        <button type="button" onclick="toggleMergeTableSelection('${t.id}')" class="px-2.5 py-1 rounded-lg text-xs font-extrabold border cursor-pointer transition ${checked ? 'bg-emerald-600 text-white border-emerald-700' : (hasOrd ? 'bg-white text-amber-950 border-amber-400 hover:bg-amber-100' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100')}">
+                            ${checked ? '✓ ' : ''}${escapeHtml(t.label)}${hasOrd ? ' •' : ''}
+                        </button>
+                    `;
+                }).join('');
         }
 
         /* ---------------- Screen Wake Lock + Audio + Browser Notification ---------------- */
@@ -956,11 +1159,11 @@
             return Object.keys(ordersMap)
                 .sort()
                 .map(tid => {
-                    const items = ordersMap[tid] || {};
-                    const pairs = Object.keys(items)
-                        .filter(k => items[k] > 0)
+                    const combined = getCombinedTableOrderMap(tid);
+                    const pairs = Object.keys(combined)
+                        .filter(k => combined[k] > 0)
                         .sort()
-                        .map(k => `${k}:${items[k]}`);
+                        .map(k => `${k}:${combined[k]}`);
                     return pairs.length ? `${tid}[${pairs.join(',')}]` : '';
                 })
                 .filter(Boolean)
@@ -972,7 +1175,7 @@
             let anyNewReady = false;
 
             Object.entries(nextKitchen || {}).forEach(([tableId, status]) => {
-                const hasItems = ordersMap && ordersMap[tableId] && Object.values(ordersMap[tableId]).some(q => q > 0);
+                const hasItems = ordersMap && ordersMap[tableId] && tableHasAnyItems(tableId);
                 if (
                     status === 'ready' &&
                     hasItems &&
@@ -1345,7 +1548,7 @@
         }
 
         function holdCurrentTable() {
-            const currentOrder = tableOrders[activeTableId] || {};
+            const currentOrder = getCombinedTableOrderMap(activeTableId);
             if (Object.keys(currentOrder).length === 0) {
                 showToast('ഹോൾഡ് ചെയ്യാൻ ഈ ടേബിളിൽ ഓർഡറൊന്നുമില്ല.');
                 return;
@@ -1377,13 +1580,18 @@
             const slotData = holdSlots[slotId];
             if (!slotData || !slotData.items) return;
 
-            const currentOrder = tableOrders[activeTableId] || {};
+            const currentOrder = getCombinedTableOrderMap(activeTableId);
             if (Object.keys(currentOrder).length > 0) {
                 showToast('നിലവിലെ ടേബിളിൽ ഓർഡർ ഉള്ളതിനാൽ ആദ്യം ഹോൾഡ്/ക്ലിയർ ചെയ്യുക.');
                 return;
             }
 
-            tableOrders[activeTableId] = JSON.parse(JSON.stringify(slotData.items));
+            tableOrders[activeTableId] = {
+                s1: JSON.parse(JSON.stringify(slotData.items)),
+                s2: {},
+                s3: {},
+                s4: {}
+            };
             if (slotData.parcel) {
                 activeTableId = 'parcel';
                 parcelInfo = { ...slotData.parcel };
@@ -1425,7 +1633,7 @@
             const tables = getTablesList();
             const activeEntries = tables
                 .map(t => {
-                    const orderMap = tableOrders[t.id] || {};
+                    const orderMap = getCombinedTableOrderMap(t.id);
                     const entries = Object.entries(orderMap)
                         .filter(([, qty]) => qty > 0)
                         .map(([key, qty]) => {
@@ -1517,11 +1725,14 @@
             if (!tables.some(t => t.id === activeTableId)) {
                 activeTableId = 't1';
             }
+            mergedTableIds = mergedTableIds.filter(id => id !== activeTableId && tables.some(t => t.id === id));
             renderHeader();
             renderHoldSlotsBar();
             renderTables();
+            renderSeatSplitBar();
             renderCategories();
             renderMenuGrid();
+            renderMergeTablesPanel();
             renderCart();
             lucide.createIcons();
         }
@@ -1548,7 +1759,6 @@
                 summaryEl.textContent = `${count} ടേബിൾ + പാർസൽ`;
             }
 
-            // Keep page layout roomy and un-cramped when 10 or 15 tables are enabled
             if (container) {
                 if (count > 8) {
                     container.className = 'grid grid-cols-3 sm:grid-cols-5 gap-2 max-h-[176px] sm:max-h-[196px] overflow-y-auto pr-1';
@@ -1559,8 +1769,8 @@
 
             container.innerHTML = tables.map(t => {
                 const isActive = t.id === activeTableId;
-                const orderMap = tableOrders[t.id] || {};
-                const itemCount = Object.values(orderMap).reduce((a, b) => a + b, 0);
+                const isMerged = mergedTableIds.includes(t.id);
+                const itemCount = getTableTotalItemCount(t.id);
                 const kStatus = itemCount > 0 ? kitchenStatus[t.id] : null;
                 const isKitchenReady = kStatus === 'ready';
                 const isKitchenPreparing = kStatus === 'preparing';
@@ -1568,6 +1778,8 @@
                 let btnClasses = 'relative min-h-[54px] py-2 px-2 rounded-xl text-xs sm:text-sm font-extrabold border-2 transition cursor-pointer flex flex-col items-center justify-center ';
                 if (isActive) {
                     btnClasses += 'bg-stone-900 text-amber-300 border-stone-900 shadow-md';
+                } else if (isMerged) {
+                    btnClasses += 'bg-emerald-100 text-emerald-950 border-emerald-600 shadow-xs';
                 } else if (isKitchenReady) {
                     btnClasses += 'bg-emerald-50 text-emerald-950 border-emerald-500 hover:bg-emerald-100';
                 } else if (itemCount > 0) {
@@ -1577,7 +1789,9 @@
                 }
 
                 let subBadgeHtml = `<span class="mt-0.5 text-[11px] font-semibold opacity-70">ഒഴിവ്</span>`;
-                if (isKitchenReady) {
+                if (isMerged) {
+                    subBadgeHtml = `<span class="mt-0.5 text-[11px] font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-700 text-white">+ ബില്ലിൽ (${itemCount})</span>`;
+                } else if (isKitchenReady) {
                     subBadgeHtml = `<span class="mt-0.5 text-[11px] font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-600 text-white">✅ റെഡി</span>`;
                 } else if (isKitchenPreparing) {
                     subBadgeHtml = `<span class="mt-0.5 text-[11px] font-extrabold px-1.5 py-0.2 rounded-full bg-orange-500 text-white">🔥 പാചകം (${itemCount})</span>`;
@@ -1628,7 +1842,7 @@
 
         function renderMenuGrid() {
             const container = document.getElementById('menu-grid');
-            const currentOrder = tableOrders[activeTableId] || {};
+            const currentOrder = getSeatOrderMap(activeTableId, activeSeatId);
 
             const filtered = activeCategory === 'all'
                 ? menuItems
@@ -1660,12 +1874,81 @@
         function renderCart() {
             const tables = getTablesList();
             const activeObj = tables.find(t => t.id === activeTableId);
-            document.getElementById('cart-table-title').textContent = activeObj ? activeObj.fullLabel : 'ടേബിൾ 1';
+            const baseTitle = activeObj ? activeObj.fullLabel : 'ടേബിൾ 1';
+            const seatSuffix = seatSplitBarOpen ? ` • ${getSeatLabel(activeSeatId)}` : '';
+            const mergedLabels = mergedTableIds
+                .map(id => tables.find(t => t.id === id)?.label)
+                .filter(Boolean);
+            const mergeSuffix = mergedLabels.length > 0 ? ` + ${mergedLabels.join(', ')}` : '';
+
+            document.getElementById('cart-table-title').textContent = `${baseTitle}${seatSuffix}${mergeSuffix}`;
             document.getElementById('cart-bill-no').textContent = `#${billSequence}`;
             renderCartCustomerSummary();
 
             const listEl = document.getElementById('cart-items-list');
-            const currentOrder = tableOrders[activeTableId] || {};
+
+            // If multi-table combine is active, show grouped items per table; otherwise show active seat's items
+            if (mergedTableIds.length > 0) {
+                const groupIds = [activeTableId, ...mergedTableIds];
+                let grandTotal = 0;
+                const blocksHtml = [];
+
+                groupIds.forEach(tid => {
+                    const tObj = tables.find(t => t.id === tid);
+                    const tLabel = tObj ? tObj.label : tid;
+                    const tMap = getCombinedTableOrderMap(tid);
+                    const keys = Object.keys(tMap).filter(k => tMap[k] > 0);
+                    if (keys.length === 0) return;
+
+                    let tSub = 0;
+                    const rows = keys.map(key => {
+                        const { itemId, note } = parseOrderEntryKey(key);
+                        const item = menuItems.find(m => m.id === itemId);
+                        if (!item) return '';
+                        const qty = tMap[key];
+                        const lineTotal = item.price * qty;
+                        tSub += lineTotal;
+                        grandTotal += lineTotal;
+                        return `
+                            <div class="py-1.5 flex items-center justify-between gap-2 text-xs sm:text-sm">
+                                <div class="min-w-0 flex-1">
+                                    <span class="font-extrabold text-stone-900">${escapeHtml(item.name)}</span>
+                                    ${note ? `<span class="text-xs font-bold text-amber-800 ml-1">(${escapeHtml(note)})</span>` : ''}
+                                    <span class="text-stone-500 ml-1">₹${item.price} × ${qty}</span>
+                                </div>
+                                <span class="font-extrabold text-stone-900">₹${lineTotal}</span>
+                            </div>
+                        `;
+                    }).join('');
+
+                    blocksHtml.push(`
+                        <div class="py-2">
+                            <div class="flex items-center justify-between bg-stone-100 px-2.5 py-1 rounded-lg mb-1">
+                                <span class="text-xs font-extrabold text-stone-800">${escapeHtml(tLabel)}</span>
+                                <span class="text-xs font-extrabold text-emerald-700">₹${tSub}</span>
+                            </div>
+                            <div class="divide-y divide-stone-100 px-1">${rows}</div>
+                        </div>
+                    `);
+                });
+
+                if (blocksHtml.length === 0) {
+                    listEl.innerHTML = `
+                        <div class="py-10 text-center text-stone-400">
+                            <i data-lucide="shopping-bag" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
+                            <p class="text-sm font-bold">തിരഞ്ഞെടുത്ത ടേബിളുകളിൽ ഐറ്റങ്ങൾ ഇല്ല</p>
+                        </div>
+                    `;
+                    document.getElementById('cart-grand-total').textContent = '₹0';
+                    return;
+                }
+
+                listEl.innerHTML = blocksHtml.join('');
+                document.getElementById('cart-grand-total').textContent = `₹${grandTotal}`;
+                return;
+            }
+
+            const currentOrder = getSeatOrderMap(activeTableId, activeSeatId);
             const entryKeys = Object.keys(currentOrder).filter(k => currentOrder[k] > 0);
 
             if (entryKeys.length === 0) {
@@ -1718,8 +2001,12 @@
 
         function selectTable(tableId) {
             activeTableId = tableId;
+            activeSeatId = 's1';
+            mergedTableIds = mergedTableIds.filter(id => id !== tableId);
             renderTables();
+            renderSeatSplitBar();
             renderMenuGrid();
+            renderMergeTablesPanel();
             renderCart();
             lucide.createIcons();
         }
@@ -1790,11 +2077,14 @@
         }
 
         function addItemWithNote(itemId, note) {
-            if (!tableOrders[activeTableId]) {
-                tableOrders[activeTableId] = {};
+            const seats = normalizeSeatOrdersForTable(tableOrders[activeTableId]);
+            if (!seats[activeSeatId]) {
+                seats[activeSeatId] = {};
             }
             const entryKey = buildOrderEntryKey(itemId, note);
-            tableOrders[activeTableId][entryKey] = (tableOrders[activeTableId][entryKey] || 0) + 1;
+            seats[activeSeatId][entryKey] = (seats[activeSeatId][entryKey] || 0) + 1;
+            tableOrders[activeTableId] = seats;
+
             kitchenStatus[activeTableId] = 'new';
             delete lastAnnouncedReadyMap[activeTableId];
 
@@ -1804,6 +2094,7 @@
 
             saveState();
             renderTables();
+            renderSeatSplitBar();
             renderMenuGrid();
             renderCart();
             lucide.createIcons();
@@ -1812,88 +2103,208 @@
         function updateEntryQty(encodedKey, delta) {
             unlockAudioContext();
             const entryKey = decodeURIComponent(encodedKey);
-            if (!tableOrders[activeTableId]) return;
-            const newQty = (tableOrders[activeTableId][entryKey] || 0) + delta;
+            const seats = normalizeSeatOrdersForTable(tableOrders[activeTableId]);
+            const seatMap = seats[activeSeatId] || {};
+            const newQty = (seatMap[entryKey] || 0) + delta;
+
             if (newQty <= 0) {
-                delete tableOrders[activeTableId][entryKey];
-                if (Object.keys(tableOrders[activeTableId]).length === 0) {
-                    delete kitchenStatus[activeTableId];
-                    delete lastAnnouncedReadyMap[activeTableId];
-                }
+                delete seatMap[entryKey];
             } else {
-                tableOrders[activeTableId][entryKey] = newQty;
+                seatMap[entryKey] = newQty;
                 if (delta > 0 && document.getElementById('kitchen-view-modal')?.classList.contains('flex')) {
                     playKitchenOrderBeep();
                 }
             }
+            seats[activeSeatId] = seatMap;
+            tableOrders[activeTableId] = seats;
+
+            if (!tableHasAnyItems(activeTableId)) {
+                delete tableOrders[activeTableId];
+                delete kitchenStatus[activeTableId];
+                delete lastAnnouncedReadyMap[activeTableId];
+            }
+
             saveState();
             renderTables();
+            renderSeatSplitBar();
             renderMenuGrid();
             renderCart();
             lucide.createIcons();
         }
 
         function clearCurrentTable() {
-            const currentOrder = tableOrders[activeTableId] || {};
+            const isSeatMode = seatSplitBarOpen && activeTableId !== 'parcel';
+            const currentOrder = isSeatMode
+                ? getSeatOrderMap(activeTableId, activeSeatId)
+                : getCombinedTableOrderMap(activeTableId);
+
             if (Object.keys(currentOrder).length === 0) return;
 
+            const titleText = isSeatMode ? `${getSeatLabel(activeSeatId)} ഓർഡർ ഒഴിവാക്കണോ?` : 'ഓർഡർ ഒഴിവാക്കണോ?';
+            const msgText = isSeatMode
+                ? `${getSeatLabel(activeSeatId)}-യുടെ ഓർഡർ മാത്രം ഒഴിവാക്കാൻ ഉറപ്പാണോ?`
+                : 'ഈ ടേബിളിലെ നിലവിലെ ഐറ്റങ്ങൾ ഒഴിവാക്കാൻ ഉറപ്പാണോ?';
+
             openConfirmDialog(
-                'ഓർഡർ ഒഴിവാക്കണോ?',
-                'ഈ ടേബിളിലെ നിലവിലെ ഐറ്റങ്ങൾ ഒഴിവാക്കാൻ ഉറപ്പാണോ?',
+                titleText,
+                msgText,
                 () => {
-                    delete tableOrders[activeTableId];
-                    delete kitchenStatus[activeTableId];
-                    delete lastAnnouncedReadyMap[activeTableId];
-                    if (activeTableId === 'parcel') {
-                        parcelInfo = { name: '', phone: '', address: '' };
-                        syncParcelInputs();
+                    if (isSeatMode) {
+                        const seats = normalizeSeatOrdersForTable(tableOrders[activeTableId]);
+                        seats[activeSeatId] = {};
+                        tableOrders[activeTableId] = seats;
+                        if (!tableHasAnyItems(activeTableId)) {
+                            delete tableOrders[activeTableId];
+                            delete kitchenStatus[activeTableId];
+                            delete lastAnnouncedReadyMap[activeTableId];
+                        }
+                    } else {
+                        delete tableOrders[activeTableId];
+                        delete kitchenStatus[activeTableId];
+                        delete lastAnnouncedReadyMap[activeTableId];
+                        if (activeTableId === 'parcel') {
+                            parcelInfo = { name: '', phone: '', address: '' };
+                            syncParcelInputs();
+                        }
                     }
                     saveState();
                     renderAll();
-                    showToast('ടേബിൾ ഓർഡർ ഒഴിവാക്കി.');
+                    showToast('ഓർഡർ ഒഴിവാക്കി.');
                 }
             );
         }
 
         function buildCurrentBillObject() {
-            const currentOrder = tableOrders[activeTableId] || {};
-            const entryKeys = Object.keys(currentOrder).filter(k => currentOrder[k] > 0);
-            if (entryKeys.length === 0) return null;
+            const tables = getTablesList();
+            const activeObj = tables.find(t => t.id === activeTableId);
+            const activeTableLabel = activeObj ? activeObj.label : 'ടേബിൾ 1';
 
             const items = [];
             let total = 0;
 
-            entryKeys.forEach(key => {
-                const { itemId, note } = parseOrderEntryKey(key);
-                const menu = menuItems.find(m => m.id === itemId);
-                if (menu) {
-                    const qty = currentOrder[key];
-                    const amount = menu.price * qty;
-                    total += amount;
-                    items.push({
-                        id: menu.id,
-                        name: menu.name,
-                        note: note || '',
-                        displayName: note ? `${menu.name} (${note})` : menu.name,
-                        price: menu.price,
-                        qty: qty,
-                        amount: amount
+            if (mergedTableIds.length > 0) {
+                const groupIds = [activeTableId, ...mergedTableIds];
+                groupIds.forEach(tid => {
+                    const tObj = tables.find(t => t.id === tid);
+                    const tLbl = tObj ? tObj.label : tid;
+                    const tMap = getCombinedTableOrderMap(tid);
+                    Object.keys(tMap).filter(k => tMap[k] > 0).forEach(key => {
+                        const { itemId, note } = parseOrderEntryKey(key);
+                        const menu = menuItems.find(m => m.id === itemId);
+                        if (menu) {
+                            const qty = tMap[key];
+                            const amount = menu.price * qty;
+                            total += amount;
+                            const baseDisp = note ? `${menu.name} (${note})` : menu.name;
+                            items.push({
+                                id: menu.id,
+                                name: menu.name,
+                                note: note || '',
+                                displayName: `${baseDisp} [${tLbl}]`,
+                                price: menu.price,
+                                qty: qty,
+                                amount: amount
+                            });
+                        }
                     });
-                }
-            });
+                });
+            } else if (seatSplitBarOpen && activeTableId !== 'parcel') {
+                const seatMap = getSeatOrderMap(activeTableId, activeSeatId);
+                Object.keys(seatMap).filter(k => seatMap[k] > 0).forEach(key => {
+                    const { itemId, note } = parseOrderEntryKey(key);
+                    const menu = menuItems.find(m => m.id === itemId);
+                    if (menu) {
+                        const qty = seatMap[key];
+                        const amount = menu.price * qty;
+                        total += amount;
+                        items.push({
+                            id: menu.id,
+                            name: menu.name,
+                            note: note || '',
+                            displayName: note ? `${menu.name} (${note})` : menu.name,
+                            price: menu.price,
+                            qty: qty,
+                            amount: amount
+                        });
+                    }
+                });
+            } else {
+                const fullMap = getCombinedTableOrderMap(activeTableId);
+                Object.keys(fullMap).filter(k => fullMap[k] > 0).forEach(key => {
+                    const { itemId, note } = parseOrderEntryKey(key);
+                    const menu = menuItems.find(m => m.id === itemId);
+                    if (menu) {
+                        const qty = fullMap[key];
+                        const amount = menu.price * qty;
+                        total += amount;
+                        items.push({
+                            id: menu.id,
+                            name: menu.name,
+                            note: note || '',
+                            displayName: note ? `${menu.name} (${note})` : menu.name,
+                            price: menu.price,
+                            qty: qty,
+                            amount: amount
+                        });
+                    }
+                });
+            }
 
-            const tables = getTablesList();
-            const tableObj = tables.find(t => t.id === activeTableId);
+            if (items.length === 0) return null;
+
+            let billTableLabel = activeTableLabel;
+            if (mergedTableIds.length > 0) {
+                const otherLabels = mergedTableIds
+                    .map(id => tables.find(t => t.id === id)?.label)
+                    .filter(Boolean);
+                billTableLabel = `${activeTableLabel} + ${otherLabels.join(', ')}`;
+            } else if (seatSplitBarOpen && activeTableId !== 'parcel') {
+                billTableLabel = `${activeTableLabel} - ${getSeatLabel(activeSeatId)}`;
+            }
 
             return {
                 billNo: billSequence,
                 date: getTodayDDMMYYYY(),
                 time: getCurrentTime12Hr(),
-                tableLabel: tableObj ? tableObj.label : 'ടേബിൾ 1',
+                tableLabel: billTableLabel,
                 parcel: activeTableId === 'parcel' ? { ...parcelInfo } : null,
                 items: items,
                 total: total
             };
+        }
+
+        function clearBilledOrdersFromState() {
+            if (mergedTableIds.length > 0) {
+                const groupIds = [activeTableId, ...mergedTableIds];
+                groupIds.forEach(tid => {
+                    delete tableOrders[tid];
+                    delete kitchenStatus[tid];
+                    delete lastAnnouncedReadyMap[tid];
+                    if (tid === 'parcel') {
+                        parcelInfo = { name: '', phone: '', address: '' };
+                        syncParcelInputs();
+                    }
+                });
+                mergedTableIds = [];
+                mergePanelOpen = false;
+            } else if (seatSplitBarOpen && activeTableId !== 'parcel') {
+                const seats = normalizeSeatOrdersForTable(tableOrders[activeTableId]);
+                seats[activeSeatId] = {};
+                tableOrders[activeTableId] = seats;
+                if (!tableHasAnyItems(activeTableId)) {
+                    delete tableOrders[activeTableId];
+                    delete kitchenStatus[activeTableId];
+                    delete lastAnnouncedReadyMap[activeTableId];
+                }
+            } else {
+                delete tableOrders[activeTableId];
+                delete kitchenStatus[activeTableId];
+                delete lastAnnouncedReadyMap[activeTableId];
+                if (activeTableId === 'parcel') {
+                    parcelInfo = { name: '', phone: '', address: '' };
+                    syncParcelInputs();
+                }
+            }
         }
 
         function printAndCompleteBill() {
@@ -1956,13 +2367,7 @@
 
             completedBills.unshift(bill);
             billSequence += 1;
-            delete tableOrders[activeTableId];
-            delete kitchenStatus[activeTableId];
-            delete lastAnnouncedReadyMap[activeTableId];
-            if (activeTableId === 'parcel') {
-                parcelInfo = { name: '', phone: '', address: '' };
-                syncParcelInputs();
-            }
+            clearBilledOrdersFromState();
             saveState();
             renderAll();
 
@@ -2423,6 +2828,11 @@
         }
 
         window.toggleOwnerPanel = toggleOwnerPanel;
+        window.toggleSeatSplitBar = toggleSeatSplitBar;
+        window.selectSeat = selectSeat;
+        window.toggleMergeTablesPanel = toggleMergeTablesPanel;
+        window.clearMergedTables = clearMergedTables;
+        window.toggleMergeTableSelection = toggleMergeTableSelection;
         window.openShopSettingsModal = openShopSettingsModal;
         window.toggleFirebaseFields = toggleFirebaseFields;
         window.enableAndToggleSound = enableAndToggleSound;
