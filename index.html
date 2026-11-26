@@ -118,7 +118,7 @@
 
                     <div class="flex items-center gap-1.5 bg-stone-800 px-2.5 py-1.5 rounded-xl border border-stone-700">
                         <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
-                        <span id="header-date" class="text-xs sm:text-sm font-extrabold text-stone-100">25-11-2026</span>
+                        <span id="header-date" class="text-xs sm:text-sm font-extrabold text-stone-100">26-11-2026</span>
                     </div>
                 </div>
             </div>
@@ -189,16 +189,23 @@
 
             <!-- Table / Parcel Quick Selector -->
             <section class="bg-white rounded-2xl p-3 sm:p-3.5 shadow-xs border border-stone-200 space-y-2.5">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between gap-2">
                     <span class="text-xs sm:text-sm font-extrabold text-stone-700 flex items-center gap-1.5">
                         <i data-lucide="layout-grid" class="w-4 h-4 text-amber-600"></i>
                         ടേബിൾ / പാർസൽ തിരഞ്ഞെടുക്കുക
                     </span>
-                    <span id="active-table-badge" class="text-xs sm:text-sm font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900">
-                        ടേബിൾ 1
-                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <span id="table-count-summary" class="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200">
+                            5 ടേബിൾ
+                        </span>
+                        <span id="active-table-badge" class="text-xs sm:text-sm font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900">
+                            ടേബിൾ 1
+                        </span>
+                    </div>
                 </div>
-                <div id="table-pills" class="grid grid-cols-3 sm:grid-cols-6 gap-2"></div>
+
+                <!-- Spacious Grid that never squishes even with 15 tables -->
+                <div id="table-pills" class="grid grid-cols-3 sm:grid-cols-5 gap-2"></div>
 
                 <!-- Parcel / Catering Customer Details Box -->
                 <div id="parcel-details-box" class="hidden bg-amber-50/80 border-2 border-amber-300 rounded-2xl p-3 space-y-2.5">
@@ -283,7 +290,7 @@
 
     </main>
 
-    <!-- Variation / Quick Note Selector Modal (Tea, Porotta, Dosa, Egg, Meals, Puttu/Appam, Biryani, Curry, Coffee, Juice) -->
+    <!-- Variation / Quick Note Selector Modal -->
     <div id="variation-picker-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/75 backdrop-blur-xs p-4">
         <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border-2 border-amber-300">
             <div class="flex items-center justify-between pb-3 border-b border-stone-200">
@@ -347,7 +354,7 @@
             <div class="flex items-center justify-between pb-3 border-b border-stone-200">
                 <div>
                     <h2 class="text-xl font-extrabold text-stone-900">ഇന്നത്തെ വിറ്റുവരവ് റിപ്പോർട്ട്</h2>
-                    <p id="report-date-subtitle" class="text-xs sm:text-sm font-bold text-stone-500 mt-0.5">തീയതി: 25-11-2026</p>
+                    <p id="report-date-subtitle" class="text-xs sm:text-sm font-bold text-stone-500 mt-0.5">തീയതി: 26-11-2026</p>
                 </div>
                 <button onclick="closeModal('daily-report-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -628,7 +635,6 @@
             { id: 'm18', name: 'ലൈം ജ്യൂസ്', price: 25, cat: 'tea' }
         ];
 
-        // Item Variation Rules requested by user
         const VARIATION_GROUPS = [
             {
                 match: ['ചായ'],
@@ -674,6 +680,13 @@
             }
         ];
 
+        function normalizeTableCount(val) {
+            const parsed = parseInt(val, 10);
+            if (!parsed || parsed < 1) return 15;
+            if (parsed > 30) return 30;
+            return parsed;
+        }
+
         function getVariationsForMenuItem(item) {
             if (!item || !item.name) return null;
             const lowerName = item.name.toLowerCase();
@@ -708,7 +721,7 @@
 
         let shopInfo = { name: 'മിനു കാറ്ററിംഗ്', place: 'കോളയാട് / കണ്ണൂർ' };
         let bizConfig = {
-            tableCount: 5,
+            tableCount: 15,
             shopId: 'malabar-default',
             shopPin: '',
             firebase: { ...DEFAULT_FIREBASE_CONFIG }
@@ -735,6 +748,7 @@
         let isInitialSnapshotLoad = true;
         let lastAnnouncedReadyMap = {};
         let lastKitchenOrderSignature = '';
+        let justSavedLocalTableCountAt = 0;
 
         function toggleOwnerPanel() {
             ownerPanelOpen = !ownerPanelOpen;
@@ -895,7 +909,7 @@
 
         /* ---------------- Helpers & Firebase Sync ---------------- */
         function getTablesList() {
-            const count = parseInt(bizConfig.tableCount, 10) || 5;
+            const count = normalizeTableCount(bizConfig.tableCount);
             const list = [];
             for (let i = 1; i <= count; i++) {
                 list.push({
@@ -1025,7 +1039,7 @@
                         pendingSettingsDraft = {
                             name: remoteData.shopInfo?.name || shopInfo.name,
                             place: remoteData.shopInfo?.place || shopInfo.place,
-                            tableCount: remoteData.tableCount || bizConfig.tableCount || 5,
+                            tableCount: normalizeTableCount(remoteData.tableCount || bizConfig.tableCount || 15),
                             shopId: bizConfig.shopId,
                             shopPin: '',
                             expectedPin: remoteData.shopPin
@@ -1074,7 +1088,10 @@
                     place: String(data.shopInfo.place || shopInfo.place || '').trim()
                 });
             }
-            if (data.tableCount) bizConfig.tableCount = parseInt(data.tableCount, 10) || bizConfig.tableCount;
+            const recentlySavedLocal = (Date.now() - justSavedLocalTableCountAt) < 2500;
+            if (!recentlySavedLocal && data.tableCount !== undefined && data.tableCount !== null) {
+                bizConfig.tableCount = normalizeTableCount(data.tableCount);
+            }
             if (data.shopPin) bizConfig.shopPin = data.shopPin;
             if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
             if (data.tableOrders) tableOrders = data.tableOrders;
@@ -1124,7 +1141,7 @@
                 const shopDocRef = doc(firestoreDb, 'shops', bizConfig.shopId || 'malabar-default');
                 await setDoc(shopDocRef, {
                     shopInfo,
-                    tableCount: bizConfig.tableCount || 5,
+                    tableCount: normalizeTableCount(bizConfig.tableCount),
                     shopPin: bizConfig.shopPin || '',
                     menuItems,
                     tableOrders,
@@ -1176,11 +1193,12 @@
                 if (savedBiz) {
                     const parsedBiz = JSON.parse(savedBiz);
                     bizConfig = Object.assign({
-                        tableCount: 5,
+                        tableCount: 15,
                         shopId: 'malabar-default',
                         shopPin: '',
                         firebase: { ...DEFAULT_FIREBASE_CONFIG }
                     }, parsedBiz);
+                    bizConfig.tableCount = normalizeTableCount(bizConfig.tableCount);
                     bizConfig.firebase = Object.assign({ ...DEFAULT_FIREBASE_CONFIG }, parsedBiz.firebase || {});
                 }
 
@@ -1217,6 +1235,7 @@
 
         function saveLocalOnly() {
             try {
+                bizConfig.tableCount = normalizeTableCount(bizConfig.tableCount);
                 localStorage.setItem(KEYS.BIZ_CONFIG, JSON.stringify(bizConfig));
                 localStorage.setItem(KEYS.SHOP, JSON.stringify(shopInfo));
                 localStorage.setItem(KEYS.MENU, JSON.stringify(menuItems));
@@ -1520,8 +1539,24 @@
         }
 
         function renderTables() {
+            const count = normalizeTableCount(bizConfig.tableCount);
             const tables = getTablesList();
             const container = document.getElementById('table-pills');
+            const summaryEl = document.getElementById('table-count-summary');
+
+            if (summaryEl) {
+                summaryEl.textContent = `${count} ടേബിൾ + പാർസൽ`;
+            }
+
+            // Keep page layout roomy and un-cramped when 10 or 15 tables are enabled
+            if (container) {
+                if (count > 8) {
+                    container.className = 'grid grid-cols-3 sm:grid-cols-5 gap-2 max-h-[176px] sm:max-h-[196px] overflow-y-auto pr-1';
+                } else {
+                    container.className = 'grid grid-cols-3 sm:grid-cols-5 gap-2';
+                }
+            }
+
             container.innerHTML = tables.map(t => {
                 const isActive = t.id === activeTableId;
                 const orderMap = tableOrders[t.id] || {};
@@ -1530,7 +1565,7 @@
                 const isKitchenReady = kStatus === 'ready';
                 const isKitchenPreparing = kStatus === 'preparing';
 
-                let btnClasses = 'relative py-2.5 px-2 rounded-xl text-xs sm:text-sm font-extrabold border-2 transition cursor-pointer flex flex-col items-center justify-center ';
+                let btnClasses = 'relative min-h-[54px] py-2 px-2 rounded-xl text-xs sm:text-sm font-extrabold border-2 transition cursor-pointer flex flex-col items-center justify-center ';
                 if (isActive) {
                     btnClasses += 'bg-stone-900 text-amber-300 border-stone-900 shadow-md';
                 } else if (isKitchenReady) {
@@ -2198,9 +2233,10 @@
 
         function openShopSettingsModal() {
             const fb = getActiveFirebaseConfig();
+            const currentCount = normalizeTableCount(bizConfig.tableCount);
             document.getElementById('setting-hotel-name').value = shopInfo.name;
             document.getElementById('setting-hotel-place').value = shopInfo.place;
-            document.getElementById('setting-table-count').value = String(bizConfig.tableCount || 5);
+            document.getElementById('setting-table-count').value = String(currentCount);
             document.getElementById('setting-shop-id').value = bizConfig.shopId || 'malabar-default';
             document.getElementById('setting-shop-pin').value = bizConfig.shopPin || '';
 
@@ -2257,7 +2293,7 @@
                 e.preventDefault();
                 const name = document.getElementById('setting-hotel-name').value.trim();
                 const place = document.getElementById('setting-hotel-place').value.trim();
-                const tableCount = parseInt(document.getElementById('setting-table-count').value, 10) || 5;
+                const tableCount = normalizeTableCount(document.getElementById('setting-table-count').value);
                 const shopId = (document.getElementById('setting-shop-id').value || 'malabar-default').trim().replace(/\s+/g, '-').toLowerCase();
                 const shopPin = (document.getElementById('setting-shop-pin').value || '').trim();
 
@@ -2298,11 +2334,12 @@
                     shopPin,
                     firebase: nextFirebase
                 };
+                justSavedLocalTableCountAt = Date.now();
 
                 saveLocalOnly();
                 renderAll();
                 closeModal('shop-settings-modal');
-                showToast(`കടയുടെ വിവരങ്ങൾ സേവ് ചെയ്തു (${shopId}).`);
+                showToast(`${tableCount} ടേബിൾ & വിവരങ്ങൾ സേവ് ചെയ്തു (${shopId}).`);
                 await initFirebaseSync();
                 await pushToFirestore();
             });
@@ -2322,7 +2359,7 @@
                     place: pendingSettingsDraft.place
                 };
                 bizConfig = {
-                    tableCount: pendingSettingsDraft.tableCount,
+                    tableCount: normalizeTableCount(pendingSettingsDraft.tableCount),
                     shopId: pendingSettingsDraft.shopId,
                     shopPin: enteredPin,
                     firebase: pendingSettingsDraft.firebase || { ...DEFAULT_FIREBASE_CONFIG }
