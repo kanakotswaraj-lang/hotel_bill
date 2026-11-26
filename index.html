@@ -808,6 +808,42 @@
         let lastAnnouncedReadyMap = {};
         let lastKitchenOrderSignature = '';
         let justSavedLocalTableCountAt = 0;
+        let justClearedOrdersAt = 0;
+
+        function pruneEmptyOrdersAndKitchen() {
+            const cleanedOrders = {};
+            const cleanedKitchen = {};
+
+            Object.entries(tableOrders || {}).forEach(([tid, rawVal]) => {
+                if (!rawVal || typeof rawVal !== 'object') return;
+                const seats = normalizeSeatOrdersForTable(rawVal);
+                const nextSeats = {};
+                let hasAny = false;
+
+                SEAT_IDS.forEach(sid => {
+                    const sMap = seats[sid] || {};
+                    const nextS = {};
+                    Object.entries(sMap).forEach(([k, q]) => {
+                        const qty = parseInt(q, 10) || 0;
+                        if (qty > 0) {
+                            nextS[k] = qty;
+                            hasAny = true;
+                        }
+                    });
+                    nextSeats[sid] = nextS;
+                });
+
+                if (hasAny) {
+                    cleanedOrders[tid] = nextSeats;
+                    if (kitchenStatus && kitchenStatus[tid]) {
+                        cleanedKitchen[tid] = kitchenStatus[tid];
+                    }
+                }
+            });
+
+            tableOrders = cleanedOrders;
+            kitchenStatus = cleanedKitchen;
+        }
 
         function normalizeSeatOrdersForTable(rawTableOrder) {
             if (!rawTableOrder || typeof rawTableOrder !== 'object') {
@@ -1337,8 +1373,16 @@
             if (data.shopPin !== undefined) bizConfig.shopPin = data.shopPin;
             if (data.staffPin !== undefined) bizConfig.staffPin = data.staffPin;
             if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
-            if (data.tableOrders) tableOrders = data.tableOrders;
-            if (data.kitchenStatus) kitchenStatus = data.kitchenStatus;
+
+            const recentlyCleared = (Date.now() - justClearedOrdersAt) < 3500;
+            if (!recentlyCleared && data.tableOrders) {
+                tableOrders = data.tableOrders;
+            }
+            if (!recentlyCleared && data.kitchenStatus) {
+                kitchenStatus = data.kitchenStatus;
+            }
+            pruneEmptyOrdersAndKitchen();
+
             if (data.holdSlots) holdSlots = Object.assign({ h1: null, h2: null, h3: null }, data.holdSlots);
             if (Array.isArray(data.completedBills)) completedBills = data.completedBills;
             if (data.billSequence) billSequence = parseInt(data.billSequence, 10) || billSequence;
@@ -1381,6 +1425,7 @@
         async function pushToFirestore() {
             if (!cloudReady || !firestoreDb) return;
             try {
+                pruneEmptyOrdersAndKitchen();
                 const shopDocRef = doc(firestoreDb, 'shops', bizConfig.shopId || 'malabar-default');
                 await setDoc(shopDocRef, {
                     shopInfo,
@@ -1394,7 +1439,7 @@
                     completedBills,
                     billSequence,
                     updatedAt: getTodayDDMMYYYY()
-                }, { merge: true });
+                });
             } catch (err) {
                 console.error('Firestore push error:', err);
             }
@@ -1459,6 +1504,8 @@
                 const savedKitchen = localStorage.getItem(KEYS.KITCHEN_STATUS);
                 kitchenStatus = savedKitchen ? JSON.parse(savedKitchen) : {};
 
+                pruneEmptyOrdersAndKitchen();
+
                 const savedHolds = localStorage.getItem(KEYS.HOLDS);
                 if (savedHolds) holdSlots = Object.assign({ h1: null, h2: null, h3: null }, JSON.parse(savedHolds));
 
@@ -1480,6 +1527,7 @@
 
         function saveLocalOnly() {
             try {
+                pruneEmptyOrdersAndKitchen();
                 bizConfig.tableCount = normalizeTableCount(bizConfig.tableCount);
                 localStorage.setItem(KEYS.BIZ_CONFIG, JSON.stringify(bizConfig));
                 localStorage.setItem(KEYS.SHOP, JSON.stringify(shopInfo));
@@ -1612,6 +1660,7 @@
                 syncParcelInputs();
             }
 
+            justClearedOrdersAt = Date.now();
             saveState();
             renderAll();
             const slotName = targetSlot === 'h1' ? 'ഹോൾഡ് 1' : targetSlot === 'h2' ? 'ഹോൾഡ് 2' : 'ഹോൾഡ് 3';
@@ -1699,7 +1748,7 @@
                 container.innerHTML = `
                     <div class="col-span-full bg-white rounded-2xl p-10 text-center border border-stone-200">
                         <p class="text-base font-extrabold text-stone-600">നിലവിൽ കിച്ചനിലേക്ക് ഓർഡറുകൾ ഒന്നും വന്നിട്ടില്ല</p>
-                        <p class="text-xs sm:text-sm text-stone-400 mt-1">സപ്ലയർ ടേബിളുകളിൽ ഐറ്റം ചേർക്കുമ്പോൾ ശബ്ദത്തോടെ ഇവിടെ തെളിയും</p>
+                        <p class="text-xs sm:text-sm text-stone-400 mt-1">സപ്ലയർ എടുക്കുന്ന ഓർഡറുകൾ ശബ്ദത്തോടെ ഇവിടെ തെളിയും</p>
                     </div>
                 `;
                 return;
@@ -2163,6 +2212,7 @@
                 delete tableOrders[activeTableId];
                 delete kitchenStatus[activeTableId];
                 delete lastAnnouncedReadyMap[activeTableId];
+                justClearedOrdersAt = Date.now();
             }
 
             saveState();
@@ -2208,6 +2258,7 @@
                             syncParcelInputs();
                         }
                     }
+                    justClearedOrdersAt = Date.now();
                     saveState();
                     renderAll();
                     showToast('ഓർഡർ ഒഴിവാക്കി.');
@@ -2346,6 +2397,8 @@
                     syncParcelInputs();
                 }
             }
+            pruneEmptyOrdersAndKitchen();
+            justClearedOrdersAt = Date.now();
         }
 
         function saveBillWithoutPrint() {
