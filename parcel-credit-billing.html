@@ -109,6 +109,12 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <button type="button" onclick="openSiteLedgerModal()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-400 hover:bg-amber-300 text-stone-950 border border-amber-500 cursor-pointer shadow-xs" title="മേസ്തിരി / സൈറ്റ് കടം, അഡ്വാൻസ്, സെറ്റിൽമെന്റ്">
+                        <i data-lucide="building-2" class="w-4 h-4"></i>
+                        <span>സൈറ്റ് / അഡ്വാൻസ്</span>
+                        <span id="header-site-due-badge" class="px-1.5 py-0.2 rounded-md bg-stone-950 text-amber-300 text-xs">₹0</span>
+                    </button>
+
                     <button id="owner-panel-toggle-btn" type="button" onclick="toggleOwnerPanel()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/50 cursor-pointer" title="മുതലാളി / കണക്ക് ഭാഗം കാണുക അല്ലെങ്കിൽ മറയ്ക്കുക">
                         <i data-lucide="user-cog" class="w-4 h-4"></i>
                         <span id="owner-panel-toggle-label">മുതലാളി / കണക്ക്</span>
@@ -184,28 +190,35 @@
 
             <!-- Parcel Customer & Payment Mode Card -->
             <section class="bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border-2 border-amber-300 space-y-3">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
                     <span class="text-xs sm:text-sm font-extrabold text-amber-950 flex items-center gap-1.5">
                         <i data-lucide="user-check" class="w-4 h-4 text-amber-700"></i>
-                        പാർസൽ കസ്റ്റമർ & പേയ്മെന്റ് വിവരങ്ങൾ
+                        പാർസൽ കസ്റ്റമർ / മേസ്തിരി & പേയ്മെന്റ് വിവരങ്ങൾ
                     </span>
-                    <button type="button" onclick="clearCustomerDetails()" class="text-xs font-bold text-rose-600 hover:underline cursor-pointer">
-                        വിവരങ്ങൾ മായ്ക്കുക
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="openSiteLedgerModal()" class="text-xs font-extrabold text-amber-800 hover:underline cursor-pointer">
+                            സൈറ്റ് & അഡ്വാൻസ് കണക്ക് →
+                        </button>
+                        <button type="button" onclick="clearCustomerDetails()" class="text-xs font-bold text-rose-600 hover:underline cursor-pointer">
+                            വിവരങ്ങൾ മായ്ക്കുക
+                        </button>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <div>
-                        <label class="block text-xs font-extrabold text-stone-700 mb-1">കസ്റ്റമറുടെ പേര് *</label>
-                        <input type="text" id="cust-name" oninput="saveCustomerDetails()" placeholder="ഉദാ: റഹീം / രാജേഷ്" class="w-full px-3 py-2 text-sm font-bold bg-amber-50/50 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">കസ്റ്റമർ / മേസ്തിരി പേര് *</label>
+                        <input type="text" id="cust-name" list="contractor-datalist" oninput="saveCustomerDetails()" onchange="handleCustomerInputChange()" placeholder="ഉദാ: ജോസ് മേസ്തിരി" class="w-full px-3 py-2 text-sm font-bold bg-amber-50/50 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <datalist id="contractor-datalist"></datalist>
                     </div>
                     <div>
                         <label class="block text-xs font-extrabold text-stone-700 mb-1">ഫോൺ നമ്പർ (വാട്സ്ആപ്പ്)</label>
                         <input type="tel" id="cust-phone" oninput="saveCustomerDetails()" placeholder="9876543210" class="w-full px-3 py-2 text-sm font-bold bg-amber-50/50 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-extrabold text-stone-700 mb-1">സ്ഥലം / കുറിപ്പ്</label>
-                        <input type="text" id="cust-address" oninput="saveCustomerDetails()" placeholder="ഉദാ: കോളയാട്" class="w-full px-3 py-2 text-sm font-semibold bg-amber-50/50 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">സൈറ്റ് / സ്ഥലം / കുറിപ്പ്</label>
+                        <input type="text" id="cust-address" list="site-datalist" oninput="saveCustomerDetails()" placeholder="ഉദാ: കോളയാട് സൈറ്റ്" class="w-full px-3 py-2 text-sm font-semibold bg-amber-50/50 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <datalist id="site-datalist"></datalist>
                     </div>
                 </div>
 
@@ -217,7 +230,7 @@
                             <span>💵 റെഡി ക്യാഷ് (Cash)</span>
                         </button>
                         <button type="button" id="pay-btn-credit" onclick="setPaymentMode('credit')" class="py-2.5 px-3 rounded-xl font-extrabold text-xs sm:text-sm border-2 transition cursor-pointer flex items-center justify-center gap-1.5">
-                            <span>📒 കടം (Credit)</span>
+                            <span>📒 കടം / സൈറ്റ് അക്കൗണ്ട്</span>
                         </button>
                     </div>
                 </div>
@@ -289,46 +302,86 @@
     <!-- Hidden 58mm Thermal Receipt Area -->
     <div id="thermal-print-area"></div>
 
-    <!-- Variation & New Variety Tag Picker Modal -->
-    <div id="variation-picker-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/75 backdrop-blur-xs p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between pb-2.5 border-b border-stone-200">
+    <!-- Contractor & Multi-Site Credit / Advance / Settlement Modal -->
+    <div id="site-ledger-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl border-2 border-amber-300 my-auto max-h-[92vh] flex flex-col">
+            <div class="flex items-center justify-between gap-2 pb-3 border-b border-stone-200">
                 <div>
-                    <h3 id="var-modal-title" class="text-lg font-extrabold text-stone-900">വേരിയേഷൻ തിരഞ്ഞെടുക്കുക</h3>
-                    <p id="var-modal-subtitle" class="text-xs font-bold text-stone-500 mt-0.5">ടാഗിൽ തൊടുക അല്ലെങ്കിൽ പുതിയ വെറൈറ്റി പേര് ചേർക്കുക</p>
+                    <h2 class="text-lg sm:text-xl font-extrabold text-stone-900">മേസ്തിരി / സൈറ്റ് കടം, അഡ്വാൻസ് & സെറ്റിൽമെന്റ്</h2>
+                    <p class="text-xs font-bold text-stone-500 mt-0.5">ഒരു മേസ്തിരിയുടെ ഒന്നിലധികം സൈറ്റുകൾ, ഇടക്കുള്ള അഡ്വാൻസ്, ആഴ്ചാവസാന കണക്ക് എന്നിവ വേർതിരിച്ച് കാണാം</p>
                 </div>
-                <button type="button" onclick="closeModal('variation-picker-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                <button type="button" onclick="closeModal('site-ledger-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <div id="var-preset-tags" class="flex flex-wrap gap-2"></div>
-
-            <!-- Add New Variety Name Tag Inline -->
-            <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
-                <label for="var-new-tag-input" class="block text-xs font-extrabold text-amber-950">
-                    പുതിയ വെറൈറ്റി പേര് ടാഗ് ആയി ചേർക്കുക
-                </label>
-                <div class="flex items-center gap-2">
-                    <input type="text" id="var-new-tag-input" placeholder="ഉദാ: മധുരം കൂടുതൽ / ഏലക്ക..." class="flex-1 px-3 py-2 text-xs sm:text-sm font-bold bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
-                    <button type="button" onclick="addCustomVariationTag()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-500 hover:bg-amber-400 text-stone-950 whitespace-nowrap cursor-pointer">
-                        + ചേർക്കുക
-                    </button>
+            <div class="overflow-y-auto py-4 space-y-5 flex-1 pr-1">
+                <!-- Overall Due Summary -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3">
+                        <span class="text-xs font-bold text-rose-800 block">ആകെ കുടിശ്ശിക (Net Due)</span>
+                        <span id="ledger-total-due" class="text-xl sm:text-2xl font-extrabold text-rose-700 mt-0.5 block">₹0</span>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
+                        <span class="text-xs font-bold text-emerald-800 block">ആകെ അഡ്വാൻസ് / വരവ്</span>
+                        <span id="ledger-total-advance" class="text-xl sm:text-2xl font-extrabold text-emerald-700 mt-0.5 block">₹0</span>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3">
+                        <span class="text-xs font-bold text-amber-900 block">സജീവ സൈറ്റുകൾ</span>
+                        <span id="ledger-active-sites-count" class="text-xl sm:text-2xl font-extrabold text-amber-800 mt-0.5 block">0</span>
+                    </div>
                 </div>
+
+                <!-- Add New Contractor / Site or Quick Credit/Advance Entry -->
+                <form id="add-site-entry-form" class="bg-amber-50/70 border border-amber-300 rounded-2xl p-3.5 space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <span class="text-xs sm:text-sm font-extrabold text-amber-950">+ പുതിയ സൈറ്റ് / കടം / അഡ്വാൻസ് ചേർക്കുക</span>
+                        <span class="text-[11px] font-bold text-stone-600">തീയതി: <span id="ledger-form-date"></span></span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+                        <div>
+                            <label class="block text-xs font-extrabold text-stone-700 mb-1">മേസ്തിരി / കസ്റ്റമർ പേര് *</label>
+                            <input type="text" id="ledger-contractor-name" list="contractor-datalist" required placeholder="ഉദാ: ജോസ് മേസ്തിരി" class="w-full px-3 py-2 text-xs sm:text-sm font-bold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-extrabold text-stone-700 mb-1">സൈറ്റ് പേര് *</label>
+                            <input type="text" id="ledger-site-name" list="site-datalist" required placeholder="ഉദാ: കോളയാട് സൈറ്റ്" class="w-full px-3 py-2 text-xs sm:text-sm font-bold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-extrabold text-stone-700 mb-1">ഫോൺ (വാട്സ്ആപ്പ്)</label>
+                            <input type="tel" id="ledger-phone" placeholder="9876543210" class="w-full px-3 py-2 text-xs sm:text-sm font-bold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-extrabold text-stone-700 mb-1">എൻട്രി തരം</label>
+                            <select id="ledger-entry-type" class="w-full px-3 py-2 text-xs sm:text-sm font-extrabold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                <option value="credit">📒 കടം / പാർസൽ (+ തുക)</option>
+                                <option value="advance">💵 അഡ്വാൻസ് വരവ് (- കുറയ്ക്കും)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end">
+                        <div>
+                            <label class="block text-xs font-extrabold text-stone-700 mb-1">തുക (₹) *</label>
+                            <input type="number" id="ledger-amount" min="1" step="1" required placeholder="ഉദാ: 850 അല്ലെങ്കിൽ 2000" class="w-full px-3 py-2 text-xs sm:text-sm font-extrabold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-extrabold text-stone-700 mb-1">വിവരണം (കഞ്ഞി/ചോറ്/അഡ്വാൻസ്)</label>
+                            <input type="text" id="ledger-note" placeholder="ഉദാ: ചോറ് പാർസൽ × 12 / അഡ്വാൻസ്" class="w-full px-3 py-2 text-xs sm:text-sm font-semibold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <button type="submit" class="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-900 hover:bg-stone-800 text-amber-300 cursor-pointer">
+                            + അക്കൗണ്ടിൽ ചേർക്കുക
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Contractor & Site-wise Grouped Cards -->
+                <div id="site-ledger-groups" class="space-y-3.5"></div>
             </div>
 
-            <div>
-                <label class="block text-xs font-extrabold text-stone-700 mb-1">പ്രത്യേക കുറിപ്പ് (ആവശ്യമുണ്ടെങ്കിൽ മാത്രം)</label>
-                <input type="text" id="var-custom-note" placeholder="ഉദാ: ചൂട് കുറച്ച് / ചാറ് വേറെ..." class="w-full px-3.5 py-2 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
-            </div>
-
-            <div class="grid grid-cols-2 gap-2.5 pt-1">
-                <button type="button" onclick="confirmPlainVariationItem()" class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-100 hover:bg-stone-200 text-stone-800 cursor-pointer">
-                    സാധാരണ (കുറിപ്പില്ലാതെ)
-                </button>
-                <button type="button" onclick="confirmCustomVariationNote()" class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
-                    + ഓർഡറിൽ ചേർക്കുക
-                </button>
+            <div class="pt-3 border-t border-stone-200 flex items-center justify-end">
+                <button type="button" onclick="closeModal('site-ledger-modal')" class="px-5 py-2 rounded-xl text-sm font-extrabold bg-stone-900 text-white cursor-pointer">അടയ്ക്കുക</button>
             </div>
         </div>
     </div>
@@ -544,7 +597,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDK (Modular v11) + Parcel/Credit POS Logic -->
+    <!-- Firebase SDK (Modular v11) + Parcel/Credit/Site Ledger POS Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
@@ -567,7 +620,8 @@
             BILLS: 'kerala_parcel_pos_bills_v1',
             BILL_SEQ: 'kerala_parcel_pos_seq_v1',
             BIZ_CONFIG: 'kerala_parcel_pos_biz_cfg_v1',
-            CUSTOM_TAGS: 'kerala_parcel_pos_custom_tags_v1'
+            CUSTOM_TAGS: 'kerala_parcel_pos_custom_tags_v1',
+            SITE_ACCOUNTS: 'kerala_parcel_pos_site_accounts_v1'
         };
 
         const MAIN_SHOP_STORAGE_KEYS = [
@@ -637,6 +691,10 @@
         let pendingVariationItemId = null;
         let pendingVariationGroupKey = 'general_group';
 
+        // Contractor + Site accounts array:
+        // { id, contractor, site, phone, entries: [{ id, date, time, type: 'credit'|'advance'|'settlement', amount, note }] }
+        let siteAccounts = [];
+
         let firestoreDb = null;
         let cloudReady = false;
 
@@ -694,6 +752,402 @@
             } catch (e) {}
         }
 
+        /* ---------------- Contractor & Multi-Site Account Helpers ---------------- */
+        function computeSiteAccountSummary(acc) {
+            let creditTotal = 0;
+            let paidOrAdvanceTotal = 0;
+            (acc.entries || []).forEach(en => {
+                const amt = parseInt(en.amount, 10) || 0;
+                if (en.type === 'credit') {
+                    creditTotal += amt;
+                } else if (en.type === 'advance' || en.type === 'settlement') {
+                    paidOrAdvanceTotal += amt;
+                }
+            });
+            const netBalance = creditTotal - paidOrAdvanceTotal;
+            return {
+                creditTotal,
+                paidOrAdvanceTotal,
+                netBalance
+            };
+        }
+
+        function getAllSiteAccountsTotals() {
+            let totalDue = 0;
+            let totalAdvance = 0;
+            let activeSites = 0;
+
+            siteAccounts.forEach(acc => {
+                const s = computeSiteAccountSummary(acc);
+                totalAdvance += s.paidOrAdvanceTotal;
+                if (s.netBalance > 0) {
+                    totalDue += s.netBalance;
+                    activeSites += 1;
+                }
+            });
+
+            return { totalDue, totalAdvance, activeSites };
+        }
+
+        function findOrCreateSiteAccount(contractorName, siteName, phone = '') {
+            const cleanContractor = (contractorName || '').trim() || 'പേരില്ലാത്ത മേസ്തിരി';
+            const cleanSite = (siteName || '').trim() || 'പൊതു സൈറ്റ്';
+            const cleanPhone = (phone || '').trim();
+
+            let existing = siteAccounts.find(a =>
+                a.contractor.toLowerCase() === cleanContractor.toLowerCase() &&
+                a.site.toLowerCase() === cleanSite.toLowerCase()
+            );
+
+            if (!existing) {
+                existing = {
+                    id: 'sa-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                    contractor: cleanContractor,
+                    site: cleanSite,
+                    phone: cleanPhone,
+                    entries: []
+                };
+                siteAccounts.unshift(existing);
+            } else if (cleanPhone && !existing.phone) {
+                existing.phone = cleanPhone;
+            }
+
+            return existing;
+        }
+
+        function recordCreditInSiteAccount(contractorName, siteName, phone, amount, note, billNo = null) {
+            const acc = findOrCreateSiteAccount(contractorName, siteName, phone);
+            acc.entries.unshift({
+                id: 'se-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                date: getTodayDDMMYYYY(),
+                time: getCurrentTime12Hr(),
+                type: 'credit',
+                amount: parseInt(amount, 10) || 0,
+                note: note || (billNo ? `ബിൽ #${billNo} പാർസൽ കടം` : 'പാർസൽ കടം')
+            });
+        }
+
+        function refreshContractorAndSiteDatalists() {
+            const contractorList = document.getElementById('contractor-datalist');
+            const siteList = document.getElementById('site-datalist');
+            if (!contractorList || !siteList) return;
+
+            const contractors = [...new Set(siteAccounts.map(a => a.contractor).filter(Boolean))];
+            const sites = [...new Set(siteAccounts.map(a => a.site).filter(Boolean))];
+
+            contractorList.innerHTML = contractors.map(c => `<option value="${escapeHtml(c)}"></option>`).join('');
+            siteList.innerHTML = sites.map(s => `<option value="${escapeHtml(s)}"></option>`).join('');
+        }
+
+        function handleCustomerInputChange() {
+            const currentC = (customerInfo.name || '').trim().toLowerCase();
+            if (!currentC) return;
+            const matched = siteAccounts.find(a => a.contractor.toLowerCase() === currentC);
+            if (matched) {
+                if (!customerInfo.phone && matched.phone) {
+                    customerInfo.phone = matched.phone;
+                    document.getElementById('cust-phone').value = matched.phone;
+                }
+                if (!customerInfo.address && matched.site) {
+                    customerInfo.address = matched.site;
+                    document.getElementById('cust-address').value = matched.site;
+                }
+                saveLocalOnly();
+                renderCartCustomerSummary();
+            }
+        }
+
+        function updateHeaderSiteDueBadge() {
+            const badge = document.getElementById('header-site-due-badge');
+            if (!badge) return;
+            const { totalDue } = getAllSiteAccountsTotals();
+            badge.textContent = `₹${totalDue}`;
+        }
+
+        function openSiteLedgerModal() {
+            const formDateEl = document.getElementById('ledger-form-date');
+            if (formDateEl) formDateEl.textContent = getTodayDDMMYYYY();
+
+            const nameInp = document.getElementById('ledger-contractor-name');
+            const siteInp = document.getElementById('ledger-site-name');
+            const phoneInp = document.getElementById('ledger-phone');
+            if (nameInp && !nameInp.value && customerInfo.name) nameInp.value = customerInfo.name;
+            if (siteInp && !siteInp.value && customerInfo.address) siteInp.value = customerInfo.address;
+            if (phoneInp && !phoneInp.value && customerInfo.phone) phoneInp.value = customerInfo.phone;
+
+            renderSiteLedgerModal();
+            openModal('site-ledger-modal');
+        }
+
+        function renderSiteLedgerModal() {
+            refreshContractorAndSiteDatalists();
+            updateHeaderSiteDueBadge();
+
+            const { totalDue, totalAdvance, activeSites } = getAllSiteAccountsTotals();
+            document.getElementById('ledger-total-due').textContent = `₹${totalDue}`;
+            document.getElementById('ledger-total-advance').textContent = `₹${totalAdvance}`;
+            document.getElementById('ledger-active-sites-count').textContent = `${activeSites}`;
+
+            const groupsContainer = document.getElementById('site-ledger-groups');
+            if (!groupsContainer) return;
+
+            if (siteAccounts.length === 0) {
+                groupsContainer.innerHTML = `
+                    <div class="bg-stone-50 border border-stone-200 rounded-2xl p-8 text-center text-stone-500">
+                        <p class="text-sm font-extrabold">സൈറ്റ് കടം / അഡ്വാൻസ് അക്കൗണ്ടുകൾ ഒന്നും ഇതുവരെ ചേർത്തിട്ടില്ല</p>
+                        <p class="text-xs mt-1">മുകളിലെ ഫോം വഴിയോ, പാർസൽ ബില്ലിൽ '📒 കടം' തിരഞ്ഞെടുത്ത് ബിൽ സേവ് ചെയ്യുമ്പോഴോ ഇവിടെ താനെ വരും.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            // Group sites by contractor name
+            const byContractor = {};
+            siteAccounts.forEach(acc => {
+                const key = acc.contractor || 'പേരില്ലാത്ത മേസ്തിരി';
+                if (!byContractor[key]) {
+                    byContractor[key] = { contractor: key, phone: acc.phone || '', sites: [] };
+                }
+                if (!byContractor[key].phone && acc.phone) {
+                    byContractor[key].phone = acc.phone;
+                }
+                byContractor[key].sites.push(acc);
+            });
+
+            groupsContainer.innerHTML = Object.values(byContractor).map(group => {
+                let contractorNetDue = 0;
+                let contractorCredit = 0;
+                let contractorPaid = 0;
+
+                group.sites.forEach(sAcc => {
+                    const sum = computeSiteAccountSummary(sAcc);
+                    contractorCredit += sum.creditTotal;
+                    contractorPaid += sum.paidOrAdvanceTotal;
+                    if (sum.netBalance > 0) contractorNetDue += sum.netBalance;
+                });
+
+                const sitesHtml = group.sites.map(sAcc => {
+                    const sum = computeSiteAccountSummary(sAcc);
+                    const isPositiveDue = sum.netBalance > 0;
+                    const isAdvanceExcess = sum.netBalance < 0;
+
+                    const statusText = isPositiveDue
+                        ? `ബാക്കി തുക: ₹${sum.netBalance}`
+                        : (isAdvanceExcess ? `അഡ്വാൻസ് ബാക്കി: ₹${Math.abs(sum.netBalance)}` : `കണക്ക് തീർന്നു (₹0)`);
+
+                    const statusClass = isPositiveDue
+                        ? 'bg-rose-100 text-rose-800 border-rose-300'
+                        : (isAdvanceExcess ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-stone-100 text-stone-700 border-stone-300');
+
+                    const entriesHtml = (sAcc.entries || []).slice(0, 8).map(en => {
+                        const isCredit = en.type === 'credit';
+                        const isAdv = en.type === 'advance';
+                        const badge = isCredit
+                            ? `<span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-extrabold text-[11px]">കടം +₹${en.amount}</span>`
+                            : (isAdv
+                                ? `<span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-extrabold text-[11px]">അഡ്വാൻസ് -₹${en.amount}</span>`
+                                : `<span class="px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 font-extrabold text-[11px]">സെറ്റിൽ -₹${en.amount}</span>`);
+
+                        return `
+                            <div class="flex items-center justify-between gap-2 py-1.5 border-b border-stone-100 last:border-b-0 text-xs">
+                                <div class="min-w-0 flex-1">
+                                    <span class="font-bold text-stone-500">${escapeHtml(en.date || '')}</span>
+                                    <span class="font-semibold text-stone-800 ml-1.5">${escapeHtml(en.note || '')}</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 flex-shrink-0">
+                                    ${badge}
+                                    <button type="button" onclick="deleteSiteEntry('${sAcc.id}', '${en.id}')" class="text-stone-400 hover:text-rose-600 px-1 cursor-pointer" title="എൻട്രി ഒഴിവാക്കുക">×</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="bg-white border border-stone-200 rounded-2xl p-3.5 space-y-2.5">
+                            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-stone-100">
+                                <div>
+                                    <span class="text-sm font-extrabold text-stone-900">🏗️ ${escapeHtml(sAcc.site)}</span>
+                                    <div class="text-[11px] font-bold text-stone-500 mt-0.5">
+                                        കടം: ₹${sum.creditTotal} • അഡ്വാൻസ്/വരവ്: ₹${sum.paidOrAdvanceTotal}
+                                    </div>
+                                </div>
+                                <span class="text-xs font-extrabold px-2.5 py-1 rounded-full border ${statusClass}">
+                                    ${statusText}
+                                </span>
+                            </div>
+
+                            <div class="max-h-36 overflow-y-auto pr-1">${entriesHtml || '<p class="text-xs text-stone-400">എൻട്രികൾ ഇല്ല</p>'}</div>
+
+                            <div class="flex flex-wrap items-center gap-2 pt-1.5 border-t border-stone-100">
+                                <button type="button" onclick="quickAddAdvanceToSite('${sAcc.id}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 cursor-pointer">
+                                    + അഡ്വാൻസ് ചേർക്കുക
+                                </button>
+                                <button type="button" onclick="quickPartialSettleSite('${sAcc.id}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 cursor-pointer">
+                                    ഭാഗിക തുക കുറയ്ക്കുക
+                                </button>
+                                ${isPositiveDue ? `
+                                    <button type="button" onclick="settleFullSiteAccount('${sAcc.id}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
+                                        ✓ മുഴുവൻ തീർത്തു (Settle ₹${sum.netBalance})
+                                    </button>
+                                ` : ''}
+                                <button type="button" onclick="shareSiteStatementWhatsApp('${sAcc.id}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-green-100 hover:bg-green-200 text-green-900 border border-green-300 cursor-pointer">
+                                    വാട്സ്ആപ്പ് സ്റ്റേറ്റ്മെന്റ്
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-stone-50 border-2 border-stone-300 rounded-3xl p-4 space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-stone-200">
+                            <div>
+                                <h3 class="text-base sm:text-lg font-extrabold text-stone-900">👷 ${escapeHtml(group.contractor)}</h3>
+                                <p class="text-xs font-bold text-stone-500">
+                                    ${group.phone ? `ഫോൺ: ${escapeHtml(group.phone)} • ` : ''}${group.sites.length} സൈറ്റുകൾ • ആകെ കടം: ₹${contractorCredit} • വരവ്: ₹${contractorPaid}
+                                </p>
+                            </div>
+                            <span class="text-xs sm:text-sm font-extrabold px-3 py-1 rounded-full ${contractorNetDue > 0 ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'}">
+                                ആകെ കുടിശ്ശിക: ₹${contractorNetDue}
+                            </span>
+                        </div>
+                        <div class="space-y-2.5">${sitesHtml}</div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function quickAddAdvanceToSite(siteAccId) {
+            const acc = siteAccounts.find(a => a.id === siteAccId);
+            if (!acc) return;
+            const rawAmt = prompt(`${acc.contractor} - ${acc.site}\nലഭിച്ച അഡ്വാൻസ് തുക (₹) നൽകുക:`, '');
+            if (rawAmt === null) return;
+            const amt = parseInt(rawAmt, 10);
+            if (!amt || amt < 1) {
+                showToast('ശരിയായ തുക നൽകുക!');
+                return;
+            }
+            const rawNote = prompt('കുറിപ്പ് (ഓപ്ഷണൽ):', 'അഡ്വാൻസ് വരവ്');
+            if (rawNote === null) return;
+
+            acc.entries.unshift({
+                id: 'se-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                date: getTodayDDMMYYYY(),
+                time: getCurrentTime12Hr(),
+                type: 'advance',
+                amount: amt,
+                note: (rawNote || '').trim() || 'അഡ്വാൻസ് വരവ്'
+            });
+
+            saveState();
+            renderSiteLedgerModal();
+            showToast(`${acc.site} അക്കൗണ്ടിൽ ₹${amt} അഡ്വാൻസ് ചേർത്തു!`);
+        }
+
+        function quickPartialSettleSite(siteAccId) {
+            const acc = siteAccounts.find(a => a.id === siteAccId);
+            if (!acc) return;
+            const sum = computeSiteAccountSummary(acc);
+            const rawAmt = prompt(`${acc.contractor} - ${acc.site} (നിലവിലെ ബാക്കി: ₹${sum.netBalance})\nഇപ്പോൾ തന്ന തുക (₹) നൽകുക:`, '');
+            if (rawAmt === null) return;
+            const amt = parseInt(rawAmt, 10);
+            if (!amt || amt < 1) {
+                showToast('ശരിയായ തുക നൽകുക!');
+                return;
+            }
+
+            acc.entries.unshift({
+                id: 'se-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                date: getTodayDDMMYYYY(),
+                time: getCurrentTime12Hr(),
+                type: 'settlement',
+                amount: amt,
+                note: 'ഭാഗിക പേയ്മെന്റ്'
+            });
+
+            saveState();
+            renderSiteLedgerModal();
+            showToast(`${acc.site} അക്കൗണ്ടിൽ നിന്ന് ₹${amt} കുറച്ചു!`);
+        }
+
+        function settleFullSiteAccount(siteAccId) {
+            const acc = siteAccounts.find(a => a.id === siteAccId);
+            if (!acc) return;
+            const sum = computeSiteAccountSummary(acc);
+            if (sum.netBalance <= 0) {
+                showToast('അടയ്ക്കാൻ ബാക്കി തുക ഇല്ല.');
+                return;
+            }
+
+            openConfirmDialog(
+                'മുഴുവൻ കടവും തീർക്കണോ?',
+                `${acc.contractor} - ${acc.site} എന്ന സൈറ്റിന്റെ ബാക്കി തുകയായ ₹${sum.netBalance} ലഭിച്ചതായി അടയാളപ്പെടുത്താൻ ഉറപ്പാണോ?`,
+                () => {
+                    acc.entries.unshift({
+                        id: 'se-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                        date: getTodayDDMMYYYY(),
+                        time: getCurrentTime12Hr(),
+                        type: 'settlement',
+                        amount: sum.netBalance,
+                        note: 'മുഴുവൻ കടം സെറ്റിൽമെന്റ്'
+                    });
+                    saveState();
+                    renderSiteLedgerModal();
+                    showToast(`${acc.site} കടം മുഴുവൻ തീർത്തു (₹${sum.netBalance})!`);
+                }
+            );
+        }
+
+        function deleteSiteEntry(siteAccId, entryId) {
+            const acc = siteAccounts.find(a => a.id === siteAccId);
+            if (!acc) return;
+            acc.entries = (acc.entries || []).filter(e => e.id !== entryId);
+            saveState();
+            renderSiteLedgerModal();
+            showToast('എൻട്രി ഒഴിവാക്കി.');
+        }
+
+        function shareSiteStatementWhatsApp(siteAccId) {
+            const acc = siteAccounts.find(a => a.id === siteAccId);
+            if (!acc) return;
+            const sum = computeSiteAccountSummary(acc);
+
+            let text = `*${shopInfo.name}*\n`;
+            text += `📋 *സൈറ്റ് കണക്ക് സ്റ്റേറ്റ്മെന്റ്*\n`;
+            text += `------------------------\n`;
+            text += `മേസ്തിരി: *${acc.contractor}*\n`;
+            text += `സൈറ്റ്: *${acc.site}*\n`;
+            text += `തീയതി: ${getTodayDDMMYYYY()}\n`;
+            text += `------------------------\n`;
+
+            (acc.entries || []).slice(0, 12).forEach(en => {
+                const sign = en.type === 'credit' ? '+ കടം' : (en.type === 'advance' ? '- അഡ്വാൻസ്' : '- അടച്ചത്');
+                text += `• ${en.date}: ${en.note || ''} (${sign}: *₹${en.amount}*)\n`;
+            });
+
+            text += `------------------------\n`;
+            text += `ആകെ കടം: ₹${sum.creditTotal}\n`;
+            text += `അഡ്വാൻസ് / അടച്ചത്: ₹${sum.paidOrAdvanceTotal}\n`;
+            if (sum.netBalance > 0) {
+                text += `*ബാക്കി അടയ്ക്കാനുള്ളത്: ₹${sum.netBalance}*\n`;
+            } else if (sum.netBalance < 0) {
+                text += `*അഡ്വാൻസ് ബാക്കി: ₹${Math.abs(sum.netBalance)}*\n`;
+            } else {
+                text += `*കണക്ക് തീർന്നു (₹0)*\n`;
+            }
+
+            const phoneDigits = formatCleanPhoneForWa(acc.phone);
+            const url = phoneDigits
+                ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent(text)}`
+                : `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+            window.open(url, '_blank');
+        }
+
+        /* ---------------- Variation & Custom Tag Picker ---------------- */
         function getVariationGroupForItem(item) {
             if (!item) return null;
             const n = String(item.name || '').toLowerCase();
@@ -961,6 +1415,7 @@
                     if (data.customTagsByGroup && typeof data.customTagsByGroup === 'object') {
                         customTagsByGroup = Object.assign({}, customTagsByGroup, data.customTagsByGroup);
                     }
+                    if (Array.isArray(data.siteAccounts)) siteAccounts = data.siteAccounts;
                     if (data.holdSlots) holdSlots = Object.assign({ h1: null, h2: null, h3: null }, data.holdSlots);
                     if (Array.isArray(data.completedBills)) completedBills = data.completedBills;
                     if (data.billSequence) billSequence = parseInt(data.billSequence, 10) || billSequence;
@@ -988,6 +1443,7 @@
                         menuItems,
                         currentOrder,
                         customTagsByGroup,
+                        siteAccounts,
                         holdSlots,
                         completedBills,
                         billSequence,
@@ -1031,6 +1487,7 @@
             document.getElementById('header-date').textContent = getTodayDDMMYYYY();
             updateOwnerPanelUI();
             syncCustomerInputs();
+            refreshContractorAndSiteDatalists();
             setupForms();
             renderAll();
             await initFirebaseSync();
@@ -1064,6 +1521,9 @@
                 const savedTags = localStorage.getItem(KEYS.CUSTOM_TAGS);
                 if (savedTags) customTagsByGroup = JSON.parse(savedTags) || {};
 
+                const savedSites = localStorage.getItem(KEYS.SITE_ACCOUNTS);
+                siteAccounts = savedSites ? JSON.parse(savedSites) : [];
+
                 const savedCust = localStorage.getItem(KEYS.CUST);
                 if (savedCust) customerInfo = Object.assign({ name: '', phone: '', address: '', paymentMode: 'cash' }, JSON.parse(savedCust));
 
@@ -1087,6 +1547,7 @@
                 localStorage.setItem(KEYS.MENU, JSON.stringify(menuItems));
                 localStorage.setItem(KEYS.ORDER, JSON.stringify(currentOrder));
                 localStorage.setItem(KEYS.CUSTOM_TAGS, JSON.stringify(customTagsByGroup));
+                localStorage.setItem(KEYS.SITE_ACCOUNTS, JSON.stringify(siteAccounts));
                 localStorage.setItem(KEYS.CUST, JSON.stringify(customerInfo));
                 localStorage.setItem(KEYS.HOLDS, JSON.stringify(holdSlots));
                 localStorage.setItem(KEYS.BILLS, JSON.stringify(completedBills));
@@ -1149,7 +1610,7 @@
             const isCredit = customerInfo.paymentMode === 'credit';
 
             if (isCredit) {
-                badgeEl.textContent = '📒 കടം (Credit)';
+                badgeEl.textContent = '📒 കടം / സൈറ്റ്';
                 badgeEl.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300';
             } else {
                 badgeEl.textContent = '💵 റെഡി ക്യാഷ്';
@@ -1248,6 +1709,8 @@
 
         function renderAll() {
             renderHeader();
+            updateHeaderSiteDueBadge();
+            refreshContractorAndSiteDatalists();
             renderHoldSlotsBar();
             renderCategories();
             renderMenuGrid();
@@ -1464,9 +1927,21 @@
             }
 
             if (bill.paymentMode === 'credit' && !customerInfo.name) {
-                showToast('കടം (Credit) നൽകുമ്പോൾ കസ്റ്റമറുടെ പേര് നൽകുക!');
+                showToast('കടം / സൈറ്റ് അക്കൗണ്ടിൽ ചേർക്കാൻ കസ്റ്റമർ / മേസ്തിരി പേര് നൽകുക!');
                 document.getElementById('cust-name').focus();
                 return;
+            }
+
+            if (bill.paymentMode === 'credit') {
+                const itemsSummary = bill.items.map(it => `${it.name} ×${it.qty}`).join(', ');
+                recordCreditInSiteAccount(
+                    bill.customerName,
+                    bill.customerAddress || 'പൊതു സൈറ്റ്',
+                    bill.customerPhone,
+                    bill.total,
+                    `ബിൽ #${bill.billNo}: ${itemsSummary}`,
+                    bill.billNo
+                );
             }
 
             const payLabel = bill.paymentMode === 'credit' ? 'കടം (CREDIT)' : 'റെഡി ക്യാഷ് (CASH)';
@@ -1489,7 +1964,7 @@
                     <div>തീയതി: ${bill.date} | ${bill.time}</div>
                     <div>കസ്റ്റമർ: <b>${escapeHtml(bill.customerName)}</b></div>
                     ${bill.customerPhone ? `<div>ഫോൺ: ${escapeHtml(bill.customerPhone)}</div>` : ''}
-                    ${bill.customerAddress ? `<div>സ്ഥലം: ${escapeHtml(bill.customerAddress)}</div>` : ''}
+                    ${bill.customerAddress ? `<div>സൈറ്റ് / സ്ഥലം: ${escapeHtml(bill.customerAddress)}</div>` : ''}
                     <div>പേയ്മെന്റ്: <b>${payLabel}</b></div>
                 </div>
                 <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
@@ -1519,7 +1994,7 @@
             saveState();
             renderAll();
 
-            showToast(`ബിൽ #${bill.billNo} (${bill.paymentMode === 'credit' ? 'കടം' : 'റെഡി ക്യാഷ്'}) സേവ് ചെയ്തു!`);
+            showToast(`ബിൽ #${bill.billNo} (${bill.paymentMode === 'credit' ? 'സൈറ്റ് കടത്തിൽ ചേർത്തു' : 'റെഡി ക്യാഷ്'}) സേവ് ചെയ്തു!`);
 
             setTimeout(() => {
                 window.print();
@@ -1549,7 +2024,7 @@
             text += `ബിൽ നമ്പർ: #${bill.billNo} (പാർസൽ)\n`;
             text += `കസ്റ്റമർ: *${bill.customerName}*\n`;
             if (bill.customerPhone) text += `ഫോൺ: ${bill.customerPhone}\n`;
-            if (bill.customerAddress) text += `സ്ഥലം: ${bill.customerAddress}\n`;
+            if (bill.customerAddress) text += `സൈറ്റ് / സ്ഥലം: ${bill.customerAddress}\n`;
             text += `തീയതി: ${bill.date} | ${bill.time}\n`;
             text += `പേയ്മെന്റ്: *${payText}*\n`;
             text += `------------------------\n`;
@@ -1618,7 +2093,7 @@
                                 <div class="font-extrabold text-stone-900">
                                     #${b.billNo} • ${escapeHtml(b.customerName)}
                                 </div>
-                                <div class="text-stone-500 mt-0.5">${b.time} ${b.customerPhone ? `• ${escapeHtml(b.customerPhone)}` : ''}</div>
+                                <div class="text-stone-500 mt-0.5">${b.time} ${b.customerAddress ? `• ${escapeHtml(b.customerAddress)}` : ''}</div>
                             </div>
                             <div class="flex items-center gap-2">
                                 <button onclick="toggleBillPaymentStatus(${b.billNo})" class="px-2 py-1 rounded-lg font-extrabold text-[11px] cursor-pointer ${isCredit ? 'bg-rose-600 text-white' : 'bg-emerald-100 text-emerald-800'}" title="ക്യാഷ് / കടം മാറ്റാൻ അമർത്തുക">
@@ -1846,6 +2321,38 @@
         }
 
         function setupForms() {
+            document.getElementById('add-site-entry-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const contractor = (document.getElementById('ledger-contractor-name')?.value || '').trim();
+                const site = (document.getElementById('ledger-site-name')?.value || '').trim();
+                const phone = (document.getElementById('ledger-phone')?.value || '').trim();
+                const entryType = document.getElementById('ledger-entry-type')?.value || 'credit';
+                const amount = parseInt(document.getElementById('ledger-amount')?.value, 10);
+                const note = (document.getElementById('ledger-note')?.value || '').trim();
+
+                if (!contractor || !site || !amount || amount < 1) {
+                    showToast('മേസ്തിരി പേര്, സൈറ്റ് പേര്, തുക എന്നിവ നൽകുക!');
+                    return;
+                }
+
+                const acc = findOrCreateSiteAccount(contractor, site, phone);
+                acc.entries.unshift({
+                    id: 'se-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                    date: getTodayDDMMYYYY(),
+                    time: getCurrentTime12Hr(),
+                    type: entryType === 'advance' ? 'advance' : 'credit',
+                    amount,
+                    note: note || (entryType === 'advance' ? 'അഡ്വാൻസ് വരവ്' : 'പാർസൽ / കഞ്ഞി / ചോറ് കടം')
+                });
+
+                saveState();
+                document.getElementById('ledger-amount').value = '';
+                document.getElementById('ledger-note').value = '';
+                updateHeaderSiteDueBadge();
+                renderSiteLedgerModal();
+                showToast(`${contractor} (${site}) അക്കൗണ്ടിൽ ചേർത്തു!`);
+            });
+
             document.getElementById('add-item-form').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const name = document.getElementById('new-item-name').value.trim();
@@ -1958,6 +2465,13 @@
         window.toggleFirebaseFields = toggleFirebaseFields;
         window.openAddItemModal = openAddItemModal;
         window.openDailyReportModal = openDailyReportModal;
+        window.openSiteLedgerModal = openSiteLedgerModal;
+        window.handleCustomerInputChange = handleCustomerInputChange;
+        window.quickAddAdvanceToSite = quickAddAdvanceToSite;
+        window.quickPartialSettleSite = quickPartialSettleSite;
+        window.settleFullSiteAccount = settleFullSiteAccount;
+        window.deleteSiteEntry = deleteSiteEntry;
+        window.shareSiteStatementWhatsApp = shareSiteStatementWhatsApp;
         window.clearCustomerDetails = clearCustomerDetails;
         window.saveCustomerDetails = saveCustomerDetails;
         window.setPaymentMode = setPaymentMode;
