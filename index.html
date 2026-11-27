@@ -97,6 +97,9 @@
                     <div class="min-w-0">
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <h1 id="header-hotel-name" class="text-base sm:text-xl font-extrabold tracking-tight text-amber-300 leading-snug">മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്</h1>
+                            <button id="quick-edit-shop-btn" type="button" onclick="quickEditHotelNamePlace()" class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-stone-800 hover:bg-amber-500 text-amber-300 hover:text-stone-950 border border-stone-700 transition cursor-pointer" title="കടയുടെ പേരും സ്ഥലവും വേഗത്തിൽ മാറ്റുക">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
                             <span id="cloud-sync-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
                                 കണക്ട് ചെയ്യുന്നു...
                             </span>
@@ -809,6 +812,29 @@
         let lastKitchenOrderSignature = '';
         let justSavedLocalTableCountAt = 0;
         let justClearedOrdersAt = 0;
+
+        function quickEditHotelNamePlace() {
+            const nextNameRaw = prompt('ഹോട്ടലിന്റെ / സ്ഥാപനത്തിന്റെ പേര് നൽകുക:', shopInfo.name || '');
+            if (nextNameRaw === null) return;
+            const cleanName = nextNameRaw.trim();
+            if (!cleanName) {
+                showToast('ഹോട്ടലിന്റെ പേര് ഒഴിവാക്കാൻ കഴിയില്ല!');
+                return;
+            }
+
+            const nextPlaceRaw = prompt('സ്ഥലം / ഫോൺ നമ്പർ നൽകുക:', shopInfo.place || '');
+            if (nextPlaceRaw === null) return;
+            const cleanPlace = nextPlaceRaw.trim();
+
+            shopInfo = {
+                name: cleanName,
+                place: cleanPlace
+            };
+            saveState();
+            renderHeader();
+            lucide.createIcons();
+            showToast(`കടയുടെ പേര് "${cleanName}" ആയി മാറ്റി!`);
+        }
 
         function pruneEmptyOrdersAndKitchen() {
             const cleanedOrders = {};
@@ -2983,6 +3009,7 @@
                 .replace(/'/g, '&#039;');
         }
 
+        window.quickEditHotelNamePlace = quickEditHotelNamePlace;
         window.toggleOwnerPanel = toggleOwnerPanel;
         window.toggleSeatSplitBar = toggleSeatSplitBar;
         window.selectSeat = selectSeat;
