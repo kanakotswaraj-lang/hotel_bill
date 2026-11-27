@@ -97,6 +97,9 @@
                     <div class="min-w-0">
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <h1 id="header-hotel-name" class="text-base sm:text-xl font-extrabold tracking-tight text-amber-300 leading-snug">മലബാർ ഹോട്ടൽ & കാറ്ററിംഗ്</h1>
+                            <button type="button" onclick="openShopSettingsModal()" class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-stone-800 hover:bg-amber-500/20 text-amber-300 border border-stone-700 transition cursor-pointer" title="കടയുടെ പേരും സ്ഥലവും മാറ്റുക">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
                             <span id="cloud-sync-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
                                 കണക്ട് ചെയ്യുന്നു...
                             </span>
@@ -567,6 +570,14 @@
             CUSTOM_TAGS: 'kerala_parcel_pos_custom_tags_v1'
         };
 
+        const MAIN_SHOP_STORAGE_KEYS = [
+            'kerala_pos_shop_v1',
+            'malabar_pos_shop_v1',
+            'hotel_pos_shop_v1',
+            'pos_shop_info_v1',
+            'shopInfo'
+        ];
+
         const VARIATION_GROUPS = {
             tea_group: ['മധുരം കുറവ്', 'മധുരമില്ലാത്തത്', 'സ്ട്രോങ്ങ്', 'മീഡിയം', 'കട്ടൻ - മധുരം', 'കട്ടൻ - മധുരമില്ല'],
             coffee_group: ['മധുരം കുറവ്', 'മധുരമില്ലാത്തത്', 'സ്ട്രോങ്ങ്', 'ബ്ലാക്ക് കോഫി'],
@@ -609,7 +620,7 @@
             { id: 'p11', name: 'ചിക്കൻ ഫ്രൈ', price: 100, cat: 'dinner' }
         ];
 
-        let shopInfo = { name: 'മിനു കാറ്ററിംഗ്', place: 'കോളയാട് / കണ്ണൂർ' };
+        let shopInfo = { name: 'മലബാർ ഹോട്ടൽ & കാറ്ററിംഗ്', place: 'പേരളശ്ശേരി / കണ്ണൂർ' };
         let bizConfig = {
             shopId: 'malabar-default',
             firebase: { ...DEFAULT_FIREBASE_CONFIG }
@@ -628,6 +639,60 @@
 
         let firestoreDb = null;
         let cloudReady = false;
+
+        function extractShopInfoFromRaw(rawObj) {
+            if (!rawObj || typeof rawObj !== 'object') return null;
+            const target = rawObj.shopInfo && typeof rawObj.shopInfo === 'object' ? rawObj.shopInfo : rawObj;
+            const name = (target.name || target.hotelName || target.shopName || '').trim();
+            const place = (target.place || target.location || target.address || '').trim();
+            if (!name && !place) return null;
+            return {
+                name: name || shopInfo.name,
+                place: place || shopInfo.place
+            };
+        }
+
+        function syncShopInfoFromMainStorage() {
+            let updated = false;
+            for (const key of MAIN_SHOP_STORAGE_KEYS) {
+                try {
+                    const raw = localStorage.getItem(key);
+                    if (!raw) continue;
+                    const parsed = JSON.parse(raw);
+                    const extracted = extractShopInfoFromRaw(parsed);
+                    if (extracted && (extracted.name !== shopInfo.name || extracted.place !== shopInfo.place)) {
+                        shopInfo = { ...shopInfo, ...extracted };
+                        updated = true;
+                    }
+                } catch (e) {}
+            }
+            if (updated) {
+                try {
+                    localStorage.setItem(KEYS.SHOP, JSON.stringify(shopInfo));
+                } catch (e) {}
+            }
+            return updated;
+        }
+
+        function writeShopInfoToMainStorage(info) {
+            const payload = { name: info.name, place: info.place };
+            MAIN_SHOP_STORAGE_KEYS.forEach(key => {
+                try {
+                    const existing = localStorage.getItem(key);
+                    if (existing) {
+                        const parsed = JSON.parse(existing);
+                        if (parsed && typeof parsed === 'object' && parsed.shopInfo && typeof parsed.shopInfo === 'object') {
+                            parsed.shopInfo = { ...parsed.shopInfo, ...payload };
+                            localStorage.setItem(key, JSON.stringify(parsed));
+                            return;
+                        }
+                    }
+                } catch (e) {}
+            });
+            try {
+                localStorage.setItem('kerala_pos_shop_v1', JSON.stringify(payload));
+            } catch (e) {}
+        }
 
         function getVariationGroupForItem(item) {
             if (!item) return null;
@@ -819,9 +884,12 @@
             );
         }
 
+        function getBaseShopId() {
+            return (bizConfig.shopId || 'malabar-default').trim() || 'malabar-default';
+        }
+
         function getParcelDocId() {
-            const baseId = (bizConfig.shopId || 'malabar-default').trim() || 'malabar-default';
-            return `${baseId}_parcel`;
+            return `${getBaseShopId()}_parcel`;
         }
 
         async function initFirebaseSync() {
@@ -862,15 +930,31 @@
         async function pullFromFirestore() {
             if (!cloudReady || !firestoreDb) return;
             try {
-                const docRef = doc(firestoreDb, 'shops', getParcelDocId());
-                const snap = await getDoc(docRef);
-                if (snap.exists()) {
-                    const data = snap.data();
-                    if (data.shopInfo && data.shopInfo.name) {
-                        shopInfo = Object.assign({}, shopInfo, {
-                            name: String(data.shopInfo.name).trim(),
-                            place: String(data.shopInfo.place || shopInfo.place || '').trim()
-                        });
+                const baseId = getBaseShopId();
+                const parcelRef = doc(firestoreDb, 'shops', getParcelDocId());
+                const mainRef = doc(firestoreDb, 'shops', baseId);
+
+                const [parcelSnap, mainSnap] = await Promise.all([
+                    getDoc(parcelRef),
+                    getDoc(mainRef).catch(() => null)
+                ]);
+
+                let dataUpdated = false;
+
+                if (mainSnap && mainSnap.exists()) {
+                    const mainData = mainSnap.data();
+                    const mainShop = extractShopInfoFromRaw(mainData);
+                    if (mainShop) {
+                        shopInfo = { ...shopInfo, ...mainShop };
+                        dataUpdated = true;
+                    }
+                }
+
+                if (parcelSnap.exists()) {
+                    const data = parcelSnap.data();
+                    if (!mainSnap || !mainSnap.exists()) {
+                        const parcelShop = extractShopInfoFromRaw(data);
+                        if (parcelShop) shopInfo = { ...shopInfo, ...parcelShop };
                     }
                     if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
                     if (data.currentOrder) currentOrder = data.currentOrder;
@@ -883,6 +967,7 @@
                     saveLocalOnly();
                     renderAll();
                 } else {
+                    if (dataUpdated) saveLocalOnly();
                     await pushToFirestore();
                 }
             } catch (err) {
@@ -893,17 +978,26 @@
         async function pushToFirestore() {
             if (!cloudReady || !firestoreDb) return;
             try {
-                const docRef = doc(firestoreDb, 'shops', getParcelDocId());
-                await setDoc(docRef, {
-                    shopInfo,
-                    menuItems,
-                    currentOrder,
-                    customTagsByGroup,
-                    holdSlots,
-                    completedBills,
-                    billSequence,
-                    updatedAt: getTodayDDMMYYYY()
-                }, { merge: true });
+                const baseId = getBaseShopId();
+                const parcelRef = doc(firestoreDb, 'shops', getParcelDocId());
+                const mainRef = doc(firestoreDb, 'shops', baseId);
+
+                await Promise.all([
+                    setDoc(parcelRef, {
+                        shopInfo,
+                        menuItems,
+                        currentOrder,
+                        customTagsByGroup,
+                        holdSlots,
+                        completedBills,
+                        billSequence,
+                        updatedAt: getTodayDDMMYYYY()
+                    }, { merge: true }),
+                    setDoc(mainRef, {
+                        shopInfo,
+                        updatedAt: getTodayDDMMYYYY()
+                    }, { merge: true }).catch(() => null)
+                ]);
             } catch (err) {
                 console.error('Firestore push error:', err);
             }
@@ -921,8 +1015,19 @@
             return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
         }
 
+        window.addEventListener('storage', (e) => {
+            if (!e.key) return;
+            if (MAIN_SHOP_STORAGE_KEYS.includes(e.key) || e.key === KEYS.SHOP) {
+                if (syncShopInfoFromMainStorage()) {
+                    renderHeader();
+                    lucide.createIcons();
+                }
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', async () => {
             loadState();
+            syncShopInfoFromMainStorage();
             document.getElementById('header-date').textContent = getTodayDDMMYYYY();
             updateOwnerPanelUI();
             syncCustomerInputs();
@@ -945,7 +1050,10 @@
                 }
 
                 const savedShop = localStorage.getItem(KEYS.SHOP);
-                if (savedShop) shopInfo = Object.assign({}, shopInfo, JSON.parse(savedShop));
+                if (savedShop) {
+                    const parsedShop = extractShopInfoFromRaw(JSON.parse(savedShop));
+                    if (parsedShop) shopInfo = Object.assign({}, shopInfo, parsedShop);
+                }
 
                 const savedMenu = localStorage.getItem(KEYS.MENU);
                 menuItems = savedMenu !== null ? JSON.parse(savedMenu) : [...DEFAULT_MENU];
@@ -1719,6 +1827,7 @@
         }
 
         function openShopSettingsModal() {
+            syncShopInfoFromMainStorage();
             const fb = getActiveFirebaseConfig();
             document.getElementById('setting-hotel-name').value = shopInfo.name;
             document.getElementById('setting-hotel-place').value = shopInfo.place;
@@ -1786,6 +1895,7 @@
                     }
                 };
 
+                writeShopInfoToMainStorage(shopInfo);
                 saveLocalOnly();
                 renderAll();
                 closeModal('shop-settings-modal');
