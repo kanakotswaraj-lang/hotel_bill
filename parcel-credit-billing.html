@@ -1,1 +1,2741 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>പാർസൽ & കാറ്ററിംഗ് POS ബില്ലിംഗ് | ബിസിനസ്</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans Malayalam & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+Malayalam:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans Malayalam"', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans Malayalam', 'Inter', sans-serif;
+            background-color: #f4f1ea;
+            color: #1c1917;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .tap-card {
+            transition: transform 0.08s ease, box-shadow 0.12s ease;
+        }
+        .tap-card:active {
+            transform: scale(0.95);
+        }
+
+        #thermal-print-area {
+            display: none;
+        }
+
+        @media print {
+            @page {
+                size: 58mm auto;
+                margin: 0mm;
+            }
+            body * {
+                visibility: hidden;
+            }
+            #thermal-print-area, #thermal-print-area * {
+                visibility: visible;
+            }
+            #thermal-print-area {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 58mm;
+                padding: 2mm 3mm;
+                background: #ffffff;
+                color: #000000;
+                font-family: 'Noto Sans Malayalam', monospace, sans-serif;
+                font-size: 11px;
+                line-height: 1.35;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Toast Notification -->
+    <div id="toast-box" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center gap-2 w-11/12 max-w-md"></div>
+
+    <!-- Compact Header: Order Navigation + Collapsible Owner/Accounts Panel -->
+    <header class="bg-stone-900 text-white shadow-md z-20">
+        <div class="max-w-7xl mx-auto px-3 sm:px-5 py-2.5 space-y-2">
+            <!-- Row 1: Shop Info, Sync Status, Owner Toggle & Date -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-stone-800">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500 text-stone-950 flex items-center justify-center font-extrabold flex-shrink-0">
+                        <i data-lucide="package" class="w-5 h-5"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <h1 id="header-hotel-name" class="text-base sm:text-xl font-extrabold tracking-tight text-amber-300 leading-snug">മലബാർ ഹോട്ടൽ & കാറ്ററിംഗ്</h1>
+                            <button type="button" onclick="openShopSettingsModal()" class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-stone-800 hover:bg-amber-500/20 text-amber-300 border border-stone-700 transition cursor-pointer" title="കടയുടെ പേരും സ്ഥലവും മാറ്റുക">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <span id="cloud-sync-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
+                                ഓൺലൈൻ സേവ് ഓൺ
+                            </span>
+                        </div>
+                        <p id="header-hotel-place" class="text-xs sm:text-sm text-stone-200 font-semibold leading-snug">പേരളശ്ശേരി / കണ്ണൂർ • പാർസൽ സർവീസ്</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <button type="button" onclick="openSiteLedgerModal()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-400 hover:bg-amber-300 text-stone-950 border border-amber-500 cursor-pointer shadow-xs" title="മേസ്തിരി / സൈറ്റ് കടം, അഡ്വാൻസ്, സെറ്റിൽമെന്റ്">
+                        <i data-lucide="building-2" class="w-4 h-4"></i>
+                        <span>സൈറ്റ് / അഡ്വാൻസ്</span>
+                        <span id="header-site-due-badge" class="px-1.5 py-0.2 rounded-md bg-stone-950 text-amber-300 text-xs">₹0</span>
+                    </button>
+
+                    <button id="owner-panel-toggle-btn" type="button" onclick="toggleOwnerPanel()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/50 cursor-pointer" title="മുതലാളി / കണക്ക് ഭാഗം കാണുക അല്ലെങ്കിൽ മറയ്ക്കുക">
+                        <i data-lucide="user-cog" class="w-4 h-4"></i>
+                        <span id="owner-panel-toggle-label">മുതലാളി / കണക്ക്</span>
+                    </button>
+
+                    <div class="flex items-center gap-1.5 bg-stone-800 px-2.5 py-1.5 rounded-xl border border-stone-700">
+                        <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
+                        <span id="header-date" class="text-xs sm:text-sm font-extrabold text-stone-100">27-11-2026</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supplier / Counter Quick Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-xs font-extrabold text-amber-300">പാർസൽ ഓർഡർ ബില്ലിംഗ്</span>
+                <a href="index.html" class="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-950 border border-amber-300 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>മെയിൻ ബില്ലിംഗ്</span>
+                </a>
+            </div>
+
+            <!-- Collapsible Owner / Accounts Section (Hidden by Default) -->
+            <div id="owner-manager-panel" class="hidden pt-2 mt-1 border-t border-amber-500/30 bg-stone-950/50 rounded-2xl p-2.5 space-y-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="bg-emerald-950/90 border border-emerald-700/70 px-3 py-1 rounded-xl flex items-baseline gap-1.5">
+                            <span class="text-xs text-emerald-300 font-bold">💵 ക്യാഷ്:</span>
+                            <span id="live-cash-sales" class="text-sm sm:text-base font-extrabold text-emerald-400">₹0</span>
+                        </div>
+                        <div class="bg-rose-950/90 border border-rose-700/70 px-3 py-1 rounded-xl flex items-baseline gap-1.5">
+                            <span class="text-xs text-rose-300 font-bold">📒 കടം:</span>
+                            <span id="live-credit-sales" class="text-sm sm:text-base font-extrabold text-rose-400">₹0</span>
+                        </div>
+                        <div class="bg-stone-800 border border-stone-700 px-3 py-1 rounded-xl flex items-baseline gap-1.5">
+                            <span class="text-xs text-stone-300 font-bold">ആകെ:</span>
+                            <span id="live-total-sales" class="text-sm sm:text-base font-extrabold text-white">₹0 (0)</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button onclick="openShopSettingsModal()" class="flex items-center gap-1 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer" title="സ്ഥാപനത്തിന്റെ പേര് / Shop ID / Firebase Config മാറ്റുക">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            <span>സെറ്റിംഗ്സ്</span>
+                        </button>
+                        <button onclick="openAddItemModal()" class="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-700 active:scale-95 text-amber-300 border border-stone-600 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            <span>മെനു / ഐറ്റം</span>
+                        </button>
+                        <button onclick="openDailyReportModal()" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-stone-950 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold shadow-xs transition cursor-pointer">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                            <span>ഇന്നത്തെ കണക്ക്</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hold Slots Quick Recall Bar -->
+                <div id="hold-slots-bar" class="pt-1.5 border-t border-stone-800 flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-extrabold text-amber-300 flex items-center gap-1">
+                        <i data-lucide="pause-circle" class="w-4 h-4"></i>
+                        ഹോൾഡ് ഓർഡറുകൾ:
+                    </span>
+                    <div id="hold-slots-buttons" class="flex flex-wrap items-center gap-1.5 flex-1"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace (Enlarged Order & Menu Area) -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-5 py-3.5 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+        <!-- Left Section (7 Columns) -->
+        <div class="lg:col-span-7 space-y-3.5">
+
+            <!-- Parcel Customer & Payment Mode Card -->
+            <section class="bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border-2 border-amber-300 space-y-3">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                    <span class="text-xs sm:text-sm font-extrabold text-amber-950 flex items-center gap-1.5">
+                        <i data-lucide="user-check" class="w-4 h-4 text-amber-700"></i>
+                        പാർസൽ കസ്റ്റമർ / മേസ്തിരി & പേയ്മെന്റ് വിവരങ്ങൾ
+                    </span>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="openSiteLedgerModal()" class="text-xs font-extrabold text-amber-800 hover:underline cursor-pointer">
+                            സൈറ്റ് & അഡ്വാൻസ് കണക്ക് →
+                        </button>
+                        <button type="button" onclick="clearCustomerDetails()" class="text-xs font-bold text-rose-600 hover:underline cursor-pointer">
+                            വിവരങ്ങൾ മായ്ക്കുക
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-extrabold text-stone-700">സ്ഥിരം മേസ്തിരി തിരഞ്ഞെടുക്കുക</label>
+                        <select id="cust-contractor-select" onchange="onCustomerContractorSelectChange()" class="w-full px-3 py-2 text-xs sm:text-sm font-extrabold bg-amber-100/70 border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="">-- ലിസ്റ്റിൽ നിന്ന് തിരഞ്ഞെടുക്കുക --</option>
+                            <option value="__NEW__">+ പുതിയ മേസ്തിരി ചേർക്കുക...</option>
+                        </select>
+                        <input type="text" id="cust-name" list="contractor-datalist" oninput="saveCustomerDetails()" onchange="handleCustomerInputChange()" placeholder="അല്ലെങ്കിൽ പേര് ടൈപ്പ് ചെയ്യുക" class="w-full px-3 py-2 text-sm font-bold bg-amber-50/50 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <datalist id="contractor-datalist"></datalist>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-extrabold text-stone-700">ഫോൺ നമ്പർ (വാട്സ്ആപ്പ്)</label>
+                        <input type="tel" id="cust-phone" oninput="saveCustomerDetails()" placeholder="9876543210" class="w-full px-3 py-2 text-sm font-bold bg-amber-50/50 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-extrabold text-stone-700">സൈറ്റ് / സ്ഥലം / കുറിപ്പ്</label>
+                        <select id="cust-site-select" onchange="onCustomerSiteSelectChange()" class="w-full px-3 py-2 text-xs sm:text-sm font-bold bg-stone-100 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="">-- സൈറ്റ് ലിസ്റ്റ് (ഓപ്ഷണൽ) --</option>
+                            <option value="__NEW__">+ പുതിയ സൈറ്റ് ചേർക്കുക...</option>
+                        </select>
+                        <input type="text" id="cust-address" list="site-datalist" oninput="saveCustomerDetails()" placeholder="ഉദാ: കോളയാട് സൈറ്റ്" class="w-full px-3 py-2 text-sm font-semibold bg-amber-50/50 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <datalist id="site-datalist"></datalist>
+                    </div>
+                </div>
+
+                <!-- Payment Status Selector: Ready Cash vs Credit -->
+                <div>
+                    <span class="block text-xs font-extrabold text-stone-600 mb-1.5">പേയ്മെന്റ് രീതി തിരഞ്ഞെടുക്കുക:</span>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button type="button" id="pay-btn-cash" onclick="setPaymentMode('cash')" class="py-2.5 px-3 rounded-xl font-extrabold text-xs sm:text-sm border-2 transition cursor-pointer flex items-center justify-center gap-1.5">
+                            <span>💵 റെഡി ക്യാഷ് (Cash)</span>
+                        </button>
+                        <button type="button" id="pay-btn-credit" onclick="setPaymentMode('credit')" class="py-2.5 px-3 rounded-xl font-extrabold text-xs sm:text-sm border-2 transition cursor-pointer flex items-center justify-center gap-1.5">
+                            <span>📒 കടം / സൈറ്റ് അക്കൗണ്ട്</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Menu Categories & Large Tap Grid -->
+            <section class="bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-stone-200 space-y-3">
+                <div id="category-pills" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1"></div>
+                <div id="menu-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3"></div>
+            </section>
+        </div>
+
+        <!-- Right Section: Current Parcel Bill Drawer (5 Columns) -->
+        <section class="lg:col-span-5 bg-white rounded-2xl shadow-md border-2 border-stone-300 flex flex-col overflow-hidden">
+            <!-- Bill Header -->
+            <div class="bg-stone-100 px-4 py-3 border-b border-stone-200 flex items-center justify-between">
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h2 class="text-lg sm:text-xl font-extrabold text-stone-900">പാർസൽ ബിൽ</h2>
+                        <span id="cart-payment-badge" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            💵 റെഡി ക്യാഷ്
+                        </span>
+                    </div>
+                    <p id="cart-customer-summary" class="text-xs sm:text-sm font-bold text-amber-800 mt-0.5">കസ്റ്റമർ: നൽകിയിട്ടില്ല</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-bold text-stone-500 block">ബിൽ നമ്പർ</span>
+                    <span id="cart-bill-no" class="text-base font-extrabold text-amber-700">#101</span>
+                </div>
+            </div>
+
+            <!-- Selected Items List -->
+            <div id="cart-items-list" class="p-3 sm:p-4 space-y-2 max-h-[360px] lg:max-h-[420px] overflow-y-auto divide-y divide-stone-100"></div>
+
+            <!-- Grand Total & Action Buttons -->
+            <div class="bg-stone-50 p-4 border-t-2 border-stone-200 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-base sm:text-lg font-extrabold text-stone-700">ആകെ തുക (Total):</span>
+                    <span id="cart-grand-total" class="text-2xl sm:text-3xl font-extrabold text-emerald-700">₹0</span>
+                </div>
+
+                <!-- Primary Action Buttons -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="completeAndPrintBill()" class="col-span-2 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-base sm:text-lg py-3.5 px-4 rounded-xl shadow-md transition cursor-pointer">
+                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                        <span>ബിൽ സേവ് & പ്രിന്റ് (Save & Print)</span>
+                    </button>
+
+                    <button onclick="holdCurrentOrder()" class="flex items-center justify-center gap-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-950 border border-amber-300 font-extrabold text-xs sm:text-sm py-3 px-3 rounded-xl transition cursor-pointer">
+                        <i data-lucide="pause-circle" class="w-4 h-4"></i>
+                        <span>ഹോൾഡ് (1/2/3)</span>
+                    </button>
+
+                    <button onclick="shareBillWhatsApp()" class="flex items-center justify-center gap-1.5 bg-green-100 hover:bg-green-200 active:scale-95 text-green-900 border border-green-300 font-extrabold text-xs sm:text-sm py-3 px-3 rounded-xl transition cursor-pointer">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        <span>വാട്സ്ആപ്പ് ബിൽ</span>
+                    </button>
+                </div>
+
+                <button onclick="clearCurrentOrder()" class="w-full flex items-center justify-center gap-1.5 text-rose-600 hover:bg-rose-50 font-bold text-xs sm:text-sm py-2 rounded-lg transition cursor-pointer">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    <span>നിലവിലെ ഓർഡർ ഒഴിവാക്കുക (Clear)</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Hidden 58mm Thermal Receipt Area -->
+    <div id="thermal-print-area"></div>
+
+    <!-- Variation Picker Modal -->
+    <div id="variation-picker-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200 space-y-4">
+            <div class="flex items-center justify-between pb-2.5 border-b border-stone-200">
+                <div>
+                    <h2 id="var-modal-title" class="text-lg font-extrabold text-stone-900">വേരിയേഷൻ തിരഞ്ഞെടുക്കുക</h2>
+                    <p id="var-modal-subtitle" class="text-xs font-semibold text-stone-500 mt-0.5"></p>
+                </div>
+                <button type="button" onclick="closeModal('variation-picker-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="var-preset-tags" class="flex flex-wrap gap-2"></div>
+
+            <div class="pt-2 border-t border-stone-100 space-y-2">
+                <label class="block text-xs font-extrabold text-stone-700">പുതിയ വെറൈറ്റി പേര് ചേർക്കുക</label>
+                <div class="flex gap-2">
+                    <input type="text" id="var-new-tag-input" placeholder="ഉദാ: കടുപ്പം കുറവ്" class="flex-1 px-3 py-2 text-xs sm:text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <button type="button" onclick="addCustomVariationTag()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-500 hover:bg-amber-400 text-stone-950 cursor-pointer">+ ചേർക്കുക</button>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-xs font-extrabold text-stone-700">പ്രത്യേക കുറിപ്പ് (ഈ ഓർഡറിന് മാത്രം)</label>
+                <div class="flex gap-2">
+                    <input type="text" id="var-custom-note" placeholder="ഉദാ: ചാറ് വേറെ പാത്രത്തിൽ" class="flex-1 px-3 py-2 text-xs sm:text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <button type="button" onclick="confirmCustomVariationNote()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-900 text-white cursor-pointer">ചേർക്കുക</button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+                <button type="button" onclick="confirmPlainVariationItem()" class="w-full py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-100 hover:bg-stone-200 text-stone-800 cursor-pointer">സാധാരണയായി ചേർക്കുക (Plain)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contractor & Multi-Site Credit / Advance / Settlement Modal -->
+    <div id="site-ledger-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl border-2 border-amber-300 my-auto max-h-[92vh] flex flex-col">
+            <div class="flex items-center justify-between gap-2 pb-3 border-b border-stone-200">
+                <div>
+                    <h2 class="text-lg sm:text-xl font-extrabold text-stone-900">മേസ്തിരി / സൈറ്റ് കടം, അഡ്വാൻസ് & സെറ്റിൽമെന്റ്</h2>
+                    <p class="text-xs font-bold text-stone-500 mt-0.5">ഒരു മേസ്തിരിയുടെ ഒന്നിലധികം സൈറ്റുകൾ, ഇടക്കുള്ള അഡ്വാൻസ്, ആഴ്ചാവസാന കണക്ക് എന്നിവ വേർതിരിച്ച് കാണാം</p>
+                </div>
+                <button type="button" onclick="closeModal('site-ledger-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto py-4 space-y-5 flex-1 pr-1">
+                <!-- Overall Due Summary -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3">
+                        <span class="text-xs font-bold text-rose-800 block">ആകെ കുടിശ്ശിക (Net Due)</span>
+                        <span id="ledger-total-due" class="text-xl sm:text-2xl font-extrabold text-rose-700 mt-0.5 block">₹0</span>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
+                        <span class="text-xs font-bold text-emerald-800 block">ആകെ അഡ്വാൻസ് / വരവ്</span>
+                        <span id="ledger-total-advance" class="text-xl sm:text-2xl font-extrabold text-emerald-700 mt-0.5 block">₹0</span>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3">
+                        <span class="text-xs font-bold text-amber-900 block">സജീവ സൈറ്റുകൾ</span>
+                        <span id="ledger-active-sites-count" class="text-xl sm:text-2xl font-extrabold text-amber-800 mt-0.5 block">0</span>
+                    </div>
+                </div>
+
+                <!-- Add New Contractor / Site or Quick Credit/Advance Entry -->
+                <form id="add-site-entry-form" class="bg-amber-50/70 border border-amber-300 rounded-2xl p-3.5 space-y-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <span class="text-xs sm:text-sm font-extrabold text-amber-950">+ പുതിയ സൈറ്റ് / കടം / അഡ്വാൻസ് ചേർക്കുക</span>
+                        <span class="text-[11px] font-bold text-stone-600">തീയതി: <span id="ledger-form-date"></span></span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+                        <div class="space-y-1">
+                            <label class="block text-xs font-extrabold text-stone-700">മേസ്തിരി പേര് *</label>
+                            <select id="ledger-contractor-select" onchange="onLedgerContractorSelectChange()" class="w-full px-3 py-2 text-xs font-extrabold bg-amber-100/80 border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                <option value="">-- സ്ഥിരം മേസ്തിരി --</option>
+                                <option value="__NEW__">+ പുതിയ മേസ്തിരി...</option>
+                            </select>
+                            <input type="text" id="ledger-contractor-name" list="contractor-datalist" required placeholder="ഉദാ: ജോസ് മേസ്തിരി" class="w-full px-3 py-2 text-xs sm:text-sm font-bold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-xs font-extrabold text-stone-700">സൈറ്റ് പേര് *</label>
+                            <select id="ledger-site-select" onchange="onLedgerSiteSelectChange()" class="w-full px-3 py-2 text-xs font-bold bg-stone-100 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                <option value="">-- സൈറ്റ് ലിസ്റ്റ് --</option>
+                                <option value="__NEW__">+ പുതിയ സൈറ്റ്...</option>
+                            </select>
+                            <input type="text" id="ledger-site-name" list="site-datalist" required placeholder="ഉദാ: കോളയാട് സൈറ്റ്" class="w-full px-3 py-2 text-xs sm:text-sm font-bold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-xs font-extrabold text-stone-700">ഫോൺ (വാട്സ്ആപ്പ്)</label>
+                            <input type="tel" id="ledger-phone" placeholder="9876543210" class="w-full px-3 py-2 text-xs sm:text-sm font-bold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-xs font-extrabold text-stone-700">എൻട്രി തരം</label>
+                            <select id="ledger-entry-type" class="w-full px-3 py-2 text-xs sm:text-sm font-extrabold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                <option value="credit">📒 കടം / പാർസൽ (+ തുക)</option>
+                                <option value="advance">💵 അഡ്വാൻസ് വരവ് (- കുറയ്ക്കും)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end">
+                        <div>
+                            <label class="block text-xs font-extrabold text-stone-700 mb-1">തുക (₹) *</label>
+                            <input type="number" id="ledger-amount" min="1" step="1" required placeholder="ഉദാ: 850 അല്ലെങ്കിൽ 2000" class="w-full px-3 py-2 text-xs sm:text-sm font-extrabold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-extrabold text-stone-700 mb-1">വിവരണം (കഞ്ഞി/ചോറ്/അഡ്വാൻസ്)</label>
+                            <input type="text" id="ledger-note" placeholder="ഉദാ: ചോറ് പാർസൽ × 12 / അഡ്വാൻസ്" class="w-full px-3 py-2 text-xs sm:text-sm font-semibold bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <button type="submit" class="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-900 hover:bg-stone-800 text-amber-300 cursor-pointer">
+                            + അക്കൗണ്ടിൽ ചേർക്കുക
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Contractor & Site-wise Grouped Cards -->
+                <div id="site-ledger-groups" class="space-y-3.5"></div>
+            </div>
+
+            <div class="pt-3 border-t border-stone-200 flex items-center justify-end">
+                <button type="button" onclick="closeModal('site-ledger-modal')" class="px-5 py-2 rounded-xl text-sm font-extrabold bg-stone-900 text-white cursor-pointer">അടയ്ക്കുക</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 1: Daily Sales & Credit Report -->
+    <div id="daily-report-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-stone-200 my-auto max-h-[92vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-stone-200">
+                <div>
+                    <h2 class="text-xl font-extrabold text-stone-900">ഇന്നത്തെ വിറ്റുവരവ് & കടം റിപ്പോർട്ട്</h2>
+                    <p id="report-date-subtitle" class="text-xs font-bold text-stone-500 mt-0.5">തീയതി: 27-11-2026</p>
+                </div>
+                <button onclick="closeModal('daily-report-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto py-4 space-y-5 flex-1 pr-1">
+                <!-- Summary KPI Boxes -->
+                <div class="grid grid-cols-3 gap-2.5">
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3">
+                        <span class="text-[11px] font-bold text-emerald-800 block">💵 റെഡി ക്യാഷ്</span>
+                        <span id="rep-cash-amount" class="text-lg sm:text-2xl font-extrabold text-emerald-700 mt-1 block">₹0</span>
+                    </div>
+                    <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3">
+                        <span class="text-[11px] font-bold text-rose-800 block">📒 കടം (Credit)</span>
+                        <span id="rep-credit-amount" class="text-lg sm:text-2xl font-extrabold text-rose-700 mt-1 block">₹0</span>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3">
+                        <span class="text-[11px] font-bold text-amber-900 block">ആകെ വിറ്റുവരവ്</span>
+                        <span id="rep-total-amount" class="text-lg sm:text-2xl font-extrabold text-amber-800 mt-1 block">₹0</span>
+                    </div>
+                </div>
+
+                <!-- Item-wise Breakdown -->
+                <div>
+                    <h3 class="text-sm font-extrabold text-stone-800 mb-2 flex items-center gap-1.5">
+                        <i data-lucide="list-ordered" class="w-4 h-4 text-amber-600"></i>
+                        <span>ഓരോ ഐറ്റത്തിന്റെയും വിൽപ്പന കണക്ക്</span>
+                    </h3>
+                    <div class="border border-stone-200 rounded-2xl overflow-hidden">
+                        <table class="w-full text-left text-xs sm:text-sm">
+                            <thead class="bg-stone-100 text-stone-700 font-extrabold">
+                                <tr>
+                                    <th class="py-2.5 px-3">ഐറ്റം</th>
+                                    <th class="py-2.5 px-3 text-center">എണ്ണം</th>
+                                    <th class="py-2.5 px-3 text-right">തുക (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rep-item-breakdown" class="divide-y divide-stone-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Recent Bills History (with Cash/Credit toggle) -->
+                <div>
+                    <h3 class="text-sm font-extrabold text-stone-800 mb-2 flex items-center gap-1.5">
+                        <i data-lucide="receipt" class="w-4 h-4 text-amber-600"></i>
+                        <span>ഇന്ന് അടിച്ച ബില്ലുകൾ (കടം ലഭിച്ചാൽ സ്റ്റാറ്റസ് മാറ്റാം)</span>
+                    </h3>
+                    <div id="rep-bills-history" class="space-y-2 max-h-56 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <!-- Report Action Buttons -->
+            <div class="pt-3 border-t border-stone-200 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button onclick="printDayEndReport()" class="flex items-center justify-center gap-1.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm py-3 px-3 rounded-xl cursor-pointer">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>റിപ്പോർട്ട് പ്രിന്റ്</span>
+                </button>
+                <button onclick="shareDayReportWhatsApp()" class="flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-bold text-xs sm:text-sm py-3 px-3 rounded-xl cursor-pointer">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    <span>വാട്സ്ആപ്പിൽ അയക്കുക</span>
+                </button>
+                <button onclick="confirmResetDay()" class="flex items-center justify-center gap-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold text-xs sm:text-sm py-3 px-3 rounded-xl cursor-pointer">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <span>പുതിയ ദിവസം തുടങ്ങുക</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Add / Edit / Delete Menu Items -->
+    <div id="add-item-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-stone-200">
+                <h2 class="text-lg font-extrabold text-stone-900">മെനു ക്രമീകരിക്കുക</h2>
+                <button onclick="closeModal('add-item-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="add-item-form" class="space-y-3.5 mt-3 overflow-y-auto pr-1 flex-1">
+                <div>
+                    <label class="block text-xs font-extrabold text-stone-700 mb-1">പുതിയ ഐറ്റത്തിന്റെ പേര് *</label>
+                    <input type="text" id="new-item-name" required placeholder="ഉദാ: ചിക്കൻ ബിരിയാണി / പൊറോട്ട" class="w-full px-3.5 py-2.5 text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">വില (₹) *</label>
+                        <input type="number" id="new-item-price" required min="1" step="1" placeholder="140" class="w-full px-3.5 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">വിഭാഗം</label>
+                        <select id="new-item-cat" class="w-full px-3 py-2.5 text-sm font-semibold border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="tea">ചായ & കടി</option>
+                            <option value="breakfast">പ്രഭാതഭക്ഷണം</option>
+                            <option value="meals">ഊണ് & ബിരിയാണി</option>
+                            <option value="dinner">രാത്രി ഭക്ഷണം</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 rounded-xl text-sm font-extrabold bg-amber-500 hover:bg-amber-400 text-stone-950 shadow-sm cursor-pointer">
+                    + ലിസ്റ്റിലേക്ക് ചേർക്കുക
+                </button>
+
+                <div class="pt-3 border-t border-stone-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-extrabold text-stone-600">നിലവിലുള്ള ഐറ്റങ്ങൾ (പേര്/വില മാറ്റാം):</span>
+                        <button type="button" onclick="confirmClearAllMenu()" class="text-[11px] font-extrabold text-rose-600 hover:underline cursor-pointer">
+                            എല്ലാം മായ്ക്കുക
+                        </button>
+                    </div>
+                    <div id="manage-menu-list" class="max-h-48 overflow-y-auto space-y-1.5 pr-1"></div>
+                </div>
+            </form>
+
+            <div class="flex items-center justify-end pt-3 border-t border-stone-200 mt-2">
+                <button type="button" onclick="closeModal('add-item-modal')" class="px-5 py-2 rounded-xl text-sm font-bold bg-stone-900 text-white cursor-pointer">ശരി (Done)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Business Shop & Hidden Firebase Config Settings -->
+    <div id="shop-settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-stone-200 my-auto max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-stone-200">
+                <h2 class="text-lg font-extrabold text-stone-900">സ്ഥാപനത്തിന്റെ വിവരങ്ങൾ & Shop ID</h2>
+                <button onclick="closeModal('shop-settings-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="shop-settings-form" class="space-y-4 mt-4">
+                <div>
+                    <label class="block text-xs font-extrabold text-stone-700 mb-1">ഹോട്ടൽ / കാറ്ററിംഗ് പേര് *</label>
+                    <input type="text" id="setting-hotel-name" required class="w-full px-3.5 py-2.5 text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-stone-700 mb-1">സ്ഥലം / ഫോൺ നമ്പർ</label>
+                    <input type="text" id="setting-hotel-place" class="w-full px-3.5 py-2.5 text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div class="pt-2 border-t border-stone-200 space-y-3">
+                    <div>
+                        <label class="block text-xs font-extrabold text-stone-700 mb-1">Shop ID (ഓരോ കടയ്ക്കും പ്രത്യേകം പേര്)</label>
+                        <input type="text" id="setting-shop-id" placeholder="ഉദാ: minu-catering-kolayad" class="w-full px-3.5 py-2 text-xs sm:text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+
+                    <!-- Hidden Firebase Fields Wrapper (Hidden by Default) -->
+                    <div>
+                        <button type="button" onclick="toggleFirebaseFields()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-extrabold transition cursor-pointer">
+                            <span>⚙️ Firebase ക്രമീകരണങ്ങൾ (മറച്ചുവെച്ചത് - കാണുക / മറയ്ക്കുക)</span>
+                            <span id="firebase-toggle-indicator">+</span>
+                        </button>
+
+                        <div id="firebase-advanced-fields" style="display: none;" class="mt-3 space-y-2.5 p-3 rounded-2xl bg-stone-50 border border-stone-200">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-stone-700 mb-1">apiKey</label>
+                                    <input type="text" id="setting-fb-apikey" placeholder="AIzaSy..." class="w-full px-3 py-2 text-xs font-mono border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-stone-700 mb-1">projectId</label>
+                                    <input type="text" id="setting-fb-projectid" placeholder="malabar-pos-business" class="w-full px-3 py-2 text-xs font-mono border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-stone-700 mb-1">authDomain</label>
+                                    <input type="text" id="setting-fb-authdomain" placeholder="malabar-pos-business.firebaseapp.com" class="w-full px-3 py-2 text-xs font-mono border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-extrabold text-stone-700 mb-1">appId</label>
+                                    <input type="text" id="setting-fb-appid" placeholder="1:1001726356903:web:..." class="w-full px-3 py-2 text-xs font-mono border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('shop-settings-modal')" class="px-4 py-2.5 rounded-xl text-sm font-bold text-stone-600 hover:bg-stone-100 cursor-pointer">റദ്ദാക്കുക</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-extrabold bg-stone-900 text-white cursor-pointer">സേവ് ചെയ്യുക</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirm-dialog" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/75 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center border border-stone-200">
+            <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 id="confirm-dialog-title" class="text-lg font-extrabold text-stone-900">ഉറപ്പാണോ?</h3>
+            <p id="confirm-dialog-msg" class="text-xs sm:text-sm text-stone-600 mt-1.5"></p>
+            <div class="flex items-center gap-3 mt-5">
+                <button onclick="closeModal('confirm-dialog')" class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 cursor-pointer">വേണ്ട</button>
+                <button id="confirm-dialog-yes" class="flex-1 py-2.5 rounded-xl text-sm font-extrabold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer">അതെ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Modular v11) + Parcel/Credit/Site Ledger POS Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCp5gTgS8RiEhMb9zXmoy4sxsaMLDZWiUk",
+            authDomain: "malabar-pos-business.firebaseapp.com",
+            projectId: "malabar-pos-business",
+            storageBucket: "malabar-pos-business.firebasestorage.app",
+            messagingSenderId: "1001726356903",
+            appId: "1:1001726356903:web:9e6328c610f2ba869d1a82"
+        };
+
+        const KEYS = {
+            SHOP: 'kerala_parcel_pos_shop_v1',
+            MENU: 'kerala_parcel_pos_menu_v1',
+            ORDER: 'kerala_parcel_pos_order_v1',
+            CUST: 'kerala_parcel_pos_cust_v1',
+            HOLDS: 'kerala_parcel_pos_holds_v1',
+            BILLS: 'kerala_parcel_pos_bills_v1',
+            BILL_SEQ: 'kerala_parcel_pos_seq_v1',
+            BIZ_CONFIG: 'kerala_parcel_pos_biz_cfg_v1',
+            CUSTOM_TAGS: 'kerala_parcel_pos_custom_tags_v1',
+            SITE_ACCOUNTS: 'kerala_parcel_pos_site_accounts_v1',
+            SAVED_CONTRACTORS: 'kerala_parcel_pos_saved_contractors_v1'
+        };
+
+        const MAIN_SHOP_STORAGE_KEYS = [
+            'kerala_pos_shop_v1',
+            'malabar_pos_shop_v1',
+            'hotel_pos_shop_v1',
+            'pos_shop_info_v1',
+            'shopInfo'
+        ];
+
+        const VARIATION_GROUPS = {
+            tea_group: ['മധുരം കുറവ്', 'മധുരമില്ലാത്തത്', 'സ്ട്രോങ്ങ്', 'മീഡിയം', 'കട്ടൻ - മധുരം', 'കട്ടൻ - മധുരമില്ല'],
+            coffee_group: ['മധുരം കുറവ്', 'മധുരമില്ലാത്തത്', 'സ്ട്രോങ്ങ്', 'ബ്ലാക്ക് കോഫി'],
+            porotta_group: ['ഗോതമ്പ് പൊറോട്ട', 'സാധാരണ മൈദ പൊറോട്ട'],
+            dosa_group: ['നെയ് റോസ്റ്റ്', 'മസാല ദോശ', 'സാദാ ദോശ'],
+            egg_group: ['മുട്ട റോസ്റ്റ്', 'ബോയിൽഡ് എഗ്ഗ്', 'ഓംലെറ്റ്', 'മുട്ട ബുർജി'],
+            meals_group: ['ചോറ് മാത്രം', 'മീൻ കറി കൂടെ', 'സാമ്പാർ കൂടെ'],
+            puttu_group: ['അരി പുട്ട്', 'ഗോതമ്പ് പുട്ട്', 'ചെറുപയർ കൂടെ'],
+            biriyani_group: ['ചിക്കൻ പീസ് കൂടുതൽ', 'ലെഗ് പീസ്', 'ചാറ് കൂടുതൽ'],
+            curry_group: ['ചാറ് കൂടുതൽ', 'ചാറ് കുറവ്', 'നല്ല എരിവ്'],
+            juice_group: ['ഐസ് വേണ്ട', 'മധുരം കുറവ്', 'ഉപ്പ് ലൈം']
+        };
+
+        const CATEGORIES = [
+            { id: 'all', label: 'എല്ലാം (All)' },
+            { id: 'tea', label: '☕ ചായ & കടി' },
+            { id: 'breakfast', label: '🥞 പ്രഭാതഭക്ഷണം' },
+            { id: 'meals', label: '🍛 ഊണ് & ബിരിയാണി' },
+            { id: 'dinner', label: '🍖 രാത്രി ഭക്ഷണം' }
+        ];
+
+        const CAT_STYLES = {
+            tea: 'bg-amber-50 border-amber-300 hover:bg-amber-100 text-amber-950',
+            breakfast: 'bg-orange-50 border-orange-300 hover:bg-orange-100 text-orange-950',
+            meals: 'bg-emerald-50 border-emerald-300 hover:bg-emerald-100 text-emerald-950',
+            dinner: 'bg-rose-50 border-rose-300 hover:bg-rose-100 text-rose-950'
+        };
+
+        const DEFAULT_MENU = [
+            { id: 'p1', name: 'ചായ', price: 12, cat: 'tea' },
+            { id: 'p2', name: 'കാപ്പി', price: 15, cat: 'tea' },
+            { id: 'p3', name: 'പഴംപൊരി', price: 15, cat: 'tea' },
+            { id: 'p4', name: 'ഉഴുന്നുവട', price: 12, cat: 'tea' },
+            { id: 'p5', name: 'പൊറോട്ട', price: 15, cat: 'breakfast' },
+            { id: 'p6', name: 'ദോശ', price: 15, cat: 'breakfast' },
+            { id: 'p7', name: 'ഇഡ്ഡലി', price: 12, cat: 'breakfast' },
+            { id: 'p8', name: 'ഊണ് (പാർസൽ)', price: 75, cat: 'meals' },
+            { id: 'p9', name: 'ചിക്കൻ ബിരിയാണി', price: 140, cat: 'meals' },
+            { id: 'p10', name: 'ബീഫ് റോസ്റ്റ്', price: 110, cat: 'dinner' },
+            { id: 'p11', name: 'ചിക്കൻ ഫ്രൈ', price: 100, cat: 'dinner' }
+        ];
+
+        let shopInfo = { name: 'മലബാർ ഹോട്ടൽ & കാറ്ററിംഗ്', place: 'പേരളശ്ശേരി / കണ്ണൂർ' };
+        let bizConfig = {
+            shopId: 'malabar-default',
+            firebase: { ...DEFAULT_FIREBASE_CONFIG }
+        };
+        let menuItems = [];
+        let currentOrder = {};
+        let customerInfo = { name: '', phone: '', address: '', paymentMode: 'cash' };
+        let holdSlots = { h1: null, h2: null, h3: null };
+        let completedBills = [];
+        let billSequence = 101;
+        let activeCategory = 'all';
+        let ownerPanelOpen = false;
+        let customTagsByGroup = {};
+        let pendingVariationItemId = null;
+        let pendingVariationGroupKey = 'general_group';
+        let siteAccounts = [];
+        let savedContractors = [];
+
+        let firestoreDb = null;
+        let cloudReady = false;
+
+        function setSyncBadge(statusType) {
+            const badge = document.getElementById('cloud-sync-badge');
+            if (!badge) return;
+            if (statusType === 'offline') {
+                badge.textContent = 'ഓഫ്‌ലൈൻ സേവ്';
+                badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-700';
+            } else {
+                badge.textContent = 'ഓൺലൈൻ സേവ് ഓൺ';
+                badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700';
+            }
+        }
+
+        function extractShopInfoFromRaw(rawObj) {
+            if (!rawObj || typeof rawObj !== 'object') return null;
+            const target = rawObj.shopInfo && typeof rawObj.shopInfo === 'object' ? rawObj.shopInfo : rawObj;
+            const name = (target.name || target.hotelName || target.shopName || '').trim();
+            const place = (target.place || target.location || target.address || '').trim();
+            if (!name && !place) return null;
+            return {
+                name: name || shopInfo.name,
+                place: place || shopInfo.place
+            };
+        }
+
+        function syncShopInfoFromMainStorage() {
+            let updated = false;
+            for (const key of MAIN_SHOP_STORAGE_KEYS) {
+                try {
+                    const raw = localStorage.getItem(key);
+                    if (!raw) continue;
+                    const parsed = JSON.parse(raw);
+                    const extracted = extractShopInfoFromRaw(parsed);
+                    if (extracted && (extracted.name !== shopInfo.name || extracted.place !== shopInfo.place)) {
+                        shopInfo = { ...shopInfo, ...extracted };
+                        updated = true;
+                    }
+                } catch (e) {}
+            }
+            if (updated) {
+                try {
+                    localStorage.setItem(KEYS.SHOP, JSON.stringify(shopInfo));
+                } catch (e) {}
+            }
+            return updated;
+        }
+
+        function writeShopInfoToMainStorage(info) {
+            const payload = { name: info.name, place: info.place };
+            MAIN_SHOP_STORAGE_KEYS.forEach(key => {
+                try {
+                    const existing = localStorage.getItem(key);
+                    if (existing) {
+                        const parsed = JSON.parse(existing);
+                        if (parsed && typeof parsed === 'object' && parsed.shopInfo && typeof parsed.shopInfo === 'object') {
+                            parsed.shopInfo = { ...parsed.shopInfo, ...payload };
+                            localStorage.setItem(key, JSON.stringify(parsed));
+                            return;
+                        }
+                    }
+                } catch (e) {}
+            });
+            try {
+                localStorage.setItem('kerala_pos_shop_v1', JSON.stringify(payload));
+            } catch (e) {}
+        }
+
+        /* ---------------- Contractor & Multi-Site Account Helpers ---------------- */
+        function rememberContractorName(name) {
+            const clean = (name || '').trim();
+            if (!clean || clean === 'Walk-in Customer') return;
+            if (!savedContractors.some(c => c.toLowerCase() === clean.toLowerCase())) {
+                savedContractors.unshift(clean);
+            }
+        }
+
+        function getAllContractorNames() {
+            const fromAccounts = siteAccounts.map(a => (a.contractor || '').trim()).filter(Boolean);
+            const merged = [...savedContractors, ...fromAccounts];
+            const seen = new Set();
+            const result = [];
+            merged.forEach(name => {
+                const key = name.toLowerCase();
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    result.push(name);
+                }
+            });
+            return result;
+        }
+
+        function getAllSiteNames(filterContractor = '') {
+            const cleanFilter = (filterContractor || '').trim().toLowerCase();
+            const matchingAccounts = cleanFilter
+                ? siteAccounts.filter(a => (a.contractor || '').trim().toLowerCase() === cleanFilter)
+                : siteAccounts;
+
+            const sites = matchingAccounts.length > 0
+                ? matchingAccounts.map(a => (a.site || '').trim()).filter(Boolean)
+                : siteAccounts.map(a => (a.site || '').trim()).filter(Boolean);
+
+            return [...new Set(sites)];
+        }
+
+        function computeSiteAccountSummary(acc) {
+            let creditTotal = 0;
+            let paidOrAdvanceTotal = 0;
+            (acc.entries || []).forEach(en => {
+                const amt = parseInt(en.amount, 10) || 0;
+                if (en.type === 'credit') {
+                    creditTotal += amt;
+                } else if (en.type === 'advance' || en.type === 'settlement') {
+                    paidOrAdvanceTotal += amt;
+                }
+            });
+            const netBalance = creditTotal - paidOrAdvanceTotal;
+            return {
+                creditTotal,
+                paidOrAdvanceTotal,
+                netBalance
+            };
+        }
+
+        function getAllSiteAccountsTotals() {
+            let totalDue = 0;
+            let totalAdvance = 0;
+            let activeSites = 0;
+
+            siteAccounts.forEach(acc => {
+                const s = computeSiteAccountSummary(acc);
+                totalAdvance += s.paidOrAdvanceTotal;
+                if (s.netBalance > 0) {
+                    totalDue += s.netBalance;
+                    activeSites += 1;
+                }
+            });
+
+            return { totalDue, totalAdvance, activeSites };
+        }
+
+        function findOrCreateSiteAccount(contractorName, siteName, phone = '') {
+            const cleanContractor = (contractorName || '').trim() || 'പേരില്ലാത്ത മേസ്തിരി';
+            const cleanSite = (siteName || '').trim() || 'പൊതു സൈറ്റ്';
+            const cleanPhone = (phone || '').trim();
+
+            rememberContractorName(cleanContractor);
+
+            let existing = siteAccounts.find(a =>
+                a.contractor.toLowerCase() === cleanContractor.toLowerCase() &&
+                a.site.toLowerCase() === cleanSite.toLowerCase()
+            );
+
+            if (!existing) {
+                existing = {
+                    id: 'sa-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                    contractor: cleanContractor,
+                    site: cleanSite,
+                    phone: cleanPhone,
+                    entries: []
+                };
+                siteAccounts.unshift(existing);
+            } else if (cleanPhone && !existing.phone) {
+                existing.phone = cleanPhone;
+            }
+
+            return existing;
+        }
+
+        function recordCreditInSiteAccount(contractorName, siteName, phone, amount, note, billNo = null) {
+            const acc = findOrCreateSiteAccount(contractorName, siteName, phone);
+            acc.entries.unshift({
+                id: 'se-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                date: getTodayDDMMYYYY(),
+                time: getCurrentTime12Hr(),
+                type: 'credit',
+                amount: parseInt(amount, 10) || 0,
+                note: note || (billNo ? `ബിൽ #${billNo} പാർസൽ കടം` : 'പാർസൽ കടം')
+            });
+        }
+
+        function populateContractorSelect(selectEl, currentName) {
+            if (!selectEl) return;
+            const contractors = getAllContractorNames();
+            const matched = contractors.find(c => c.toLowerCase() === (currentName || '').trim().toLowerCase());
+            selectEl.innerHTML = `
+                <option value="">-- സ്ഥിരം മേസ്തിരി തിരഞ്ഞെടുക്കുക --</option>
+                ${contractors.map(c => `<option value="${escapeHtml(c)}" ${matched === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
+                <option value="__NEW__">+ പുതിയ മേസ്തിരി ചേർക്കുക...</option>
+            `;
+        }
+
+        function populateSiteSelect(selectEl, contractorName, currentSite) {
+            if (!selectEl) return;
+            const sites = getAllSiteNames(contractorName);
+            const matched = sites.find(s => s.toLowerCase() === (currentSite || '').trim().toLowerCase());
+            selectEl.innerHTML = `
+                <option value="">-- സൈറ്റ് ലിസ്റ്റ് (ഓപ്ഷണൽ) --</option>
+                ${sites.map(s => `<option value="${escapeHtml(s)}" ${matched === s ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+                <option value="__NEW__">+ പുതിയ സൈറ്റ് ചേർക്കുക...</option>
+            `;
+        }
+
+        function refreshContractorAndSiteDatalists() {
+            const contractorList = document.getElementById('contractor-datalist');
+            const siteList = document.getElementById('site-datalist');
+            const contractors = getAllContractorNames();
+            const allSites = getAllSiteNames('');
+
+            if (contractorList) {
+                contractorList.innerHTML = contractors.map(c => `<option value="${escapeHtml(c)}"></option>`).join('');
+            }
+            if (siteList) {
+                siteList.innerHTML = allSites.map(s => `<option value="${escapeHtml(s)}"></option>`).join('');
+            }
+
+            populateContractorSelect(document.getElementById('cust-contractor-select'), customerInfo.name);
+            populateSiteSelect(document.getElementById('cust-site-select'), customerInfo.name, customerInfo.address);
+
+            const ledgerName = document.getElementById('ledger-contractor-name')?.value || '';
+            const ledgerSite = document.getElementById('ledger-site-name')?.value || '';
+            populateContractorSelect(document.getElementById('ledger-contractor-select'), ledgerName);
+            populateSiteSelect(document.getElementById('ledger-site-select'), ledgerName, ledgerSite);
+        }
+
+        function onCustomerContractorSelectChange() {
+            const sel = document.getElementById('cust-contractor-select');
+            const nameInp = document.getElementById('cust-name');
+            if (!sel || !nameInp) return;
+
+            if (sel.value === '__NEW__') {
+                nameInp.value = '';
+                nameInp.focus();
+                customerInfo.name = '';
+                saveLocalOnly();
+                renderCartCustomerSummary();
+                return;
+            }
+
+            if (sel.value) {
+                nameInp.value = sel.value;
+                customerInfo.name = sel.value;
+                const matchedAcc = siteAccounts.find(a => a.contractor.toLowerCase() === sel.value.toLowerCase());
+                if (matchedAcc) {
+                    if (!customerInfo.phone && matchedAcc.phone) {
+                        customerInfo.phone = matchedAcc.phone;
+                        document.getElementById('cust-phone').value = matchedAcc.phone;
+                    }
+                    if (!customerInfo.address && matchedAcc.site) {
+                        customerInfo.address = matchedAcc.site;
+                        document.getElementById('cust-address').value = matchedAcc.site;
+                    }
+                }
+                populateSiteSelect(document.getElementById('cust-site-select'), sel.value, customerInfo.address);
+                saveLocalOnly();
+                renderCartCustomerSummary();
+            }
+        }
+
+        function onCustomerSiteSelectChange() {
+            const sel = document.getElementById('cust-site-select');
+            const addrInp = document.getElementById('cust-address');
+            if (!sel || !addrInp) return;
+
+            if (sel.value === '__NEW__') {
+                addrInp.value = '';
+                addrInp.focus();
+                customerInfo.address = '';
+                saveLocalOnly();
+                renderCartCustomerSummary();
+                return;
+            }
+
+            if (sel.value) {
+                addrInp.value = sel.value;
+                customerInfo.address = sel.value;
+                saveLocalOnly();
+                renderCartCustomerSummary();
+            }
+        }
+
+        function onLedgerContractorSelectChange() {
+            const sel = document.getElementById('ledger-contractor-select');
+            const nameInp = document.getElementById('ledger-contractor-name');
+            const siteInp = document.getElementById('ledger-site-name');
+            const phoneInp = document.getElementById('ledger-phone');
+            if (!sel || !nameInp) return;
+
+            if (sel.value === '__NEW__') {
+                nameInp.value = '';
+                nameInp.focus();
+                return;
+            }
+
+            if (sel.value) {
+                nameInp.value = sel.value;
+                const matchedAcc = siteAccounts.find(a => a.contractor.toLowerCase() === sel.value.toLowerCase());
+                if (matchedAcc) {
+                    if (phoneInp && !phoneInp.value && matchedAcc.phone) phoneInp.value = matchedAcc.phone;
+                    if (siteInp && !siteInp.value && matchedAcc.site) siteInp.value = matchedAcc.site;
+                }
+                populateSiteSelect(document.getElementById('ledger-site-select'), sel.value, siteInp?.value || '');
+            }
+        }
+
+        function onLedgerSiteSelectChange() {
+            const sel = document.getElementById('ledger-site-select');
+            const siteInp = document.getElementById('ledger-site-name');
+            if (!sel || !siteInp) return;
+
+            if (sel.value === '__NEW__') {
+                siteInp.value = '';
+                siteInp.focus();
+                return;
+            }
+
+            if (sel.value) {
+                siteInp.value = sel.value;
+            }
+        }
+
+        function handleCustomerInputChange() {
+            const currentC = (customerInfo.name || '').trim().toLowerCase();
+            if (!currentC) return;
+            const matched = siteAccounts.find(a => a.contractor.toLowerCase() === currentC);
+            if (matched) {
+                if (!customerInfo.phone && matched.phone) {
+                    customerInfo.phone = matched.phone;
+                    document.getElementById('cust-phone').value = matched.phone;
+                }
+                if (!customerInfo.address && matched.site) {
+                    customerInfo.address = matched.site;
+                    document.getElementById('cust-address').value = matched.site;
+                }
+            }
+            populateContractorSelect(document.getElementById('cust-contractor-select'), customerInfo.name);
+            populateSiteSelect(document.getElementById('cust-site-select'), customerInfo.name, customerInfo.address);
+            saveLocalOnly();
+            renderCartCustomerSummary();
+        }
+
+        function updateHeaderSiteDueBadge() {
+            const badge = document.getElementById('header-site-due-badge');
+            if (!badge) return;
+            const { totalDue } = getAllSiteAccountsTotals();
+            badge.textContent = `₹${totalDue}`;
+        }
+
+        function openSiteLedgerModal() {
+            const formDateEl = document.getElementById('ledger-form-date');
+            if (formDateEl) formDateEl.textContent = getTodayDDMMYYYY();
+
+            const nameInp = document.getElementById('ledger-contractor-name');
+            const siteInp = document.getElementById('ledger-site-name');
+            const phoneInp = document.getElementById('ledger-phone');
+            if (nameInp && !nameInp.value && customerInfo.name) nameInp.value = customerInfo.name;
+            if (siteInp && !siteInp.value && customerInfo.address) siteInp.value = customerInfo.address;
+            if (phoneInp && !phoneInp.value && customerInfo.phone) phoneInp.value = customerInfo.phone;
+
+            renderSiteLedgerModal();
+            openModal('site-ledger-modal');
+        }
+
+        function renderSiteLedgerModal() {
+            refreshContractorAndSiteDatalists();
+            updateHeaderSiteDueBadge();
+
+            const { totalDue, totalAdvance, activeSites } = getAllSiteAccountsTotals();
+            document.getElementById('ledger-total-due').textContent = `₹${totalDue}`;
+            document.getElementById('ledger-total-advance').textContent = `₹${totalAdvance}`;
+            document.getElementById('ledger-active-sites-count').textContent = `${activeSites}`;
+
+            const groupsContainer = document.getElementById('site-ledger-groups');
+            if (!groupsContainer) return;
+
+            if (siteAccounts.length === 0) {
+                groupsContainer.innerHTML = `
+                    <div class="bg-stone-50 border border-stone-200 rounded-2xl p-8 text-center text-stone-500">
+                        <p class="text-sm font-extrabold">സൈറ്റ് കടം / അഡ്വാൻസ് അക്കൗണ്ടുകൾ ഒന്നും ഇതുവരെ ചേർത്തിട്ടില്ല</p>
+                        <p class="text-xs mt-1">മുകളിലെ ഫോം വഴിയോ, പാർസൽ ബില്ലിൽ '📒 കടം' തിരഞ്ഞെടുത്ത് ബിൽ സേവ് ചെയ്യുമ്പോഴോ ഇവിടെ താനെ വരും.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            const byContractor = {};
+            siteAccounts.forEach(acc => {
+                const key = acc.contractor || 'പേരില്ലാത്ത മേസ്തിരി';
+                if (!byContractor[key]) {
+                    byContractor[key] = { contractor: key, phone: acc.phone || '', sites: [] };
+                }
+                if (!byContractor[key].phone && acc.phone) {
+                    byContractor[key].phone = acc.phone;
+                }
+                byContractor[key].sites.push(acc);
+            });
+
+            groupsContainer.innerHTML = Object.values(byContractor).map(group => {
+                let contractorNetDue = 0;
+                let contractorCredit = 0;
+                let contractorPaid = 0;
+
+                group.sites.forEach(sAcc => {
+                    const sum = computeSiteAccountSummary(sAcc);
+                    contractorCredit += sum.creditTotal;
+                    contractorPaid += sum.paidOrAdvanceTotal;
+                    if (sum.netBalance > 0) contractorNetDue += sum.netBalance;
+                });
+
+                const sitesHtml = group.sites.map(sAcc => {
+                    const sum = computeSiteAccountSummary(sAcc);
+                    const isPositiveDue = sum.netBalance > 0;
+                    const isAdvanceExcess = sum.netBalance < 0;
+
+                    const statusText = isPositiveDue
+                        ? `ബാക്കി തുക: ₹${sum.netBalance}`
+                        : (isAdvanceExcess ? `അഡ്വാൻസ് ബാക്കി: ₹${Math.abs(sum.netBalance)}` : `കണക്ക് തീർന്നു (₹0)`);
+
+                    const statusClass = isPositiveDue
+                        ? 'bg-rose-100 text-rose-800 border-rose-300'
+                        : (isAdvanceExcess ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-stone-100 text-stone-700 border-stone-300');
+
+                    const entriesHtml = (sAcc.entries || []).slice(0, 8).map(en => {
+                        const isCredit = en.type === 'credit';
+                        const isAdv = en.type === 'advance';
+                        const badge = isCredit
+                            ? `<span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-extrabold text-[11px]">കടം +₹${en.amount}</span>`
+                            : (isAdv
+                                ? `<span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-extrabold text-[11px]">അഡ്വാൻസ് -₹${en.amount}</span>`
+                                : `<span class="px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 font-extrabold text-[11px]">സെറ്റിൽ -₹${en.amount}</span>`);
+
+                        return `
+                            <div class="flex items-center justify-between gap-2 py-1.5 border-b border-stone-100 last:border-b-0 text-xs">
+                                <div class="min-w-0 flex-1">
+                                    <span class="font-bold text-stone-500">${escapeHtml(en.date || '')}</span>
+                                    <span class="font-semibold text-stone-800 ml-1.5">${escapeHtml(en.note || '')}</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 flex-shrink-0">
+                                    ${badge}
+                                    <button type="button" onclick="deleteSiteEntry('${sAcc.id}', '${en.id}')" class="text-stone-400 hover:text-rose-600 px-1 cursor-pointer" title="എൻട്രി ഒഴിവാക്കുക">×</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="bg-white border border-stone-200 rounded-2xl p-3.5 space-y-2.5">
+                            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-stone-100">
+                                <div>
+                                    <span class="text-sm font-extrabold text-stone-900">🏗️ ${escapeHtml(sAcc.site)}</span>
+                                    <div class="text-[11px] font-bold text-stone-500 mt-0.5">
+                                        കടം: ₹${sum.creditTotal} • അഡ്വാൻസ്/വരവ്: ₹${sum.paidOrAdvanceTotal}
+                                    </div>
+                                </div>
+                                <span class="text-xs font-extrabold px-2.5 py-1 rounded-full border ${statusClass}">
+                                    ${statusText}
+                                </span>
+                            </div>
+
+                            <div class="max-h-36 overflow-y-auto pr-1">${entriesHtml || '<p class="text-xs text-stone-400">എൻട്രികൾ ഇല്ല</p>'}</div>
+
+                            <div class="flex flex-wrap items-center gap-2 pt-1.5 border-t border-stone-100">
+                                <button type="button" onclick="quickAddAdvanceToSite('${sAcc.id}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 cursor-pointer">
+                                    + അഡ്വാൻസ് ചേർക്കുക
+                                </button>
+                                <button type="button" onclick="quickPartialSettleSite('${sAcc.id}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 cursor-pointer">
+                                    ഭാഗിക തുക കുറയ്ക്കുക
+                                </button>
+                                ${isPositiveDue ? `
+                                    <button type="button" onclick="settleFullSiteAccount('${sAcc.id}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
+                                        ✓ മുഴുവൻ തീർത്തു (Settle ₹${sum.netBalance})
+                                    </button>
+                                ` : ''}
+                                <button type="button" onclick="shareSiteStatementWhatsApp('${sAcc.id}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-green-100 hover:bg-green-200 text-green-900 border border-green-300 cursor-pointer">
+                                    വാട്സ്ആപ്പ് സ്റ്റേറ്റ്മെന്റ്
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-stone-50 border-2 border-stone-300 rounded-3xl p-4 space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-stone-200">
+                            <div>
+                                <h3 class="text-base sm:text-lg font-extrabold text-stone-900">👷 ${escapeHtml(group.contractor)}</h3>
+                                <p class="text-xs font-bold text-stone-500">
+                                    ${group.phone ? `ഫോൺ: ${escapeHtml(group.phone)} • ` : ''}${group.sites.length} സൈറ്റുകൾ • ആകെ കടം: ₹${contractorCredit} • വരവ്: ₹${contractorPaid}
+                                </p>
+                            </div>
+                            <span class="text-xs sm:text-sm font-extrabold px-3 py-1 rounded-full ${contractorNetDue > 0 ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'}">
+                                ആകെ കുടിശ്ശിക: ₹${contractorNetDue}
+                            </span>
+                        </div>
+                        <div class="space-y-2.5">${sitesHtml}</div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function quickAddAdvanceToSite(siteAccId) {
+            const acc = siteAccounts.find(a => a.id === siteAccId);
+            if (!acc) return;
+            const rawAmt = prompt(`${acc.contractor} - ${acc.site}\nലഭിച്ച അഡ്വാൻസ് തുക (₹) നൽകുക:`, '');
+            if (rawAmt === null) return;
+            const amt = parseInt(rawAmt, 10);
+            if (!amt || amt < 1) {
+                showToast('ശരിയായ തുക നൽകുക!');
+                return;
+            }
+            const rawNote = prompt('കുറിപ്പ് (ഓപ്ഷണൽ):', 'അഡ്വാൻസ് വരവ്');
+            if (rawNote === null) return;
+
+            acc.entries.unshift({
+                id: 'se-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                date: getTodayDDMMYYYY(),
+                time: getCurrentTime12Hr(),
+                type: 'advance',
+                amount: amt,
+                note: (rawNote || '').trim() || 'അഡ്വാൻസ് വരവ്'
+            });
+
+            saveState();
+            renderSiteLedgerModal();
+            showToast(`${acc.site} അക്കൗണ്ടിൽ ₹${amt} അഡ്വാൻസ് ചേർത്തു!`);
+        }
+
+        function quickPartialSettleSite(siteAccId) {
+            const acc = siteAccounts.find(a => a.id === siteAccId);
+            if (!acc) return;
+            const sum = computeSiteAccountSummary(acc);
+            const rawAmt = prompt(`${acc.contractor} - ${acc.site} (നിലവിലെ ബാക്കി: ₹${sum.netBalance})\nഇപ്പോൾ തന്ന തുക (₹) നൽകുക:`, '');
+            if (rawAmt === null) return;
+            const amt = parseInt(rawAmt, 10);
+            if (!amt || amt < 1) {
+                showToast('ശരിയായ തുക നൽകുക!');
+                return;
+            }
+
+            acc.entries.unshift({
+                id: 'se-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                date: getTodayDDMMYYYY(),
+                time: getCurrentTime12Hr(),
+                type: 'settlement',
+                amount: amt,
+                note: 'ഭാഗിക പേയ്മെന്റ്'
+            });
+
+            saveState();
+            renderSiteLedgerModal();
+            showToast(`${acc.site} അക്കൗണ്ടിൽ നിന്ന് ₹${amt} കുറച്ചു!`);
+        }
+
+        function settleFullSiteAccount(siteAccId) {
+            const acc = siteAccounts.find(a => a.id === siteAccId);
+            if (!acc) return;
+            const sum = computeSiteAccountSummary(acc);
+            if (sum.netBalance <= 0) {
+                showToast('അടയ്ക്കാൻ ബാക്കി തുക ഇല്ല.');
+                return;
+            }
+
+            openConfirmDialog(
+                'മുഴുവൻ കടവും തീർക്കണോ?',
+                `${acc.contractor} - ${acc.site} എന്ന സൈറ്റിന്റെ ബാക്കി തുകയായ ₹${sum.netBalance} ലഭിച്ചതായി അടയാളപ്പെടുത്താൻ ഉറപ്പാണോ?`,
+                () => {
+                    acc.entries.unshift({
+                        id: 'se-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                        date: getTodayDDMMYYYY(),
+                        time: getCurrentTime12Hr(),
+                        type: 'settlement',
+                        amount: sum.netBalance,
+                        note: 'മുഴുവൻ കടം സെറ്റിൽമെന്റ്'
+                    });
+                    saveState();
+                    renderSiteLedgerModal();
+                    showToast(`${acc.site} കടം മുഴുവൻ തീർത്തു (₹${sum.netBalance})!`);
+                }
+            );
+        }
+
+        function deleteSiteEntry(siteAccId, entryId) {
+            const acc = siteAccounts.find(a => a.id === siteAccId);
+            if (!acc) return;
+            acc.entries = (acc.entries || []).filter(e => e.id !== entryId);
+            saveState();
+            renderSiteLedgerModal();
+            showToast('എൻട്രി ഒഴിവാക്കി.');
+        }
+
+        function shareSiteStatementWhatsApp(siteAccId) {
+            const acc = siteAccounts.find(a => a.id === siteAccId);
+            if (!acc) return;
+            const sum = computeSiteAccountSummary(acc);
+
+            let text = `*${shopInfo.name}*\n`;
+            text += `📋 *സൈറ്റ് കണക്ക് സ്റ്റേറ്റ്മെന്റ്*\n`;
+            text += `------------------------\n`;
+            text += `മേസ്തിരി: *${acc.contractor}*\n`;
+            text += `സൈറ്റ്: *${acc.site}*\n`;
+            text += `തീയതി: ${getTodayDDMMYYYY()}\n`;
+            text += `------------------------\n`;
+
+            (acc.entries || []).slice(0, 12).forEach(en => {
+                const sign = en.type === 'credit' ? '+ കടം' : (en.type === 'advance' ? '- അഡ്വാൻസ്' : '- അടച്ചത്');
+                text += `• ${en.date}: ${en.note || ''} (${sign}: *₹${en.amount}*)\n`;
+            });
+
+            text += `------------------------\n`;
+            text += `ആകെ കടം: ₹${sum.creditTotal}\n`;
+            text += `അഡ്വാൻസ് / അടച്ചത്: ₹${sum.paidOrAdvanceTotal}\n`;
+            if (sum.netBalance > 0) {
+                text += `*ബാക്കി അടയ്ക്കാനുള്ളത്: ₹${sum.netBalance}*\n`;
+            } else if (sum.netBalance < 0) {
+                text += `*അഡ്വാൻസ് ബാക്കി: ₹${Math.abs(sum.netBalance)}*\n`;
+            } else {
+                text += `*കണക്ക് തീർന്നു (₹0)*\n`;
+            }
+
+            const phoneDigits = formatCleanPhoneForWa(acc.phone);
+            const url = phoneDigits
+                ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent(text)}`
+                : `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+            window.open(url, '_blank');
+        }
+
+        /* ---------------- Variation & Custom Tag Picker ---------------- */
+        function getVariationGroupForItem(item) {
+            if (!item) return null;
+            const n = String(item.name || '').toLowerCase();
+            if (n.includes('ചായ') || n.includes('tea')) return 'tea_group';
+            if (n.includes('കാപ്പി') || n.includes('coffee')) return 'coffee_group';
+            if (n.includes('പൊറോട്ട') || n.includes('porotta')) return 'porotta_group';
+            if (n.includes('ദോശ') || n.includes('dosa')) return 'dosa_group';
+            if (n.includes('മുട്ട') || n.includes('egg')) return 'egg_group';
+            if (n.includes('ഊണ്') || n.includes('meals')) return 'meals_group';
+            if (n.includes('പുട്ട്') || n.includes('puttu')) return 'puttu_group';
+            if (n.includes('ബിരിയാണി') || n.includes('biriyani')) return 'biriyani_group';
+            if (n.includes('കറി') || n.includes('റോസ്റ്റ്') || n.includes('ഫ്രൈ')) return 'curry_group';
+            if (n.includes('ജ്യൂസ്') || n.includes('ലൈം') || n.includes('juice')) return 'juice_group';
+            return null;
+        }
+
+        function getTagsForGroup(groupKey) {
+            const base = VARIATION_GROUPS[groupKey] || [];
+            const custom = Array.isArray(customTagsByGroup[groupKey]) ? customTagsByGroup[groupKey] : [];
+            return [...new Set([...base, ...custom])];
+        }
+
+        function encodeOrderEntryKey(itemId, note) {
+            const cleanNote = String(note || '').trim();
+            return cleanNote ? `${itemId}::${cleanNote}` : itemId;
+        }
+
+        function decodeOrderEntryKey(rawKey) {
+            const raw = String(rawKey || '');
+            const sepIdx = raw.indexOf('::');
+            if (sepIdx === -1) {
+                return { itemId: raw, note: '' };
+            }
+            return {
+                itemId: raw.slice(0, sepIdx),
+                note: raw.slice(sepIdx + 2)
+            };
+        }
+
+        function getOrderDisplayName(rawKey) {
+            const { itemId, note } = decodeOrderEntryKey(rawKey);
+            const menu = menuItems.find(m => m.id === itemId);
+            const baseName = menu ? menu.name : itemId;
+            return note ? `${baseName} (${note})` : baseName;
+        }
+
+        function getOrderItemPrice(rawKey) {
+            const { itemId } = decodeOrderEntryKey(rawKey);
+            const menu = menuItems.find(m => m.id === itemId);
+            return menu ? menu.price : 0;
+        }
+
+        function openVariationPickerModal(itemId) {
+            const item = menuItems.find(m => m.id === itemId);
+            if (!item) return;
+
+            const groupKey = getVariationGroupForItem(item) || `item_${item.id}`;
+            pendingVariationItemId = itemId;
+            pendingVariationGroupKey = groupKey;
+
+            document.getElementById('var-modal-title').textContent = `${item.name} — ₹${item.price}`;
+            document.getElementById('var-modal-subtitle').textContent = 'വേരിയേഷൻ തിരഞ്ഞെടുക്കുക അല്ലെങ്കിൽ പുതിയ വെറൈറ്റി പേര് ചേർക്കുക';
+            document.getElementById('var-custom-note').value = '';
+            document.getElementById('var-new-tag-input').value = '';
+
+            renderVariationTagButtons();
+            openModal('variation-picker-modal');
+        }
+
+        function renderVariationTagButtons() {
+            const tags = getTagsForGroup(pendingVariationGroupKey);
+            const tagsContainer = document.getElementById('var-preset-tags');
+            if (!tagsContainer) return;
+
+            if (tags.length === 0) {
+                tagsContainer.innerHTML = `<p class="text-xs font-semibold text-stone-500">ഈ ഐറ്റത്തിന് നിലവിൽ ടാഗുകൾ ഇല്ല. താഴെ പുതിയ വെറൈറ്റി പേര് ചേർക്കാം.</p>`;
+                return;
+            }
+
+            tagsContainer.innerHTML = tags.map(tag => `
+                <button type="button" onclick="selectVariationTag(${JSON.stringify(tag)})" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-50 hover:bg-amber-100 text-amber-950 border-2 border-amber-300 cursor-pointer">
+                    ${escapeHtml(tag)}
+                </button>
+            `).join('');
+        }
+
+        function addCustomVariationTag() {
+            const inputEl = document.getElementById('var-new-tag-input');
+            const newTag = (inputEl?.value || '').trim();
+            if (!newTag) {
+                showToast('പുതിയ വെറൈറ്റി പേര് ടൈപ്പ് ചെയ്യുക!');
+                inputEl?.focus();
+                return;
+            }
+
+            const existing = Array.isArray(customTagsByGroup[pendingVariationGroupKey]) ? customTagsByGroup[pendingVariationGroupKey] : [];
+            if (!existing.includes(newTag)) {
+                customTagsByGroup[pendingVariationGroupKey] = [...existing, newTag];
+            }
+
+            if (inputEl) inputEl.value = '';
+            renderVariationTagButtons();
+            saveState();
+            showToast(`"${newTag}" ടാഗ് ചേർത്തു!`);
+            selectVariationTag(newTag);
+        }
+
+        function selectVariationTag(tagText) {
+            if (!pendingVariationItemId) return;
+            const entryKey = encodeOrderEntryKey(pendingVariationItemId, tagText);
+            currentOrder[entryKey] = (currentOrder[entryKey] || 0) + 1;
+            const item = menuItems.find(m => m.id === pendingVariationItemId);
+            const label = item ? `${item.name} (${tagText})` : tagText;
+            pendingVariationItemId = null;
+            closeModal('variation-picker-modal');
+            saveState();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+            showToast(`${label} ഓർഡറിൽ ചേർത്തു!`);
+        }
+
+        function confirmPlainVariationItem() {
+            if (!pendingVariationItemId) return;
+            const itemId = pendingVariationItemId;
+            pendingVariationItemId = null;
+            closeModal('variation-picker-modal');
+            currentOrder[itemId] = (currentOrder[itemId] || 0) + 1;
+            saveState();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function confirmCustomVariationNote() {
+            if (!pendingVariationItemId) return;
+            const note = (document.getElementById('var-custom-note')?.value || '').trim();
+            const itemId = pendingVariationItemId;
+            pendingVariationItemId = null;
+            closeModal('variation-picker-modal');
+            const entryKey = encodeOrderEntryKey(itemId, note);
+            currentOrder[entryKey] = (currentOrder[entryKey] || 0) + 1;
+            saveState();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function toggleOwnerPanel() {
+            ownerPanelOpen = !ownerPanelOpen;
+            updateOwnerPanelUI();
+        }
+
+        function updateOwnerPanelUI() {
+            const panel = document.getElementById('owner-manager-panel');
+            const label = document.getElementById('owner-panel-toggle-label');
+            if (panel) {
+                if (ownerPanelOpen) {
+                    panel.classList.remove('hidden');
+                } else {
+                    panel.classList.add('hidden');
+                }
+            }
+            if (label) {
+                label.textContent = ownerPanelOpen ? 'കണക്ക് മറയ്ക്കുക' : 'മുതലാളി / കണക്ക്';
+            }
+        }
+
+        function getActiveFirebaseConfig() {
+            const custom = bizConfig.firebase || {};
+            return {
+                apiKey: (custom.apiKey || '').trim() || DEFAULT_FIREBASE_CONFIG.apiKey,
+                authDomain: (custom.authDomain || '').trim() || DEFAULT_FIREBASE_CONFIG.authDomain,
+                projectId: (custom.projectId || '').trim() || DEFAULT_FIREBASE_CONFIG.projectId,
+                storageBucket: (custom.storageBucket || '').trim() || DEFAULT_FIREBASE_CONFIG.storageBucket,
+                messagingSenderId: (custom.messagingSenderId || '').trim() || DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+                appId: (custom.appId || '').trim() || DEFAULT_FIREBASE_CONFIG.appId
+            };
+        }
+
+        function isFirebaseConfigured(cfg) {
+            return Boolean(
+                cfg &&
+                cfg.apiKey &&
+                !cfg.apiKey.startsWith('YOUR_') &&
+                cfg.projectId &&
+                !cfg.projectId.startsWith('YOUR_')
+            );
+        }
+
+        function getBaseShopId() {
+            return (bizConfig.shopId || 'malabar-default').trim() || 'malabar-default';
+        }
+
+        function getParcelDocId() {
+            return `${getBaseShopId()}_parcel`;
+        }
+
+        async function initFirebaseSync() {
+            const cfg = getActiveFirebaseConfig();
+
+            if (!isFirebaseConfigured(cfg)) {
+                cloudReady = false;
+                firestoreDb = null;
+                setSyncBadge('offline');
+                return;
+            }
+
+            try {
+                const app = initializeApp(cfg, `parcel-${getParcelDocId()}-${Date.now()}`);
+                firestoreDb = getFirestore(app);
+                cloudReady = true;
+                setSyncBadge('online');
+                await pullFromFirestore();
+            } catch (err) {
+                console.error('Firebase init error:', err);
+                cloudReady = false;
+                setSyncBadge('offline');
+            }
+        }
+
+        async function pullFromFirestore() {
+            if (!cloudReady || !firestoreDb) return;
+            try {
+                const baseId = getBaseShopId();
+                const parcelRef = doc(firestoreDb, 'shops', getParcelDocId());
+                const mainRef = doc(firestoreDb, 'shops', baseId);
+
+                const [parcelSnap, mainSnap] = await Promise.all([
+                    getDoc(parcelRef),
+                    getDoc(mainRef).catch(() => null)
+                ]);
+
+                let dataUpdated = false;
+
+                if (mainSnap && mainSnap.exists()) {
+                    const mainData = mainSnap.data();
+                    const mainShop = extractShopInfoFromRaw(mainData);
+                    if (mainShop) {
+                        shopInfo = { ...shopInfo, ...mainShop };
+                        dataUpdated = true;
+                    }
+                }
+
+                if (parcelSnap.exists()) {
+                    const data = parcelSnap.data();
+                    if (!mainSnap || !mainSnap.exists()) {
+                        const parcelShop = extractShopInfoFromRaw(data);
+                        if (parcelShop) shopInfo = { ...shopInfo, ...parcelShop };
+                    }
+                    if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
+                    if (data.currentOrder) currentOrder = data.currentOrder;
+                    if (data.customTagsByGroup && typeof data.customTagsByGroup === 'object') {
+                        customTagsByGroup = Object.assign({}, customTagsByGroup, data.customTagsByGroup);
+                    }
+                    if (Array.isArray(data.siteAccounts)) siteAccounts = data.siteAccounts;
+                    if (Array.isArray(data.savedContractors)) savedContractors = data.savedContractors;
+                    if (data.holdSlots) holdSlots = Object.assign({ h1: null, h2: null, h3: null }, data.holdSlots);
+                    if (Array.isArray(data.completedBills)) completedBills = data.completedBills;
+                    if (data.billSequence) billSequence = parseInt(data.billSequence, 10) || billSequence;
+                    saveLocalOnly();
+                    renderAll();
+                } else {
+                    if (dataUpdated) saveLocalOnly();
+                    await pushToFirestore();
+                }
+                setSyncBadge('online');
+            } catch (err) {
+                console.error('Firestore pull error:', err);
+                setSyncBadge('offline');
+            }
+        }
+
+        async function pushToFirestore() {
+            if (!cloudReady || !firestoreDb) return;
+            try {
+                const baseId = getBaseShopId();
+                const parcelRef = doc(firestoreDb, 'shops', getParcelDocId());
+                const mainRef = doc(firestoreDb, 'shops', baseId);
+
+                await Promise.all([
+                    setDoc(parcelRef, {
+                        shopInfo,
+                        menuItems,
+                        currentOrder,
+                        customTagsByGroup,
+                        siteAccounts,
+                        savedContractors,
+                        holdSlots,
+                        completedBills,
+                        billSequence,
+                        updatedAt: getTodayDDMMYYYY()
+                    }, { merge: true }),
+                    setDoc(mainRef, {
+                        shopInfo,
+                        updatedAt: getTodayDDMMYYYY()
+                    }, { merge: true }).catch(() => null)
+                ]);
+                setSyncBadge('online');
+            } catch (err) {
+                console.error('Firestore push error:', err);
+                setSyncBadge('offline');
+            }
+        }
+
+        function getTodayDDMMYYYY() {
+            const d = new Date();
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}-${month}-${year}`;
+        }
+
+        function getCurrentTime12Hr() {
+            return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        window.addEventListener('storage', (e) => {
+            if (!e.key) return;
+            if (MAIN_SHOP_STORAGE_KEYS.includes(e.key) || e.key === KEYS.SHOP) {
+                if (syncShopInfoFromMainStorage()) {
+                    renderHeader();
+                    lucide.createIcons();
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadState();
+            syncShopInfoFromMainStorage();
+            document.getElementById('header-date').textContent = getTodayDDMMYYYY();
+            updateOwnerPanelUI();
+            syncCustomerInputs();
+            refreshContractorAndSiteDatalists();
+            setupForms();
+            renderAll();
+            await initFirebaseSync();
+        });
+
+        function loadState() {
+            try {
+                const savedBiz = localStorage.getItem(KEYS.BIZ_CONFIG);
+                if (savedBiz) {
+                    const parsedBiz = JSON.parse(savedBiz);
+                    bizConfig = Object.assign({
+                        shopId: 'malabar-default',
+                        firebase: { ...DEFAULT_FIREBASE_CONFIG }
+                    }, parsedBiz, {
+                        firebase: Object.assign({ ...DEFAULT_FIREBASE_CONFIG }, parsedBiz.firebase || {})
+                    });
+                }
+
+                const savedShop = localStorage.getItem(KEYS.SHOP);
+                if (savedShop) {
+                    const parsedShop = extractShopInfoFromRaw(JSON.parse(savedShop));
+                    if (parsedShop) shopInfo = Object.assign({}, shopInfo, parsedShop);
+                }
+
+                const savedMenu = localStorage.getItem(KEYS.MENU);
+                menuItems = savedMenu !== null ? JSON.parse(savedMenu) : [...DEFAULT_MENU];
+
+                const savedOrder = localStorage.getItem(KEYS.ORDER);
+                currentOrder = savedOrder ? JSON.parse(savedOrder) : {};
+
+                const savedTags = localStorage.getItem(KEYS.CUSTOM_TAGS);
+                if (savedTags) customTagsByGroup = JSON.parse(savedTags) || {};
+
+                const savedSites = localStorage.getItem(KEYS.SITE_ACCOUNTS);
+                siteAccounts = savedSites ? JSON.parse(savedSites) : [];
+
+                const savedCont = localStorage.getItem(KEYS.SAVED_CONTRACTORS);
+                savedContractors = savedCont ? JSON.parse(savedCont) : [];
+
+                const savedCust = localStorage.getItem(KEYS.CUST);
+                if (savedCust) customerInfo = Object.assign({ name: '', phone: '', address: '', paymentMode: 'cash' }, JSON.parse(savedCust));
+
+                const savedHolds = localStorage.getItem(KEYS.HOLDS);
+                if (savedHolds) holdSlots = Object.assign({ h1: null, h2: null, h3: null }, JSON.parse(savedHolds));
+
+                const savedBills = localStorage.getItem(KEYS.BILLS);
+                completedBills = savedBills ? JSON.parse(savedBills) : [];
+
+                const savedSeq = localStorage.getItem(KEYS.BILL_SEQ);
+                if (savedSeq) billSequence = parseInt(savedSeq, 10) || 101;
+            } catch (e) {
+                menuItems = [...DEFAULT_MENU];
+            }
+        }
+
+        function saveLocalOnly() {
+            try {
+                localStorage.setItem(KEYS.BIZ_CONFIG, JSON.stringify(bizConfig));
+                localStorage.setItem(KEYS.SHOP, JSON.stringify(shopInfo));
+                localStorage.setItem(KEYS.MENU, JSON.stringify(menuItems));
+                localStorage.setItem(KEYS.ORDER, JSON.stringify(currentOrder));
+                localStorage.setItem(KEYS.CUSTOM_TAGS, JSON.stringify(customTagsByGroup));
+                localStorage.setItem(KEYS.SITE_ACCOUNTS, JSON.stringify(siteAccounts));
+                localStorage.setItem(KEYS.SAVED_CONTRACTORS, JSON.stringify(savedContractors));
+                localStorage.setItem(KEYS.CUST, JSON.stringify(customerInfo));
+                localStorage.setItem(KEYS.HOLDS, JSON.stringify(holdSlots));
+                localStorage.setItem(KEYS.BILLS, JSON.stringify(completedBills));
+                localStorage.setItem(KEYS.BILL_SEQ, String(billSequence));
+            } catch (e) {}
+        }
+
+        function saveState() {
+            saveLocalOnly();
+            pushToFirestore();
+        }
+
+        function syncCustomerInputs() {
+            document.getElementById('cust-name').value = customerInfo.name || '';
+            document.getElementById('cust-phone').value = customerInfo.phone || '';
+            document.getElementById('cust-address').value = customerInfo.address || '';
+            populateContractorSelect(document.getElementById('cust-contractor-select'), customerInfo.name);
+            populateSiteSelect(document.getElementById('cust-site-select'), customerInfo.name, customerInfo.address);
+            renderPaymentButtons();
+        }
+
+        function saveCustomerDetails() {
+            customerInfo.name = (document.getElementById('cust-name')?.value || '').trim();
+            customerInfo.phone = (document.getElementById('cust-phone')?.value || '').trim();
+            customerInfo.address = (document.getElementById('cust-address')?.value || '').trim();
+            saveLocalOnly();
+            renderCartCustomerSummary();
+        }
+
+        function setPaymentMode(mode) {
+            customerInfo.paymentMode = mode === 'credit' ? 'credit' : 'cash';
+            saveLocalOnly();
+            renderPaymentButtons();
+            renderCartCustomerSummary();
+        }
+
+        function renderPaymentButtons() {
+            const cashBtn = document.getElementById('pay-btn-cash');
+            const creditBtn = document.getElementById('pay-btn-credit');
+            const isCredit = customerInfo.paymentMode === 'credit';
+
+            if (!isCredit) {
+                cashBtn.className = 'py-2.5 px-3 rounded-xl font-extrabold text-xs sm:text-sm border-2 bg-emerald-600 text-white border-emerald-700 shadow-sm cursor-pointer flex items-center justify-center gap-1.5';
+                creditBtn.className = 'py-2.5 px-3 rounded-xl font-extrabold text-xs sm:text-sm border-2 bg-stone-50 text-stone-600 border-stone-200 hover:bg-rose-50 cursor-pointer flex items-center justify-center gap-1.5';
+            } else {
+                cashBtn.className = 'py-2.5 px-3 rounded-xl font-extrabold text-xs sm:text-sm border-2 bg-stone-50 text-stone-600 border-stone-200 hover:bg-emerald-50 cursor-pointer flex items-center justify-center gap-1.5';
+                creditBtn.className = 'py-2.5 px-3 rounded-xl font-extrabold text-xs sm:text-sm border-2 bg-rose-600 text-white border-rose-700 shadow-sm cursor-pointer flex items-center justify-center gap-1.5';
+            }
+        }
+
+        function clearCustomerDetails() {
+            customerInfo = { name: '', phone: '', address: '', paymentMode: 'cash' };
+            syncCustomerInputs();
+            saveLocalOnly();
+            renderCartCustomerSummary();
+            showToast('കസ്റ്റമർ വിവരങ്ങൾ മായ്ച്ചു.');
+        }
+
+        function renderCartCustomerSummary() {
+            const summaryEl = document.getElementById('cart-customer-summary');
+            const badgeEl = document.getElementById('cart-payment-badge');
+            const isCredit = customerInfo.paymentMode === 'credit';
+
+            if (isCredit) {
+                badgeEl.textContent = '📒 കടം / സൈറ്റ്';
+                badgeEl.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300';
+            } else {
+                badgeEl.textContent = '💵 റെഡി ക്യാഷ്';
+                badgeEl.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+            }
+
+            const parts = [];
+            if (customerInfo.name) parts.push(customerInfo.name);
+            if (customerInfo.phone) parts.push(customerInfo.phone);
+            if (customerInfo.address) parts.push(customerInfo.address);
+
+            summaryEl.textContent = parts.length > 0
+                ? `കസ്റ്റമർ: ${parts.join(' • ')}`
+                : 'കസ്റ്റമർ: പേര് നൽകിയിട്ടില്ല';
+        }
+
+        function renderHoldSlotsBar() {
+            const container = document.getElementById('hold-slots-buttons');
+            const slotDefs = [
+                { id: 'h1', label: 'ഹോൾഡ് 1' },
+                { id: 'h2', label: 'ഹോൾഡ് 2' },
+                { id: 'h3', label: 'ഹോൾഡ് 3' }
+            ];
+
+            container.innerHTML = slotDefs.map(s => {
+                const data = holdSlots[s.id];
+                if (!data || !data.items || Object.keys(data.items).length === 0) {
+                    return `<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-stone-800/70 text-stone-500 border border-stone-800">${s.label} (ഒഴിവ്)</span>`;
+                }
+                const total = calculateOrderTotal(data.items);
+                const cName = data.customer?.name ? ` • ${escapeHtml(data.customer.name)}` : '';
+                return `
+                    <div class="inline-flex items-center bg-amber-400 text-stone-950 rounded-lg overflow-hidden shadow-xs">
+                        <button onclick="recallHoldSlot('${s.id}')" class="px-2.5 py-1 text-xs font-extrabold hover:bg-amber-300 cursor-pointer flex items-center gap-1">
+                            <span>${s.label}${cName}</span>
+                            <span class="bg-stone-950 text-amber-300 px-1.5 py-0.2 rounded text-xs">₹${total}</span>
+                        </button>
+                        <button onclick="discardHoldSlot('${s.id}')" class="px-2 py-1 text-xs font-extrabold hover:bg-rose-500 hover:text-white cursor-pointer border-l border-amber-500/50">×</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function calculateOrderTotal(orderMap) {
+            if (!orderMap) return 0;
+            return Object.entries(orderMap).reduce((sum, [rawKey, qty]) => {
+                return sum + (getOrderItemPrice(rawKey) * qty);
+            }, 0);
+        }
+
+        function holdCurrentOrder() {
+            if (Object.keys(currentOrder).length === 0) {
+                showToast('ഹോൾഡ് ചെയ്യാൻ ഓർഡറൊന്നുമില്ല.');
+                return;
+            }
+            const freeSlot = ['h1', 'h2', 'h3'].find(id => !holdSlots[id]);
+            const targetSlot = freeSlot || 'h1';
+
+            holdSlots[targetSlot] = {
+                items: JSON.parse(JSON.stringify(currentOrder)),
+                customer: { ...customerInfo }
+            };
+
+            currentOrder = {};
+            customerInfo = { name: '', phone: '', address: '', paymentMode: 'cash' };
+            syncCustomerInputs();
+            saveState();
+            renderAll();
+            showToast('ഓർഡർ ഹോൾഡിലേക്ക് മാറ്റി വെച്ചു!');
+        }
+
+        function recallHoldSlot(slotId) {
+            const slotData = holdSlots[slotId];
+            if (!slotData || !slotData.items) return;
+            if (Object.keys(currentOrder).length > 0) {
+                showToast('നിലവിലെ ഓർഡർ ആദ്യം ഹോൾഡ് അല്ലെങ്കിൽ ക്ലിയർ ചെയ്യുക.');
+                return;
+            }
+            currentOrder = JSON.parse(JSON.stringify(slotData.items));
+            if (slotData.customer) {
+                customerInfo = Object.assign({ name: '', phone: '', address: '', paymentMode: 'cash' }, slotData.customer);
+                syncCustomerInputs();
+            }
+            holdSlots[slotId] = null;
+            saveState();
+            renderAll();
+            showToast('ഹോൾഡ് ഓർഡർ തിരികെ എടുത്തു!');
+        }
+
+        function discardHoldSlot(slotId) {
+            holdSlots[slotId] = null;
+            saveState();
+            renderHoldSlotsBar();
+            showToast('ഹോൾഡ് ഒഴിവാക്കി.');
+        }
+
+        function renderAll() {
+            renderHeader();
+            updateHeaderSiteDueBadge();
+            refreshContractorAndSiteDatalists();
+            renderHoldSlotsBar();
+            renderCategories();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function renderHeader() {
+            document.getElementById('header-hotel-name').textContent = shopInfo.name;
+            document.getElementById('header-hotel-place').textContent = `${shopInfo.place} • പാർസൽ സർവീസ്`;
+
+            const todayStr = getTodayDDMMYYYY();
+            const todaysBills = completedBills.filter(b => b.date === todayStr);
+            const cashTotal = todaysBills.filter(b => b.paymentMode !== 'credit').reduce((s, b) => s + b.total, 0);
+            const creditTotal = todaysBills.filter(b => b.paymentMode === 'credit').reduce((s, b) => s + b.total, 0);
+            const grandTotal = cashTotal + creditTotal;
+
+            document.getElementById('live-cash-sales').textContent = `₹${cashTotal}`;
+            document.getElementById('live-credit-sales').textContent = `₹${creditTotal}`;
+            document.getElementById('live-total-sales').textContent = `₹${grandTotal} (${todaysBills.length})`;
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('category-pills');
+            container.innerHTML = CATEGORIES.map(c => {
+                const isSelected = c.id === activeCategory;
+                return `
+                    <button onclick="selectCategory('${c.id}')" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold whitespace-nowrap transition cursor-pointer ${isSelected ? 'bg-amber-500 text-stone-950 shadow-xs' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'}">
+                        ${c.label}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function getItemTotalQtyInOrder(itemId) {
+            return Object.entries(currentOrder).reduce((sum, [rawKey, qty]) => {
+                const { itemId: keyItemId } = decodeOrderEntryKey(rawKey);
+                return keyItemId === itemId ? sum + qty : sum;
+            }, 0);
+        }
+
+        function renderMenuGrid() {
+            const container = document.getElementById('menu-grid');
+            const filtered = activeCategory === 'all'
+                ? menuItems
+                : menuItems.filter(item => item.cat === activeCategory);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-stone-400 text-sm font-bold">ഈ വിഭാഗത്തിൽ ഐറ്റങ്ങൾ ഒന്നുമില്ല. 'മുതലാളി / കണക്ക്' തുറന്ന് 'മെനു / ഐറ്റം' വഴി ചേർക്കുക.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => {
+                const qty = getItemTotalQtyInOrder(item.id);
+                const styleClass = CAT_STYLES[item.cat] || CAT_STYLES.tea;
+                const hasVar = Boolean(getVariationGroupForItem(item));
+
+                return `
+                    <button onclick="addItemToOrder('${item.id}')" class="tap-card relative text-left p-3.5 sm:p-4 rounded-2xl border-2 ${styleClass} shadow-xs flex flex-col justify-between min-h-[96px] cursor-pointer">
+                        ${qty > 0 ? `<span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-stone-900 text-amber-300 text-xs font-extrabold flex items-center justify-center shadow-md border-2 border-white">${qty}</span>` : ''}
+                        <span class="text-base sm:text-lg font-extrabold leading-snug block pr-2">${escapeHtml(item.name)}</span>
+                        <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-black/10">
+                            <span class="text-sm sm:text-base font-extrabold">₹${item.price}</span>
+                            <span class="text-xs font-bold opacity-80">${hasVar ? 'വേരിയേഷൻ / +' : '+ ചേർക്കുക'}</span>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderCart() {
+            document.getElementById('cart-bill-no').textContent = `#${billSequence}`;
+            renderCartCustomerSummary();
+
+            const listEl = document.getElementById('cart-items-list');
+            const orderKeys = Object.keys(currentOrder).filter(k => currentOrder[k] > 0);
+
+            if (orderKeys.length === 0) {
+                listEl.innerHTML = `
+                    <div class="py-10 text-center text-stone-400">
+                        <i data-lucide="shopping-bag" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
+                        <p class="text-sm font-bold">ഐറ്റങ്ങൾ തിരഞ്ഞെടുത്തിട്ടില്ല</p>
+                        <p class="text-xs mt-0.5">ഇടതുവശത്തുള്ള ഐറ്റങ്ങളിൽ തൊട്ട് ഓർഡർ ചേർക്കുക</p>
+                    </div>
+                `;
+                document.getElementById('cart-grand-total').textContent = '₹0';
+                return;
+            }
+
+            let grandTotal = 0;
+
+            listEl.innerHTML = orderKeys.map(rawKey => {
+                const unitPrice = getOrderItemPrice(rawKey);
+                if (!unitPrice) return '';
+                const displayName = getOrderDisplayName(rawKey);
+                const qty = currentOrder[rawKey];
+                const lineTotal = unitPrice * qty;
+                grandTotal += lineTotal;
+                const encodedArg = JSON.stringify(rawKey);
+
+                return `
+                    <div class="py-2.5 flex items-center justify-between gap-2">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm sm:text-base font-extrabold text-stone-900 truncate">${escapeHtml(displayName)}</p>
+                            <p class="text-xs font-semibold text-stone-500">₹${unitPrice} × ${qty}</p>
+                        </div>
+
+                        <div class="flex items-center gap-1.5 bg-stone-100 p-1 rounded-xl border border-stone-200">
+                            <button onclick='updateItemQty(${encodedArg}, -1)' class="w-8 h-8 rounded-lg bg-white hover:bg-rose-50 text-rose-600 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">-</button>
+                            <span class="w-7 text-center text-sm font-extrabold text-stone-900">${qty}</span>
+                            <button onclick='updateItemQty(${encodedArg}, 1)' class="w-8 h-8 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 font-extrabold text-lg flex items-center justify-center shadow-2xs active:scale-90 cursor-pointer">+</button>
+                        </div>
+
+                        <div class="w-16 text-right">
+                            <span class="text-sm sm:text-base font-extrabold text-stone-900">₹${lineTotal}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('cart-grand-total').textContent = `₹${grandTotal}`;
+        }
+
+        function selectCategory(catId) {
+            activeCategory = catId;
+            renderCategories();
+            renderMenuGrid();
+        }
+
+        function addItemToOrder(itemId) {
+            const item = menuItems.find(m => m.id === itemId);
+            if (item && getVariationGroupForItem(item)) {
+                openVariationPickerModal(itemId);
+                return;
+            }
+            currentOrder[itemId] = (currentOrder[itemId] || 0) + 1;
+            saveState();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function updateItemQty(rawKey, delta) {
+            const newQty = (currentOrder[rawKey] || 0) + delta;
+            if (newQty <= 0) {
+                delete currentOrder[rawKey];
+            } else {
+                currentOrder[rawKey] = newQty;
+            }
+            saveState();
+            renderMenuGrid();
+            renderCart();
+            lucide.createIcons();
+        }
+
+        function clearCurrentOrder() {
+            if (Object.keys(currentOrder).length === 0) return;
+            openConfirmDialog(
+                'ഓർഡർ ഒഴിവാക്കണോ?',
+                'നിലവിലെ പാർസൽ ഓർഡർ ഒഴിവാക്കാൻ ഉറപ്പാണോ?',
+                () => {
+                    currentOrder = {};
+                    customerInfo = { name: '', phone: '', address: '', paymentMode: 'cash' };
+                    syncCustomerInputs();
+                    saveState();
+                    renderAll();
+                    showToast('ഓർഡർ ഒഴിവാക്കി.');
+                }
+            );
+        }
+
+        function buildCurrentBillObject() {
+            const orderKeys = Object.keys(currentOrder).filter(k => currentOrder[k] > 0);
+            if (orderKeys.length === 0) return null;
+
+            const items = [];
+            let total = 0;
+
+            orderKeys.forEach(rawKey => {
+                const { itemId } = decodeOrderEntryKey(rawKey);
+                const menu = menuItems.find(m => m.id === itemId);
+                if (menu) {
+                    const qty = currentOrder[rawKey];
+                    const amount = menu.price * qty;
+                    total += amount;
+                    items.push({
+                        id: rawKey,
+                        name: getOrderDisplayName(rawKey),
+                        price: menu.price,
+                        qty: qty,
+                        amount: amount
+                    });
+                }
+            });
+
+            return {
+                billNo: billSequence,
+                date: getTodayDDMMYYYY(),
+                time: getCurrentTime12Hr(),
+                customerName: customerInfo.name || 'Walk-in Customer',
+                customerPhone: customerInfo.phone || '',
+                customerAddress: customerInfo.address || '',
+                paymentMode: customerInfo.paymentMode || 'cash',
+                items: items,
+                total: total
+            };
+        }
+
+        function completeAndPrintBill() {
+            const bill = buildCurrentBillObject();
+            if (!bill) {
+                showToast('ബിൽ സേവ് ചെയ്യാൻ ആദ്യം ഐറ്റങ്ങൾ ചേർക്കുക!');
+                return;
+            }
+
+            if (bill.paymentMode === 'credit' && !customerInfo.name) {
+                showToast('കടം / സൈറ്റ് അക്കൗണ്ടിൽ ചേർക്കാൻ കസ്റ്റമർ / മേസ്തിരി പേര് നൽകുക!');
+                document.getElementById('cust-name').focus();
+                return;
+            }
+
+            if (customerInfo.name) {
+                rememberContractorName(customerInfo.name);
+            }
+
+            if (bill.paymentMode === 'credit') {
+                const itemsSummary = bill.items.map(it => `${it.name} ×${it.qty}`).join(', ');
+                recordCreditInSiteAccount(
+                    bill.customerName,
+                    bill.customerAddress || 'പൊതു സൈറ്റ്',
+                    bill.customerPhone,
+                    bill.total,
+                    `ബിൽ #${bill.billNo}: ${itemsSummary}`,
+                    bill.billNo
+                );
+            }
+
+            const payLabel = bill.paymentMode === 'credit' ? 'കടം (CREDIT)' : 'റെഡി ക്യാഷ് (CASH)';
+            const printArea = document.getElementById('thermal-print-area');
+            const itemsRowsHtml = bill.items.map(it => `
+                <tr>
+                    <td style="padding: 2px 0; text-align: left;">${escapeHtml(it.name)}</td>
+                    <td style="padding: 2px 0; text-align: center;">${it.qty}</td>
+                    <td style="padding: 2px 0; text-align: right;">${it.amount}</td>
+                </tr>
+            `).join('');
+
+            printArea.innerHTML = `
+                <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 4px; margin-bottom: 4px;">
+                    <div style="font-size: 14px; font-weight: 800;">${escapeHtml(shopInfo.name)}</div>
+                    <div style="font-size: 10px;">${escapeHtml(shopInfo.place)}</div>
+                </div>
+                <div style="font-size: 10px; margin-bottom: 4px; border-bottom: 1px dashed #000; padding-bottom: 4px;">
+                    <div>ബിൽ നമ്പർ: <b>#${bill.billNo}</b> (പാർസൽ)</div>
+                    <div>തീയതി: ${bill.date} | ${bill.time}</div>
+                    <div>കസ്റ്റമർ: <b>${escapeHtml(bill.customerName)}</b></div>
+                    ${bill.customerPhone ? `<div>ഫോൺ: ${escapeHtml(bill.customerPhone)}</div>` : ''}
+                    ${bill.customerAddress ? `<div>സൈറ്റ് / സ്ഥലം: ${escapeHtml(bill.customerAddress)}</div>` : ''}
+                    <div>പേയ്മെന്റ്: <b>${payLabel}</b></div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                    <thead>
+                        <tr style="border-bottom: 1px dashed #000;">
+                            <th style="text-align: left; padding-bottom: 2px;">ഐറ്റം</th>
+                            <th style="text-align: center; padding-bottom: 2px;">എണ്ണം</th>
+                            <th style="text-align: right; padding-bottom: 2px;">തുക</th>
+                        </tr>
+                    </thead>
+                    <tbody>${itemsRowsHtml}</tbody>
+                </table>
+                <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-top: 5px; padding: 4px 0; display: flex; justify-content: space-between; font-size: 14px; font-weight: 800;">
+                    <span>ആകെ തുക:</span>
+                    <span>₹${bill.total}</span>
+                </div>
+                <div style="text-align: center; font-size: 10px; margin-top: 6px;">
+                    നന്ദി! വീണ്ടും വരിക 🙏
+                </div>
+            `;
+
+            completedBills.unshift(bill);
+            billSequence += 1;
+            currentOrder = {};
+            customerInfo = { name: '', phone: '', address: '', paymentMode: 'cash' };
+            syncCustomerInputs();
+            saveState();
+            renderAll();
+
+            showToast(`ബിൽ #${bill.billNo} (${bill.paymentMode === 'credit' ? 'സൈറ്റ് കടത്തിൽ ചേർത്തു' : 'റെഡി ക്യാഷ്'}) സേവ് ചെയ്തു!`);
+
+            setTimeout(() => {
+                window.print();
+            }, 150);
+        }
+
+        function formatCleanPhoneForWa(rawPhone) {
+            if (!rawPhone) return '';
+            const digits = String(rawPhone).replace(/\D/g, '');
+            if (!digits) return '';
+            if (digits.length === 10) return '91' + digits;
+            return digits;
+        }
+
+        function shareBillWhatsApp() {
+            const bill = buildCurrentBillObject();
+            if (!bill) {
+                showToast('വാട്സ്ആപ്പിൽ അയക്കാൻ ആദ്യം ഐറ്റങ്ങൾ ചേർക്കുക!');
+                return;
+            }
+
+            const payText = bill.paymentMode === 'credit' ? '📒 കടം (Credit)' : '💵 റെഡി ക്യാഷ് (Paid)';
+
+            let text = `*${shopInfo.name}*\n`;
+            text += `${shopInfo.place}\n`;
+            text += `------------------------\n`;
+            text += `ബിൽ നമ്പർ: #${bill.billNo} (പാർസൽ)\n`;
+            text += `കസ്റ്റമർ: *${bill.customerName}*\n`;
+            if (bill.customerPhone) text += `ഫോൺ: ${bill.customerPhone}\n`;
+            if (bill.customerAddress) text += `സൈറ്റ് / സ്ഥലം: ${bill.customerAddress}\n`;
+            text += `തീയതി: ${bill.date} | ${bill.time}\n`;
+            text += `പേയ്മെന്റ്: *${payText}*\n`;
+            text += `------------------------\n`;
+
+            bill.items.forEach(it => {
+                text += `• ${it.name} (${it.qty} × ₹${it.price}) = *₹${it.amount}*\n`;
+            });
+
+            text += `------------------------\n`;
+            text += `*ആകെ തുക: ₹${bill.total}*\n`;
+            text += `നന്ദി! വീണ്ടും വരിക 🙏`;
+
+            const phoneDigits = formatCleanPhoneForWa(bill.customerPhone);
+            const url = phoneDigits
+                ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent(text)}`
+                : `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+            window.open(url, '_blank');
+        }
+
+        function openDailyReportModal() {
+            const todayStr = getTodayDDMMYYYY();
+            document.getElementById('report-date-subtitle').textContent = `തീയതി: ${todayStr}`;
+
+            const todaysBills = completedBills.filter(b => b.date === todayStr);
+            const cashTotal = todaysBills.filter(b => b.paymentMode !== 'credit').reduce((s, b) => s + b.total, 0);
+            const creditTotal = todaysBills.filter(b => b.paymentMode === 'credit').reduce((s, b) => s + b.total, 0);
+
+            document.getElementById('rep-cash-amount').textContent = `₹${cashTotal}`;
+            document.getElementById('rep-credit-amount').textContent = `₹${creditTotal}`;
+            document.getElementById('rep-total-amount').textContent = `₹${cashTotal + creditTotal}`;
+
+            const itemMap = {};
+            todaysBills.forEach(bill => {
+                bill.items.forEach(it => {
+                    if (!itemMap[it.name]) itemMap[it.name] = { qty: 0, amount: 0 };
+                    itemMap[it.name].qty += it.qty;
+                    itemMap[it.name].amount += it.amount;
+                });
+            });
+
+            const itemEntries = Object.entries(itemMap).sort((a, b) => b[1].amount - a[1].amount);
+            const breakdownBody = document.getElementById('rep-item-breakdown');
+
+            if (itemEntries.length === 0) {
+                breakdownBody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-stone-400 font-semibold">ഇന്ന് ഇതുവരെ ബില്ലുകൾ ഒന്നും അടിച്ചിട്ടില്ല</td></tr>`;
+            } else {
+                breakdownBody.innerHTML = itemEntries.map(([name, data]) => `
+                    <tr>
+                        <td class="py-2 px-3 font-bold text-stone-800">${escapeHtml(name)}</td>
+                        <td class="py-2 px-3 text-center font-extrabold text-amber-800">${data.qty}</td>
+                        <td class="py-2 px-3 text-right font-extrabold text-emerald-700">₹${data.amount}</td>
+                    </tr>
+                `).join('');
+            }
+
+            const historyEl = document.getElementById('rep-bills-history');
+            if (todaysBills.length === 0) {
+                historyEl.innerHTML = `<p class="text-xs text-stone-400 text-center py-3">ബില്ലുകൾ ലഭ്യമല്ല</p>`;
+            } else {
+                historyEl.innerHTML = todaysBills.map(b => {
+                    const isCredit = b.paymentMode === 'credit';
+                    return `
+                        <div class="flex items-center justify-between gap-2 bg-stone-50 px-3 py-2.5 rounded-xl border ${isCredit ? 'border-rose-300 bg-rose-50/40' : 'border-stone-200'} text-xs">
+                            <div>
+                                <div class="font-extrabold text-stone-900">
+                                    #${b.billNo} • ${escapeHtml(b.customerName)}
+                                </div>
+                                <div class="text-stone-500 mt-0.5">${b.time} ${b.customerAddress ? `• ${escapeHtml(b.customerAddress)}` : ''}</div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="toggleBillPaymentStatus(${b.billNo})" class="px-2 py-1 rounded-lg font-extrabold text-[11px] cursor-pointer ${isCredit ? 'bg-rose-600 text-white' : 'bg-emerald-100 text-emerald-800'}" title="ക്യാഷ് / കടം മാറ്റാൻ അമർത്തുക">
+                                    ${isCredit ? '📒 കടം (മാറ്റുക)' : '💵 ക്യാഷ്'}
+                                </button>
+                                <span class="font-extrabold text-stone-900 text-sm">₹${b.total}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            openModal('daily-report-modal');
+        }
+
+        function toggleBillPaymentStatus(billNo) {
+            const bill = completedBills.find(b => b.billNo === billNo);
+            if (!bill) return;
+            bill.paymentMode = bill.paymentMode === 'credit' ? 'cash' : 'credit';
+            saveState();
+            renderHeader();
+            openDailyReportModal();
+            showToast(`ബിൽ #${billNo} "${bill.paymentMode === 'credit' ? 'കടം' : 'റെഡി ക്യാഷ്'}" ആയി മാറ്റി.`);
+        }
+
+        function printDayEndReport() {
+            const todayStr = getTodayDDMMYYYY();
+            const todaysBills = completedBills.filter(b => b.date === todayStr);
+            const cashTotal = todaysBills.filter(b => b.paymentMode !== 'credit').reduce((s, b) => s + b.total, 0);
+            const creditTotal = todaysBills.filter(b => b.paymentMode === 'credit').reduce((s, b) => s + b.total, 0);
+
+            const itemMap = {};
+            todaysBills.forEach(bill => {
+                bill.items.forEach(it => {
+                    if (!itemMap[it.name]) itemMap[it.name] = { qty: 0, amount: 0 };
+                    itemMap[it.name].qty += it.qty;
+                    itemMap[it.name].amount += it.amount;
+                });
+            });
+
+            const rowsHtml = Object.entries(itemMap).map(([name, d]) => `
+                <tr>
+                    <td style="padding: 2px 0;">${escapeHtml(name)}</td>
+                    <td style="text-align: center;">${d.qty}</td>
+                    <td style="text-align: right;">${d.amount}</td>
+                </tr>
+            `).join('');
+
+            const printArea = document.getElementById('thermal-print-area');
+            printArea.innerHTML = `
+                <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 4px; margin-bottom: 4px;">
+                    <div style="font-size: 13px; font-weight: 800;">${escapeHtml(shopInfo.name)}</div>
+                    <div style="font-size: 11px; font-weight: 700;">ദിവസത്തെ വിറ്റുവരവ് റിപ്പോർട്ട്</div>
+                    <div style="font-size: 10px;">തീയതി: ${todayStr}</div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                    <thead>
+                        <tr style="border-bottom: 1px dashed #000;">
+                            <th style="text-align: left;">ഐറ്റം</th>
+                            <th style="text-align: center;">എണ്ണം</th>
+                            <th style="text-align: right;">തുക</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml || '<tr><td colspan="3">വിൽപ്പനയില്ല</td></tr>'}</tbody>
+                </table>
+                <div style="border-top: 1px dashed #000; margin-top: 5px; padding-top: 4px; font-size: 11px;">
+                    <div>ആകെ ബില്ലുകൾ: <b>${todaysBills.length}</b></div>
+                    <div>റെഡി ക്യാഷ്: <b>₹${cashTotal}</b></div>
+                    <div>കടം (Credit): <b>₹${creditTotal}</b></div>
+                    <div style="font-size: 13px; font-weight: 800; margin-top: 2px;">ആകെ വിറ്റുവരവ്: ₹${cashTotal + creditTotal}</div>
+                </div>
+            `;
+
+            setTimeout(() => window.print(), 150);
+        }
+
+        function shareDayReportWhatsApp() {
+            const todayStr = getTodayDDMMYYYY();
+            const todaysBills = completedBills.filter(b => b.date === todayStr);
+            const cashTotal = todaysBills.filter(b => b.paymentMode !== 'credit').reduce((s, b) => s + b.total, 0);
+            const creditTotal = todaysBills.filter(b => b.paymentMode === 'credit').reduce((s, b) => s + b.total, 0);
+            const creditBills = todaysBills.filter(b => b.paymentMode === 'credit');
+
+            let text = `📊 *${shopInfo.name} - ദിവസത്തെ കണക്ക്*\n`;
+            text += `📅 തീയതി: ${todayStr}\n`;
+            text += `🧾 ആകെ ബില്ലുകൾ: ${todaysBills.length}\n`;
+            text += `💵 റെഡി ക്യാഷ്: *₹${cashTotal}*\n`;
+            text += `📒 കടം (Credit): *₹${creditTotal}*\n`;
+            text += `💰 *ആകെ വിറ്റുവരവ്: ₹${cashTotal + creditTotal}*\n`;
+
+            if (creditBills.length > 0) {
+                text += `------------------------\n`;
+                text += `*കടം വാങ്ങിയവർ:*\n`;
+                creditBills.forEach(cb => {
+                    text += `• ${cb.customerName} (#${cb.billNo}) - *₹${cb.total}*\n`;
+                });
+            }
+
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
+        function confirmResetDay() {
+            openConfirmDialog(
+                'പുതിയ ദിവസം തുടങ്ങണോ?',
+                'ഇന്നത്തെ ബില്ലുകളുടെ കണക്ക് ക്ലിയർ ചെയ്ത് പുതിയ ദിവസത്തെ കണക്ക് ₹0 മുതൽ തുടങ്ങാൻ ഉറപ്പാണോ?',
+                () => {
+                    const todayStr = getTodayDDMMYYYY();
+                    completedBills = completedBills.filter(b => b.date !== todayStr);
+                    saveState();
+                    closeModal('daily-report-modal');
+                    renderAll();
+                    showToast('പുതിയ ദിവസത്തെ കണക്ക് ആരംഭിച്ചു!');
+                }
+            );
+        }
+
+        function openAddItemModal() {
+            renderManageMenuList();
+            openModal('add-item-modal');
+        }
+
+        function renderManageMenuList() {
+            const container = document.getElementById('manage-menu-list');
+            if (menuItems.length === 0) {
+                container.innerHTML = `<p class="text-xs text-stone-400 text-center py-3">മെനുവിൽ ഐറ്റങ്ങൾ ഒന്നുമില്ല. മുകളിൽ നിന്ന് പുതിയവ ചേർക്കുക.</p>`;
+                return;
+            }
+            container.innerHTML = menuItems.map(item => `
+                <div class="flex items-center justify-between gap-2 bg-stone-50 px-2.5 py-2 rounded-xl border border-stone-200 text-xs">
+                    <input type="text" value="${escapeHtml(item.name)}" onchange="updateMenuItemName('${item.id}', this.value)" class="flex-1 min-w-0 px-2 py-1 border border-stone-300 rounded-lg font-bold text-stone-800 bg-white">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-stone-500 font-bold">₹</span>
+                        <input type="number" value="${item.price}" min="1" onchange="updateMenuItemPrice('${item.id}', this.value)" class="w-16 px-2 py-1 border border-stone-300 rounded-lg font-extrabold text-right bg-white">
+                        <button type="button" onclick="deleteMenuItem('${item.id}')" class="text-rose-500 hover:text-rose-700 p-1 cursor-pointer" title="നീക്കം ചെയ്യുക">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function updateMenuItemName(itemId, newName) {
+            const trimmed = (newName || '').trim();
+            if (!trimmed) return;
+            const item = menuItems.find(m => m.id === itemId);
+            if (item) {
+                item.name = trimmed;
+                saveState();
+                renderMenuGrid();
+                renderCart();
+                showToast('പേര് പുതുക്കി.');
+            }
+        }
+
+        function updateMenuItemPrice(itemId, newPrice) {
+            const val = parseInt(newPrice, 10);
+            if (!val || val < 1) return;
+            const item = menuItems.find(m => m.id === itemId);
+            if (item) {
+                item.price = val;
+                saveState();
+                renderMenuGrid();
+                renderCart();
+                showToast(`${item.name} - വില ₹${val} ആയി പുതുക്കി.`);
+            }
+        }
+
+        function deleteMenuItem(itemId) {
+            menuItems = menuItems.filter(m => m.id !== itemId);
+            Object.keys(currentOrder).forEach(k => {
+                const { itemId: kItemId } = decodeOrderEntryKey(k);
+                if (kItemId === itemId) delete currentOrder[k];
+            });
+            saveState();
+            renderManageMenuList();
+            renderMenuGrid();
+            renderCart();
+            showToast('ഐറ്റം മെനുവിൽ നിന്ന് നീക്കം ചെയ്തു.');
+        }
+
+        function confirmClearAllMenu() {
+            openConfirmDialog(
+                'മുഴുവൻ മെനുവും മായ്ക്കണോ?',
+                'നിലവിലുള്ള എല്ലാ ഐറ്റങ്ങളും ഒഴിവാക്കി നിങ്ങളുടെ സ്വന്തം ലിസ്റ്റ് ആദ്യം മുതൽ തുടങ്ങാൻ ഉറപ്പാണോ?',
+                () => {
+                    menuItems = [];
+                    currentOrder = {};
+                    saveState();
+                    renderManageMenuList();
+                    renderMenuGrid();
+                    renderCart();
+                    showToast('എല്ലാ ഐറ്റങ്ങളും മായ്ച്ചു. ഇനി നിങ്ങളുടെ ഐറ്റങ്ങൾ ചേർക്കുക.');
+                }
+            );
+        }
+
+        function toggleFirebaseFields() {
+            const box = document.getElementById('firebase-advanced-fields');
+            const ind = document.getElementById('firebase-toggle-indicator');
+            if (!box) return;
+            const isHidden = box.style.display === 'none' || box.style.display === '';
+            box.style.display = isHidden ? 'block' : 'none';
+            if (ind) ind.textContent = isHidden ? '−' : '+';
+        }
+
+        function openShopSettingsModal() {
+            syncShopInfoFromMainStorage();
+            const fb = getActiveFirebaseConfig();
+            document.getElementById('setting-hotel-name').value = shopInfo.name;
+            document.getElementById('setting-hotel-place').value = shopInfo.place;
+            document.getElementById('setting-shop-id').value = bizConfig.shopId || 'malabar-default';
+            document.getElementById('setting-fb-apikey').value = fb.apiKey || '';
+            document.getElementById('setting-fb-projectid').value = fb.projectId || '';
+            document.getElementById('setting-fb-authdomain').value = fb.authDomain || '';
+            document.getElementById('setting-fb-appid').value = fb.appId || '';
+
+            const box = document.getElementById('firebase-advanced-fields');
+            const ind = document.getElementById('firebase-toggle-indicator');
+            if (box) box.style.display = 'none';
+            if (ind) ind.textContent = '+';
+
+            openModal('shop-settings-modal');
+        }
+
+        function setupForms() {
+            document.getElementById('add-site-entry-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const contractor = (document.getElementById('ledger-contractor-name')?.value || '').trim();
+                const site = (document.getElementById('ledger-site-name')?.value || '').trim();
+                const phone = (document.getElementById('ledger-phone')?.value || '').trim();
+                const entryType = document.getElementById('ledger-entry-type')?.value || 'credit';
+                const amount = parseInt(document.getElementById('ledger-amount')?.value, 10);
+                const note = (document.getElementById('ledger-note')?.value || '').trim();
+
+                if (!contractor || !site || !amount || amount < 1) {
+                    showToast('മേസ്തിരി പേര്, സൈറ്റ് പേര്, തുക എന്നിവ നൽകുക!');
+                    return;
+                }
+
+                const acc = findOrCreateSiteAccount(contractor, site, phone);
+                acc.entries.unshift({
+                    id: 'se-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                    date: getTodayDDMMYYYY(),
+                    time: getCurrentTime12Hr(),
+                    type: entryType === 'advance' ? 'advance' : 'credit',
+                    amount,
+                    note: note || (entryType === 'advance' ? 'അഡ്വാൻസ് വരവ്' : 'പാർസൽ / കഞ്ഞി / ചോറ് കടം')
+                });
+
+                saveState();
+                document.getElementById('ledger-amount').value = '';
+                document.getElementById('ledger-note').value = '';
+                updateHeaderSiteDueBadge();
+                renderSiteLedgerModal();
+                showToast(`${contractor} (${site}) അക്കൗണ്ടിൽ ചേർത്തു!`);
+            });
+
+            document.getElementById('add-item-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('new-item-name').value.trim();
+                const price = parseInt(document.getElementById('new-item-price').value, 10);
+                const cat = document.getElementById('new-item-cat').value;
+
+                if (!name || !price) return;
+
+                menuItems.unshift({
+                    id: 'pm-' + Date.now(),
+                    name,
+                    price,
+                    cat
+                });
+
+                saveState();
+                document.getElementById('new-item-name').value = '';
+                document.getElementById('new-item-price').value = '';
+                renderManageMenuList();
+                renderMenuGrid();
+                showToast(`"${name}" (₹${price}) മെനുവിൽ ചേർത്തു!`);
+            });
+
+            document.getElementById('shop-settings-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('setting-hotel-name').value.trim();
+                const place = document.getElementById('setting-hotel-place').value.trim();
+                const shopId = (document.getElementById('setting-shop-id').value || 'malabar-default').trim().replace(/\s+/g, '-').toLowerCase();
+
+                const apiKey = (document.getElementById('setting-fb-apikey').value || '').trim();
+                const projectId = (document.getElementById('setting-fb-projectid').value || '').trim();
+                const authDomain = (document.getElementById('setting-fb-authdomain').value || (projectId ? `${projectId}.firebaseapp.com` : '')).trim();
+                const appId = (document.getElementById('setting-fb-appid').value || '').trim();
+
+                if (!name) return;
+
+                shopInfo = { name, place };
+                bizConfig = {
+                    shopId,
+                    firebase: {
+                        apiKey: apiKey || DEFAULT_FIREBASE_CONFIG.apiKey,
+                        projectId: projectId || DEFAULT_FIREBASE_CONFIG.projectId,
+                        authDomain: authDomain || DEFAULT_FIREBASE_CONFIG.authDomain,
+                        storageBucket: projectId ? `${projectId}.firebasestorage.app` : DEFAULT_FIREBASE_CONFIG.storageBucket,
+                        messagingSenderId: bizConfig.firebase?.messagingSenderId || DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+                        appId: appId || DEFAULT_FIREBASE_CONFIG.appId
+                    }
+                };
+
+                writeShopInfoToMainStorage(shopInfo);
+                saveLocalOnly();
+                renderAll();
+                closeModal('shop-settings-modal');
+                showToast('സ്ഥാപനത്തിന്റെ വിവരങ്ങൾ & Firebase സേവ് ചെയ്തു.');
+                await initFirebaseSync();
+                await pushToFirestore();
+            });
+        }
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+
+        function openConfirmDialog(title, msg, onYes) {
+            document.getElementById('confirm-dialog-title').textContent = title;
+            document.getElementById('confirm-dialog-msg').textContent = msg;
+            const yesBtn = document.getElementById('confirm-dialog-yes');
+            const cloned = yesBtn.cloneNode(true);
+            yesBtn.parentNode.replaceChild(cloned, yesBtn);
+            cloned.addEventListener('click', () => {
+                onYes();
+                closeModal('confirm-dialog');
+            });
+            openModal('confirm-dialog');
+        }
+
+        function showToast(msg) {
+            const box = document.getElementById('toast-box');
+            const toast = document.createElement('div');
+            toast.className = 'bg-stone-900 text-amber-300 border border-stone-700 px-4 py-2.5 rounded-2xl shadow-xl text-xs sm:text-sm font-bold text-center transition-opacity duration-300';
+            toast.textContent = msg;
+            box.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2600);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        window.toggleOwnerPanel = toggleOwnerPanel;
+        window.openShopSettingsModal = openShopSettingsModal;
+        window.toggleFirebaseFields = toggleFirebaseFields;
+        window.openAddItemModal = openAddItemModal;
+        window.openDailyReportModal = openDailyReportModal;
+        window.openSiteLedgerModal = openSiteLedgerModal;
+        window.onCustomerContractorSelectChange = onCustomerContractorSelectChange;
+        window.onCustomerSiteSelectChange = onCustomerSiteSelectChange;
+        window.onLedgerContractorSelectChange = onLedgerContractorSelectChange;
+        window.onLedgerSiteSelectChange = onLedgerSiteSelectChange;
+        window.handleCustomerInputChange = handleCustomerInputChange;
+        window.quickAddAdvanceToSite = quickAddAdvanceToSite;
+        window.quickPartialSettleSite = quickPartialSettleSite;
+        window.settleFullSiteAccount = settleFullSiteAccount;
+        window.deleteSiteEntry = deleteSiteEntry;
+        window.shareSiteStatementWhatsApp = shareSiteStatementWhatsApp;
+        window.clearCustomerDetails = clearCustomerDetails;
+        window.saveCustomerDetails = saveCustomerDetails;
+        window.setPaymentMode = setPaymentMode;
+        window.completeAndPrintBill = completeAndPrintBill;
+        window.holdCurrentOrder = holdCurrentOrder;
+        window.shareBillWhatsApp = shareBillWhatsApp;
+        window.clearCurrentOrder = clearCurrentOrder;
+        window.closeModal = closeModal;
+        window.printDayEndReport = printDayEndReport;
+        window.shareDayReportWhatsApp = shareDayReportWhatsApp;
+        window.confirmResetDay = confirmResetDay;
+        window.selectCategory = selectCategory;
+        window.addItemToOrder = addItemToOrder;
+        window.updateItemQty = updateItemQty;
+        window.recallHoldSlot = recallHoldSlot;
+        window.discardHoldSlot = discardHoldSlot;
+        window.updateMenuItemName = updateMenuItemName;
+        window.updateMenuItemPrice = updateMenuItemPrice;
+        window.deleteMenuItem = deleteMenuItem;
+        window.confirmClearAllMenu = confirmClearAllMenu;
+        window.toggleBillPaymentStatus = toggleBillPaymentStatus;
+        window.addCustomVariationTag = addCustomVariationTag;
+        window.selectVariationTag = selectVariationTag;
+        window.confirmPlainVariationItem = confirmPlainVariationItem;
+        window.confirmCustomVariationNote = confirmCustomVariationNote;
+    </script>
+</body>
+</html>
