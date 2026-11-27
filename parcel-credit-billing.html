@@ -282,9 +282,14 @@
 
                 <!-- Primary Action Buttons -->
                 <div class="grid grid-cols-2 gap-2.5">
-                    <button onclick="completeAndPrintBill()" class="col-span-2 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-base sm:text-lg py-3.5 px-4 rounded-xl shadow-md transition cursor-pointer">
+                    <button onclick="completeBill(false)" class="col-span-2 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-base sm:text-lg py-3.5 px-4 rounded-xl shadow-md transition cursor-pointer">
                         <i data-lucide="check-circle-2" class="w-5 h-5"></i>
-                        <span>ബിൽ സേവ് & പ്രിന്റ് (Save & Print)</span>
+                        <span>ബിൽ സേവ് ചെയ്യുക (Save Only)</span>
+                    </button>
+
+                    <button onclick="completeBill(true)" class="col-span-2 flex items-center justify-center gap-2 bg-stone-900 hover:bg-stone-800 active:scale-98 text-amber-300 font-extrabold text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-xs transition cursor-pointer">
+                        <i data-lucide="printer" class="w-4 h-4"></i>
+                        <span>സേവ് & പ്രിന്റ് (Save & Print)</span>
                     </button>
 
                     <button onclick="holdCurrentOrder()" class="flex items-center justify-center gap-1.5 bg-amber-100 hover:bg-amber-200 active:scale-95 text-amber-950 border border-amber-300 font-extrabold text-xs sm:text-sm py-3 px-3 rounded-xl transition cursor-pointer">
@@ -2150,7 +2155,7 @@
             };
         }
 
-        function completeAndPrintBill() {
+        function completeBill(shouldPrint = false) {
             const bill = buildCurrentBillObject();
             if (!bill) {
                 showToast('ബിൽ സേവ് ചെയ്യാൻ ആദ്യം ഐറ്റങ്ങൾ ചേർക്കുക!');
@@ -2179,47 +2184,49 @@
                 );
             }
 
-            const payLabel = bill.paymentMode === 'credit' ? 'കടം (CREDIT)' : 'റെഡി ക്യാഷ് (CASH)';
-            const printArea = document.getElementById('thermal-print-area');
-            const itemsRowsHtml = bill.items.map(it => `
-                <tr>
-                    <td style="padding: 2px 0; text-align: left;">${escapeHtml(it.name)}</td>
-                    <td style="padding: 2px 0; text-align: center;">${it.qty}</td>
-                    <td style="padding: 2px 0; text-align: right;">${it.amount}</td>
-                </tr>
-            `).join('');
+            if (shouldPrint) {
+                const payLabel = bill.paymentMode === 'credit' ? 'കടം (CREDIT)' : 'റെഡി ക്യാഷ് (CASH)';
+                const printArea = document.getElementById('thermal-print-area');
+                const itemsRowsHtml = bill.items.map(it => `
+                    <tr>
+                        <td style="padding: 2px 0; text-align: left;">${escapeHtml(it.name)}</td>
+                        <td style="padding: 2px 0; text-align: center;">${it.qty}</td>
+                        <td style="padding: 2px 0; text-align: right;">${it.amount}</td>
+                    </tr>
+                `).join('');
 
-            printArea.innerHTML = `
-                <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 4px; margin-bottom: 4px;">
-                    <div style="font-size: 14px; font-weight: 800;">${escapeHtml(shopInfo.name)}</div>
-                    <div style="font-size: 10px;">${escapeHtml(shopInfo.place)}</div>
-                </div>
-                <div style="font-size: 10px; margin-bottom: 4px; border-bottom: 1px dashed #000; padding-bottom: 4px;">
-                    <div>ബിൽ നമ്പർ: <b>#${bill.billNo}</b> (പാർസൽ)</div>
-                    <div>തീയതി: ${bill.date} | ${bill.time}</div>
-                    <div>കസ്റ്റമർ: <b>${escapeHtml(bill.customerName)}</b></div>
-                    ${bill.customerPhone ? `<div>ഫോൺ: ${escapeHtml(bill.customerPhone)}</div>` : ''}
-                    ${bill.customerAddress ? `<div>സൈറ്റ് / സ്ഥലം: ${escapeHtml(bill.customerAddress)}</div>` : ''}
-                    <div>പേയ്മെന്റ്: <b>${payLabel}</b></div>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                    <thead>
-                        <tr style="border-bottom: 1px dashed #000;">
-                            <th style="text-align: left; padding-bottom: 2px;">ഐറ്റം</th>
-                            <th style="text-align: center; padding-bottom: 2px;">എണ്ണം</th>
-                            <th style="text-align: right; padding-bottom: 2px;">തുക</th>
-                        </tr>
-                    </thead>
-                    <tbody>${itemsRowsHtml}</tbody>
-                </table>
-                <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-top: 5px; padding: 4px 0; display: flex; justify-content: space-between; font-size: 14px; font-weight: 800;">
-                    <span>ആകെ തുക:</span>
-                    <span>₹${bill.total}</span>
-                </div>
-                <div style="text-align: center; font-size: 10px; margin-top: 6px;">
-                    നന്ദി! വീണ്ടും വരിക 🙏
-                </div>
-            `;
+                printArea.innerHTML = `
+                    <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 4px; margin-bottom: 4px;">
+                        <div style="font-size: 14px; font-weight: 800;">${escapeHtml(shopInfo.name)}</div>
+                        <div style="font-size: 10px;">${escapeHtml(shopInfo.place)}</div>
+                    </div>
+                    <div style="font-size: 10px; margin-bottom: 4px; border-bottom: 1px dashed #000; padding-bottom: 4px;">
+                        <div>ബിൽ നമ്പർ: <b>#${bill.billNo}</b> (പാർസൽ)</div>
+                        <div>തീയതി: ${bill.date} | ${bill.time}</div>
+                        <div>കസ്റ്റമർ: <b>${escapeHtml(bill.customerName)}</b></div>
+                        ${bill.customerPhone ? `<div>ഫോൺ: ${escapeHtml(bill.customerPhone)}</div>` : ''}
+                        ${bill.customerAddress ? `<div>സൈറ്റ് / സ്ഥലം: ${escapeHtml(bill.customerAddress)}</div>` : ''}
+                        <div>പേയ്മെന്റ്: <b>${payLabel}</b></div>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <thead>
+                            <tr style="border-bottom: 1px dashed #000;">
+                                <th style="text-align: left; padding-bottom: 2px;">ഐറ്റം</th>
+                                <th style="text-align: center; padding-bottom: 2px;">എണ്ണം</th>
+                                <th style="text-align: right; padding-bottom: 2px;">തുക</th>
+                            </tr>
+                        </thead>
+                        <tbody>${itemsRowsHtml}</tbody>
+                    </table>
+                    <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; margin-top: 5px; padding: 4px 0; display: flex; justify-content: space-between; font-size: 14px; font-weight: 800;">
+                        <span>ആകെ തുക:</span>
+                        <span>₹${bill.total}</span>
+                    </div>
+                    <div style="text-align: center; font-size: 10px; margin-top: 6px;">
+                        നന്ദി! വീണ്ടും വരിക 🙏
+                    </div>
+                `;
+            }
 
             completedBills.unshift(bill);
             billSequence += 1;
@@ -2231,9 +2238,15 @@
 
             showToast(`ബിൽ #${bill.billNo} (${bill.paymentMode === 'credit' ? 'സൈറ്റ് കടത്തിൽ ചേർത്തു' : 'റെഡി ക്യാഷ്'}) സേവ് ചെയ്തു!`);
 
-            setTimeout(() => {
-                window.print();
-            }, 150);
+            if (shouldPrint) {
+                setTimeout(() => {
+                    window.print();
+                }, 150);
+            }
+        }
+
+        function completeAndPrintBill() {
+            completeBill(true);
         }
 
         function formatCleanPhoneForWa(rawPhone) {
@@ -2714,6 +2727,7 @@
         window.clearCustomerDetails = clearCustomerDetails;
         window.saveCustomerDetails = saveCustomerDetails;
         window.setPaymentMode = setPaymentMode;
+        window.completeBill = completeBill;
         window.completeAndPrintBill = completeAndPrintBill;
         window.holdCurrentOrder = holdCurrentOrder;
         window.shareBillWhatsApp = shareBillWhatsApp;
