@@ -101,7 +101,7 @@
                                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                             </button>
                             <span id="cloud-sync-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
-                                കണക്ട് ചെയ്യുന്നു...
+                                ഓൺലൈൻ സേവ് ഓൺ
                             </span>
                         </div>
                         <p id="header-hotel-place" class="text-xs sm:text-sm text-stone-200 font-semibold leading-snug">പേരളശ്ശേരി / കണ്ണൂർ • പാർസൽ സർവീസ്</p>
@@ -122,7 +122,7 @@
 
                     <div class="flex items-center gap-1.5 bg-stone-800 px-2.5 py-1.5 rounded-xl border border-stone-700">
                         <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
-                        <span id="header-date" class="text-xs sm:text-sm font-extrabold text-stone-100">25-11-2026</span>
+                        <span id="header-date" class="text-xs sm:text-sm font-extrabold text-stone-100">27-11-2026</span>
                     </div>
                 </div>
             </div>
@@ -302,6 +302,43 @@
     <!-- Hidden 58mm Thermal Receipt Area -->
     <div id="thermal-print-area"></div>
 
+    <!-- Variation Picker Modal -->
+    <div id="variation-picker-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/70 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200 space-y-4">
+            <div class="flex items-center justify-between pb-2.5 border-b border-stone-200">
+                <div>
+                    <h2 id="var-modal-title" class="text-lg font-extrabold text-stone-900">വേരിയേഷൻ തിരഞ്ഞെടുക്കുക</h2>
+                    <p id="var-modal-subtitle" class="text-xs font-semibold text-stone-500 mt-0.5"></p>
+                </div>
+                <button type="button" onclick="closeModal('variation-picker-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="var-preset-tags" class="flex flex-wrap gap-2"></div>
+
+            <div class="pt-2 border-t border-stone-100 space-y-2">
+                <label class="block text-xs font-extrabold text-stone-700">പുതിയ വെറൈറ്റി പേര് ചേർക്കുക</label>
+                <div class="flex gap-2">
+                    <input type="text" id="var-new-tag-input" placeholder="ഉദാ: കടുപ്പം കുറവ്" class="flex-1 px-3 py-2 text-xs sm:text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <button type="button" onclick="addCustomVariationTag()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-500 hover:bg-amber-400 text-stone-950 cursor-pointer">+ ചേർക്കുക</button>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-xs font-extrabold text-stone-700">പ്രത്യേക കുറിപ്പ് (ഈ ഓർഡറിന് മാത്രം)</label>
+                <div class="flex gap-2">
+                    <input type="text" id="var-custom-note" placeholder="ഉദാ: ചാറ് വേറെ പാത്രത്തിൽ" class="flex-1 px-3 py-2 text-xs sm:text-sm font-semibold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <button type="button" onclick="confirmCustomVariationNote()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-900 text-white cursor-pointer">ചേർക്കുക</button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+                <button type="button" onclick="confirmPlainVariationItem()" class="w-full py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-100 hover:bg-stone-200 text-stone-800 cursor-pointer">സാധാരണയായി ചേർക്കുക (Plain)</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Contractor & Multi-Site Credit / Advance / Settlement Modal -->
     <div id="site-ledger-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-stone-950/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl border-2 border-amber-300 my-auto max-h-[92vh] flex flex-col">
@@ -392,7 +429,7 @@
             <div class="flex items-center justify-between pb-3 border-b border-stone-200">
                 <div>
                     <h2 class="text-xl font-extrabold text-stone-900">ഇന്നത്തെ വിറ്റുവരവ് & കടം റിപ്പോർട്ട്</h2>
-                    <p id="report-date-subtitle" class="text-xs font-bold text-stone-500 mt-0.5">തീയതി: 25-11-2026</p>
+                    <p id="report-date-subtitle" class="text-xs font-bold text-stone-500 mt-0.5">തീയതി: 27-11-2026</p>
                 </div>
                 <button onclick="closeModal('daily-report-modal')" class="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -541,7 +578,7 @@
                 <div class="pt-2 border-t border-stone-200 space-y-3">
                     <div>
                         <label class="block text-xs font-extrabold text-stone-700 mb-1">Shop ID (ഓരോ കടയ്ക്കും പ്രത്യേകം പേര്)</label>
-                        <input type="text" id="setting-shop-id" placeholder="ഉദാ: malabar-peralassery" class="w-full px-3.5 py-2 text-xs sm:text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <input type="text" id="setting-shop-id" placeholder="ഉദാ: minu-catering-kolayad" class="w-full px-3.5 py-2 text-xs sm:text-sm font-bold border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
                     </div>
 
                     <!-- Hidden Firebase Fields Wrapper (Hidden by Default) -->
@@ -690,13 +727,22 @@
         let customTagsByGroup = {};
         let pendingVariationItemId = null;
         let pendingVariationGroupKey = 'general_group';
-
-        // Contractor + Site accounts array:
-        // { id, contractor, site, phone, entries: [{ id, date, time, type: 'credit'|'advance'|'settlement', amount, note }] }
         let siteAccounts = [];
 
         let firestoreDb = null;
         let cloudReady = false;
+
+        function setSyncBadge(statusType) {
+            const badge = document.getElementById('cloud-sync-badge');
+            if (!badge) return;
+            if (statusType === 'offline') {
+                badge.textContent = 'ഓഫ്‌ലൈൻ സേവ്';
+                badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-700';
+            } else {
+                badge.textContent = 'ഓൺലൈൻ സേവ് ഓൺ';
+                badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700';
+            }
+        }
 
         function extractShopInfoFromRaw(rawObj) {
             if (!rawObj || typeof rawObj !== 'object') return null;
@@ -902,7 +948,6 @@
                 return;
             }
 
-            // Group sites by contractor name
             const byContractor = {};
             siteAccounts.forEach(acc => {
                 const key = acc.contractor || 'പേരില്ലാത്ത മേസ്തിരി';
@@ -1348,15 +1393,11 @@
 
         async function initFirebaseSync() {
             const cfg = getActiveFirebaseConfig();
-            const badge = document.getElementById('cloud-sync-badge');
 
             if (!isFirebaseConfigured(cfg)) {
                 cloudReady = false;
                 firestoreDb = null;
-                if (badge) {
-                    badge.textContent = 'ലോക്കൽ മോഡ്';
-                    badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700';
-                }
+                setSyncBadge('offline');
                 return;
             }
 
@@ -1364,20 +1405,12 @@
                 const app = initializeApp(cfg, `parcel-${getParcelDocId()}-${Date.now()}`);
                 firestoreDb = getFirestore(app);
                 cloudReady = true;
-
-                if (badge) {
-                    badge.textContent = `Firestore: ${getParcelDocId()}`;
-                    badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700';
-                }
-
+                setSyncBadge('online');
                 await pullFromFirestore();
             } catch (err) {
                 console.error('Firebase init error:', err);
                 cloudReady = false;
-                if (badge) {
-                    badge.textContent = 'ഓഫ്‌ലൈൻ ബാക്ക്‌അപ്പ്';
-                    badge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-700';
-                }
+                setSyncBadge('offline');
             }
         }
 
@@ -1425,8 +1458,10 @@
                     if (dataUpdated) saveLocalOnly();
                     await pushToFirestore();
                 }
+                setSyncBadge('online');
             } catch (err) {
                 console.error('Firestore pull error:', err);
+                setSyncBadge('offline');
             }
         }
 
@@ -1454,8 +1489,10 @@
                         updatedAt: getTodayDDMMYYYY()
                     }, { merge: true }).catch(() => null)
                 ]);
+                setSyncBadge('online');
             } catch (err) {
                 console.error('Firestore push error:', err);
+                setSyncBadge('offline');
             }
         }
 
