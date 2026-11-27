@@ -40,24 +40,21 @@
     <!-- Toast Notification -->
     <div id="toast-box" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center gap-2 w-11/12 max-w-md"></div>
 
-    <!-- Kitchen Header -->
+    <!-- Kitchen Header (Hotel Name Only for Chef) -->
     <header class="bg-stone-900 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-3 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2.5">
             <div class="flex items-center gap-2.5 min-w-0">
                 <div class="w-10 h-10 rounded-xl bg-orange-500 text-stone-950 flex items-center justify-center font-extrabold flex-shrink-0">
                     <i data-lucide="chef-hat" class="w-5 h-5"></i>
                 </div>
-                <div class="min-w-0">
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                        <h1 id="kitchen-shop-name" class="text-base sm:text-xl font-extrabold text-amber-300 leading-snug">മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്</h1>
-                        <button onclick="openShopSettingsModal()" class="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white transition cursor-pointer" title="Shop ID / PIN മാറ്റുക">
-                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <span id="cloud-sync-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
-                            കണക്ട് ചെയ്യുന്നു...
-                        </span>
-                    </div>
-                    <p class="text-xs sm:text-sm font-bold text-stone-200">കിച്ചൻ ലൈവ് ഓർഡർ ബോർഡ് (ഷെഫ് വ്യൂ)</p>
+                <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                    <h1 id="kitchen-shop-name" class="text-base sm:text-xl font-extrabold text-amber-300 leading-snug truncate">മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്</h1>
+                    <button onclick="openShopSettingsModal()" class="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white transition cursor-pointer" title="Shop ID / PIN മാറ്റുക">
+                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <span id="cloud-sync-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-300 border border-stone-700">
+                        കണക്ട് ചെയ്യുന്നു...
+                    </span>
                 </div>
             </div>
 
@@ -69,10 +66,6 @@
                 <button type="button" onclick="testKitchenBeep()" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-500 hover:bg-amber-400 text-stone-950 cursor-pointer">
                     🔔 ശബ്ദം ടെസ്റ്റ്
                 </button>
-                <a href="index.html" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-stone-800 hover:bg-stone-700 text-amber-200 border border-stone-600 cursor-pointer">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                    <span>POS പേജ്</span>
-                </a>
             </div>
         </div>
     </header>
@@ -104,13 +97,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-extrabold text-stone-700 mb-1">ടേബിളുകളുടെ എണ്ണം</label>
-                        <select id="setting-table-count" class="w-full px-3 py-2.5 text-sm font-bold border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
-                            <option value="5">5 ടേബിൾ + പാർസൽ</option>
-                            <option value="8">8 ടേബിൾ + പാർസൽ</option>
-                            <option value="10">10 ടേബിൾ + പാർസൽ</option>
-                            <option value="12">12 ടേബിൾ + പാർസൽ</option>
-                            <option value="15">15 ടേബിൾ + പാർസൽ</option>
-                        </select>
+                        <input type="number" id="setting-table-count" min="1" max="30" step="1" class="w-full px-3 py-2.5 text-sm font-bold border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
                     </div>
                     <div>
                         <label class="block text-xs font-extrabold text-stone-700 mb-1">Shop ID (കടയുടെ ഐഡി)</label>
@@ -219,6 +206,8 @@
             { id: 'm18', name: 'ലൈം ജ്യൂസ്', price: 25, cat: 'tea' }
         ];
 
+        const SEAT_IDS = ['s1', 's2', 's3', 's4'];
+
         function parseOrderEntryKey(key) {
             const raw = String(key || '');
             const sepIdx = raw.indexOf('::');
@@ -229,6 +218,33 @@
                 itemId: raw.slice(0, sepIdx),
                 note: raw.slice(sepIdx + 2)
             };
+        }
+
+        function getFlattenedTableOrderMap(rawTableOrder) {
+            const merged = {};
+            if (!rawTableOrder || typeof rawTableOrder !== 'object') return merged;
+
+            const hasSeatKeys = SEAT_IDS.some(sid => rawTableOrder[sid] && typeof rawTableOrder[sid] === 'object');
+            if (hasSeatKeys) {
+                SEAT_IDS.forEach(sid => {
+                    const seatMap = rawTableOrder[sid] || {};
+                    Object.entries(seatMap).forEach(([k, q]) => {
+                        const qty = parseInt(q, 10) || 0;
+                        if (qty > 0) {
+                            merged[k] = (merged[k] || 0) + qty;
+                        }
+                    });
+                });
+                return merged;
+            }
+
+            Object.entries(rawTableOrder).forEach(([k, q]) => {
+                const qty = parseInt(q, 10) || 0;
+                if (qty > 0) {
+                    merged[k] = (merged[k] || 0) + qty;
+                }
+            });
+            return merged;
         }
 
         let shopInfo = { name: 'മലബാർ ഹോട്ടൽ & ടീ ഷോപ്പ്', place: 'പേരളശ്ശേരി / കണ്ണൂർ' };
@@ -395,7 +411,7 @@
             return Object.keys(ordersMap)
                 .sort()
                 .map(tid => {
-                    const items = ordersMap[tid] || {};
+                    const items = getFlattenedTableOrderMap(ordersMap[tid]);
                     const pairs = Object.keys(items)
                         .filter(k => items[k] > 0)
                         .sort()
@@ -466,9 +482,14 @@
 
         function applyRemoteData(data, silent = false) {
             const prevSig = lastOrderSignature;
-            if (data.shopInfo) shopInfo = Object.assign({}, shopInfo, data.shopInfo);
+            if (data.shopInfo && data.shopInfo.name) {
+                shopInfo = Object.assign({}, shopInfo, {
+                    name: String(data.shopInfo.name).trim(),
+                    place: String(data.shopInfo.place || shopInfo.place || '').trim()
+                });
+            }
             if (data.tableCount) bizConfig.tableCount = parseInt(data.tableCount, 10) || bizConfig.tableCount;
-            if (data.shopPin) bizConfig.shopPin = data.shopPin;
+            if (data.shopPin !== undefined) bizConfig.shopPin = data.shopPin;
             if (Array.isArray(data.menuItems)) menuItems = data.menuItems;
             if (data.tableOrders) tableOrders = data.tableOrders;
             if (data.kitchenStatus) kitchenStatus = data.kitchenStatus;
@@ -505,7 +526,15 @@
 
                 if (snap.exists()) {
                     const remote = snap.data();
-                    if (remote.shopPin && bizConfig.shopPin !== remote.shopPin) {
+                    const reqShopPin = (remote.shopPin || '').trim();
+                    const reqStaffPin = (remote.staffPin || '').trim();
+                    const localPin = (bizConfig.shopPin || '').trim();
+                    const authorized =
+                        (!reqShopPin && !reqStaffPin) ||
+                        (reqShopPin && localPin === reqShopPin) ||
+                        (reqStaffPin && localPin === reqStaffPin);
+
+                    if (!authorized) {
                         cloudReady = false;
                         if (badge) {
                             badge.textContent = 'PIN ആവശ്യമാണ്';
@@ -517,7 +546,7 @@
                             tableCount: remote.tableCount || bizConfig.tableCount || 5,
                             shopId: bizConfig.shopId,
                             shopPin: '',
-                            expectedPin: remote.shopPin,
+                            expectedPin: reqShopPin || reqStaffPin,
                             firebase: cfg
                         };
                         openPinVerificationModal(bizConfig.shopId);
@@ -535,7 +564,6 @@
                 unsubscribeSnapshot = onSnapshot(ref, (docSnap) => {
                     if (!docSnap.exists()) return;
                     const data = docSnap.data();
-                    if (data.shopPin && bizConfig.shopPin && data.shopPin !== bizConfig.shopPin) return;
                     applyRemoteData(data, isInitialSnapshotLoad);
                     isInitialSnapshotLoad = false;
                 });
@@ -550,7 +578,10 @@
         }
 
         function renderHeader() {
-            document.getElementById('kitchen-shop-name').textContent = shopInfo.name;
+            const nameEl = document.getElementById('kitchen-shop-name');
+            if (nameEl) {
+                nameEl.textContent = shopInfo.name || 'ഹോട്ടൽ';
+            }
         }
 
         function renderKitchenOrders() {
@@ -559,7 +590,7 @@
 
             const activeEntries = tables
                 .map(t => {
-                    const orderMap = tableOrders[t.id] || {};
+                    const orderMap = getFlattenedTableOrderMap(tableOrders[t.id]);
                     const entries = Object.entries(orderMap)
                         .filter(([, qty]) => qty > 0)
                         .map(([rawKey, qty]) => {
